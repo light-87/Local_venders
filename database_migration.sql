@@ -352,11 +352,11 @@ ALTER TABLE message_templates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE bill_sequences ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies
--- Note: These policies use a custom claim 'vendor_id' that should be set in the JWT
--- For service role, all access is granted automatically
+-- Note: These policies use a custom setting 'app.current_vendor_id'
+-- For service role, all access is granted automatically (bypasses RLS)
 
--- Helper function to get current vendor_id from JWT or session
-CREATE OR REPLACE FUNCTION auth.vendor_id()
+-- Helper function to get current vendor_id from session setting
+CREATE OR REPLACE FUNCTION public.get_current_vendor_id()
 RETURNS UUID AS $$
 BEGIN
   RETURN NULLIF(current_setting('app.current_vendor_id', TRUE), '')::UUID;
@@ -365,72 +365,72 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Accounts policies
 CREATE POLICY "Vendors can view own accounts" ON accounts
-  FOR SELECT USING (vendor_id = auth.vendor_id());
+  FOR SELECT USING (vendor_id = public.get_current_vendor_id());
 CREATE POLICY "Vendors can insert own accounts" ON accounts
-  FOR INSERT WITH CHECK (vendor_id = auth.vendor_id());
+  FOR INSERT WITH CHECK (vendor_id = public.get_current_vendor_id());
 CREATE POLICY "Vendors can update own accounts" ON accounts
-  FOR UPDATE USING (vendor_id = auth.vendor_id());
+  FOR UPDATE USING (vendor_id = public.get_current_vendor_id());
 CREATE POLICY "Vendors can delete own accounts" ON accounts
-  FOR DELETE USING (vendor_id = auth.vendor_id());
+  FOR DELETE USING (vendor_id = public.get_current_vendor_id());
 
 -- Customers policies
 CREATE POLICY "Vendors can view own customers" ON customers
-  FOR SELECT USING (vendor_id = auth.vendor_id());
+  FOR SELECT USING (vendor_id = public.get_current_vendor_id());
 CREATE POLICY "Vendors can insert own customers" ON customers
-  FOR INSERT WITH CHECK (vendor_id = auth.vendor_id());
+  FOR INSERT WITH CHECK (vendor_id = public.get_current_vendor_id());
 CREATE POLICY "Vendors can update own customers" ON customers
-  FOR UPDATE USING (vendor_id = auth.vendor_id());
+  FOR UPDATE USING (vendor_id = public.get_current_vendor_id());
 CREATE POLICY "Vendors can delete own customers" ON customers
-  FOR DELETE USING (vendor_id = auth.vendor_id());
+  FOR DELETE USING (vendor_id = public.get_current_vendor_id());
 
 -- Inventory Categories
 CREATE POLICY "Vendors can manage own inventory categories" ON inventory_categories
-  FOR ALL USING (vendor_id = auth.vendor_id());
+  FOR ALL USING (vendor_id = public.get_current_vendor_id());
 
 -- Inventory Items
 CREATE POLICY "Vendors can manage own inventory" ON inventory_items
-  FOR ALL USING (vendor_id = auth.vendor_id());
+  FOR ALL USING (vendor_id = public.get_current_vendor_id());
 
 -- Sales
 CREATE POLICY "Vendors can manage own sales" ON sales
-  FOR ALL USING (vendor_id = auth.vendor_id());
+  FOR ALL USING (vendor_id = public.get_current_vendor_id());
 
 -- Sale Items (needs join through sales)
 CREATE POLICY "Vendors can manage own sale items" ON sale_items
   FOR ALL USING (
     EXISTS (
       SELECT 1 FROM sales WHERE sales.id = sale_items.sale_id
-      AND sales.vendor_id = auth.vendor_id()
+      AND sales.vendor_id = public.get_current_vendor_id()
     )
   );
 
 -- Expense Categories
 CREATE POLICY "Vendors can manage own expense categories" ON expense_categories
-  FOR ALL USING (vendor_id = auth.vendor_id());
+  FOR ALL USING (vendor_id = public.get_current_vendor_id());
 
 -- Expenses
 CREATE POLICY "Vendors can manage own expenses" ON expenses
-  FOR ALL USING (vendor_id = auth.vendor_id());
+  FOR ALL USING (vendor_id = public.get_current_vendor_id());
 
 -- Income
 CREATE POLICY "Vendors can manage own income" ON income
-  FOR ALL USING (vendor_id = auth.vendor_id());
+  FOR ALL USING (vendor_id = public.get_current_vendor_id());
 
 -- Scheduled Messages
 CREATE POLICY "Vendors can manage own messages" ON scheduled_messages
-  FOR ALL USING (vendor_id = auth.vendor_id());
+  FOR ALL USING (vendor_id = public.get_current_vendor_id());
 
 -- Message Logs
 CREATE POLICY "Vendors can view own message logs" ON message_logs
-  FOR SELECT USING (vendor_id = auth.vendor_id());
+  FOR SELECT USING (vendor_id = public.get_current_vendor_id());
 
 -- Message Templates
 CREATE POLICY "Vendors can manage own templates" ON message_templates
-  FOR ALL USING (vendor_id = auth.vendor_id());
+  FOR ALL USING (vendor_id = public.get_current_vendor_id());
 
 -- Bill Sequences
 CREATE POLICY "Vendors can manage own bill sequence" ON bill_sequences
-  FOR ALL USING (vendor_id = auth.vendor_id());
+  FOR ALL USING (vendor_id = public.get_current_vendor_id());
 
 -- ============================================
 -- MIGRATION 18: Default Data Function
