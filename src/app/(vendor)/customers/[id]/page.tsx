@@ -2,10 +2,11 @@ import { validateSession } from '@/lib/auth';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { formatCurrency, formatDate } from '@/lib/utils/format';
 import { PageHeader } from '@/components/layout';
-import { Card, Badge } from '@/components/ui';
+import { Card } from '@/components/ui';
 import { User, Phone, ShoppingBag } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import { CustomerActions } from './customer-actions';
 
 async function getCustomer(vendorId: string, customerId: string) {
   const supabase = createAdminClient();
@@ -54,13 +55,13 @@ export default async function CustomerDetailPage({
       <div className="p-4 space-y-6">
         {/* Customer Info */}
         <Card>
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 bg-brand-100 rounded-full flex items-center justify-center">
+          <div className="flex items-start gap-4">
+            <div className="w-14 h-14 bg-brand-100 rounded-full flex items-center justify-center flex-shrink-0">
               <User className="w-7 h-7 text-brand-600" />
             </div>
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <h2 className="text-xl font-semibold text-gray-900">{customer.name}</h2>
-              {customer.phone && (
+              {customer.phone ? (
                 <a
                   href={`tel:${customer.phone}`}
                   className="flex items-center gap-1 text-brand-500 mt-1"
@@ -68,8 +69,14 @@ export default async function CustomerDetailPage({
                   <Phone className="w-4 h-4" />
                   {customer.phone}
                 </a>
+              ) : (
+                <p className="text-sm text-gray-400 mt-1">No phone number</p>
               )}
             </div>
+          </div>
+
+          <div className="mt-4">
+            <CustomerActions customer={customer} />
           </div>
 
           <div className="grid grid-cols-2 gap-4 mt-6">

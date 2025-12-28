@@ -14,6 +14,9 @@ import {
   Plus,
   Trash2,
   Receipt,
+  Pencil,
+  Phone,
+  Building2,
 } from 'lucide-react';
 import type { Account, Vendor } from '@/types';
 
@@ -32,13 +35,16 @@ export default function SettingsPage() {
   const [showPinModal, setShowPinModal] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showAccountModal, setShowAccountModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
 
   // Form states
   const [pinForm, setPinForm] = useState({ current: '', new: '', confirm: '' });
   const [accountForm, setAccountForm] = useState({ name: '', type: '' });
+  const [profileForm, setProfileForm] = useState({ name: '', businessName: '', phone: '' });
   const [pinLoading, setPinLoading] = useState(false);
   const [accountLoading, setAccountLoading] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(false);
   const [logoutLoading, setLogoutLoading] = useState(false);
 
   useEffect(() => {
@@ -157,6 +163,54 @@ export default function SettingsPage() {
     }
   };
 
+  const handleSaveProfile = async () => {
+    if (!profileForm.name.trim()) {
+      error('Name is required');
+      return;
+    }
+    if (!profileForm.businessName.trim()) {
+      error('Business name is required');
+      return;
+    }
+
+    setProfileLoading(true);
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: profileForm.name.trim(),
+          businessName: profileForm.businessName.trim(),
+          phone: profileForm.phone.trim() || null,
+        }),
+      });
+
+      if (res.ok) {
+        success('Profile updated');
+        setShowProfileModal(false);
+        fetchSettings();
+      } else {
+        const json = await res.json();
+        error(json.error || 'Failed to update profile');
+      }
+    } catch {
+      error('Something went wrong');
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
+  const openProfileModal = () => {
+    if (data?.vendor) {
+      setProfileForm({
+        name: data.vendor.name,
+        businessName: data.vendor.business_name,
+        phone: data.vendor.phone || '',
+      });
+    }
+    setShowProfileModal(true);
+  };
+
   const openEditAccount = (account: Account) => {
     setEditingAccount(account);
     setAccountForm({ name: account.name, type: account.type });
@@ -189,15 +243,35 @@ export default function SettingsPage() {
       <div className="p-4 space-y-6">
         {/* Profile Section */}
         <section>
-          <h2 className="text-sm font-medium text-gray-500 mb-3">Profile</h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-medium text-gray-500">Profile</h2>
+            <button
+              onClick={openProfileModal}
+              className="text-sm text-brand-500 flex items-center gap-1"
+            >
+              <Pencil className="w-4 h-4" />
+              Edit
+            </button>
+          </div>
           <Card>
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-brand-100 rounded-full flex items-center justify-center">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 bg-brand-100 rounded-full flex items-center justify-center flex-shrink-0">
                 <User className="w-6 h-6 text-brand-600" />
               </div>
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <p className="font-medium text-gray-900">{data?.vendor.name}</p>
-                <p className="text-sm text-gray-500">{data?.vendor.business_name}</p>
+                <div className="flex items-center gap-1 text-sm text-gray-500 mt-1">
+                  <Building2 className="w-4 h-4" />
+                  {data?.vendor.business_name}
+                </div>
+                {data?.vendor.phone ? (
+                  <div className="flex items-center gap-1 text-sm text-gray-500 mt-1">
+                    <Phone className="w-4 h-4" />
+                    {data.vendor.phone}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-400 mt-1">No phone number</p>
+                )}
               </div>
             </div>
           </Card>
@@ -400,6 +474,39 @@ export default function SettingsPage() {
               Set as Default
             </Button>
           )}
+        </div>
+      </Modal>
+
+      {/* Profile Edit Modal */}
+      <Modal
+        isOpen={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+        title="Edit Profile"
+      >
+        <div className="space-y-4">
+          <Input
+            label="Your Name"
+            placeholder="Enter your name"
+            value={profileForm.name}
+            onChange={(e) => setProfileForm((p) => ({ ...p, name: e.target.value }))}
+          />
+          <Input
+            label="Business Name"
+            placeholder="Enter your business name"
+            value={profileForm.businessName}
+            onChange={(e) => setProfileForm((p) => ({ ...p, businessName: e.target.value }))}
+          />
+          <Input
+            label="Phone Number"
+            type="tel"
+            placeholder="Enter phone number (optional)"
+            value={profileForm.phone}
+            onChange={(e) => setProfileForm((p) => ({ ...p, phone: e.target.value }))}
+            helperText="This will be shown on your bills"
+          />
+          <Button fullWidth loading={profileLoading} onClick={handleSaveProfile}>
+            Save Changes
+          </Button>
         </div>
       </Modal>
 
