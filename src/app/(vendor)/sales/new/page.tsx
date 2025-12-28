@@ -288,7 +288,7 @@ export default function NewSalePage() {
             placeholder="Search inventory..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            prefix={<Search className="w-5 h-5" />}
+            startIcon={<Search className="w-5 h-5" />}
           />
 
           {/* Inventory Grid */}
@@ -396,7 +396,7 @@ export default function NewSalePage() {
                         setDiscountPercent(Number(e.target.value));
                         setDiscountAmount(0);
                       }}
-                      suffix="%"
+                      endIcon="%"
                     />
                   </div>
                 </div>
@@ -465,7 +465,7 @@ export default function NewSalePage() {
             placeholder="Search by name..."
             value={customerSearch}
             onChange={(e) => setCustomerSearch(e.target.value)}
-            prefix={<Search className="w-5 h-5" />}
+            startIcon={<Search className="w-5 h-5" />}
           />
 
           {customers.length > 0 && (

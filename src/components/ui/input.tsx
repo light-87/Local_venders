@@ -4,12 +4,12 @@ import { forwardRef } from 'react';
 import { cn } from '@/lib/utils/cn';
 
 export interface InputProps
-  extends React.InputHTMLAttributes<HTMLInputElement> {
+  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'prefix'> {
   label?: string;
   error?: string;
   helperText?: string;
-  prefix?: React.ReactNode;
-  suffix?: React.ReactNode;
+  startIcon?: React.ReactNode;
+  endIcon?: React.ReactNode;
 }
 
 const Input = forwardRef<HTMLInputElement, InputProps>(
@@ -20,8 +20,8 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
       label,
       error,
       helperText,
-      prefix,
-      suffix,
+      startIcon,
+      endIcon,
       disabled,
       ...props
     },
@@ -35,9 +35,9 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           </label>
         )}
         <div className="relative">
-          {prefix && (
+          {startIcon && (
             <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-              {prefix}
+              {startIcon}
             </div>
           )}
           <input
@@ -46,16 +46,16 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             disabled={disabled}
             className={cn(
               'input-base',
-              prefix && 'pl-11',
-              suffix && 'pr-11',
+              startIcon && 'pl-11',
+              endIcon && 'pr-11',
               error && 'border-red-500 focus:border-red-500 focus:ring-red-100',
               className
             )}
             {...props}
           />
-          {suffix && (
+          {endIcon && (
             <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
-              {suffix}
+              {endIcon}
             </div>
           )}
         </div>

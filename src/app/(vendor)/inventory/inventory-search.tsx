@@ -41,7 +41,7 @@ export function InventorySearch({ categories }: InventorySearchProps) {
           placeholder="Search items..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          prefix={<Search className="w-5 h-5" />}
+          startIcon={<Search className="w-5 h-5" />}
         />
       </div>
       <div className="w-40">

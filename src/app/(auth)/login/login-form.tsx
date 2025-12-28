@@ -104,7 +104,7 @@ export function LoginForm({ rememberedUsername }: LoginFormProps) {
           placeholder="Enter your username"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
-          prefix={<User className="w-5 h-5" />}
+          startIcon={<User className="w-5 h-5" />}
           autoComplete="username"
           autoCapitalize="none"
         />
@@ -124,7 +124,7 @@ export function LoginForm({ rememberedUsername }: LoginFormProps) {
           const value = e.target.value.replace(/\D/g, '').slice(0, 5);
           setPin(value);
         }}
-        prefix={<Lock className="w-5 h-5" />}
+        startIcon={<Lock className="w-5 h-5" />}
         autoComplete="current-password"
       />
 
