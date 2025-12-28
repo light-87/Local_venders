@@ -1,0 +1,108 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Backgrounds */
+    --bg-primary: #FAF9F7;
+    --bg-secondary: #F5F4F2;
+    --bg-white: #FFFFFF;
+
+    /* Brand / Accent */
+    --accent-primary: #D97757;
+    --accent-hover: #C4684A;
+    --accent-light: #FDF4F1;
+
+    /* Text */
+    --text-primary: #1A1A1A;
+    --text-secondary: #6B7280;
+    --text-tertiary: #9CA3AF;
+
+    /* Borders */
+    --border-light: #E5E5E5;
+    --border-medium: #D1D5DB;
+
+    /* Status Colors */
+    --success: #059669;
+    --warning: #D97706;
+    --error: #DC2626;
+    --info: #2563EB;
+  }
+
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-surface-primary text-gray-900 antialiased;
+    font-feature-settings: 'rlig' 1, 'calt' 1;
+  }
+
+  /* Prevent iOS zoom on input focus */
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+@layer components {
+  /* Safe area padding for iOS */
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  /* Touch-friendly button base */
+  .touch-target {
+    @apply min-h-[48px] min-w-[48px];
+  }
+
+  /* Card styles */
+  .card {
+    @apply bg-white rounded-2xl shadow-sm border border-gray-100 p-4;
+  }
+
+  .card-interactive {
+    @apply card transition-all duration-150 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98];
+  }
+
+  /* Input base styles */
+  .input-base {
+    @apply w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-base
+           placeholder:text-gray-400
+           focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100
+           disabled:bg-gray-50 disabled:text-gray-500;
+  }
+
+  /* Tabular numbers for financial data */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer utilities {
+  /* Hide scrollbar but keep functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Gradient mask for overflow indication */
+  .fade-right {
+    mask-image: linear-gradient(to right, black 90%, transparent);
+    -webkit-mask-image: linear-gradient(to right, black 90%, transparent);
+  }
+}
