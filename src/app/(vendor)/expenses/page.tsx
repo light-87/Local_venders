@@ -86,7 +86,7 @@ export default async function ExpensesPage() {
             title="No expenses recorded"
             description="Track your business expenses here"
             actionLabel="Add Expense"
-            onAction={() => (window.location.href = '/expenses/new')}
+            actionHref="/expenses/new"
           />
         )}
       </div>
