@@ -48,14 +48,18 @@ export default async function SalesPage() {
         {/* Sales List */}
         {sales.length > 0 ? (
           <div className="space-y-2">
-            {sales.map((sale) => (
+            {sales.map((sale) => {
+              const customerName = sale.customer && typeof sale.customer === 'object' && 'name' in sale.customer
+                ? (sale.customer as { name: string }).name
+                : 'Walk-in';
+              return (
               <Link key={sale.id} href={`/bill/${sale.bill_id}`}>
                 <Card variant="interactive">
                   <div className="flex justify-between items-start">
                     <div>
                       <p className="font-medium text-gray-900">{sale.bill_number}</p>
                       <p className="text-sm text-gray-500">
-                        {(sale.customer as { name: string } | null)?.name ?? 'Walk-in'}
+                        {customerName}
                       </p>
                       <p className="text-xs text-gray-400 mt-1">
                         {formatDate(sale.created_at)}
@@ -67,7 +71,7 @@ export default async function SalesPage() {
                   </div>
                 </Card>
               </Link>
-            ))}
+            )})}
           </div>
         ) : (
           <EmptyState

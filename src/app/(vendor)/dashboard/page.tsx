@@ -217,7 +217,11 @@ export default async function DashboardPage() {
           </div>
           {data.recentSales.length > 0 ? (
             <div className="space-y-2">
-              {data.recentSales.map((sale) => (
+              {data.recentSales.map((sale) => {
+                const customerName = sale.customer && typeof sale.customer === 'object' && 'name' in sale.customer
+                  ? (sale.customer as { name: string }).name
+                  : 'Walk-in';
+                return (
                 <Card key={sale.id} variant="interactive">
                   <Link href={`/bill/${sale.bill_number}`} className="block">
                     <div className="flex justify-between items-center">
@@ -226,7 +230,7 @@ export default async function DashboardPage() {
                           {sale.bill_number}
                         </p>
                         <p className="text-sm text-gray-500">
-                          {(sale.customer as { name: string } | null)?.name ?? 'Walk-in'}
+                          {customerName}
                         </p>
                       </div>
                       <p className="font-semibold text-gray-900 tabular-nums">
@@ -235,7 +239,7 @@ export default async function DashboardPage() {
                     </div>
                   </Link>
                 </Card>
-              ))}
+              )})}
             </div>
           ) : (
             <Card>
