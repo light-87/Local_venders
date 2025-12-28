@@ -118,7 +118,7 @@ export default function NewExpensePage() {
           step="0.01"
           label="Amount *"
           placeholder="0.00"
-          prefix="₹"
+          startIcon="₹"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
         />

@@ -384,7 +384,7 @@ export default function NewSalePage() {
                         setDiscountAmount(Number(e.target.value));
                         setDiscountPercent(0);
                       }}
-                      prefix="₹"
+                      startIcon="₹"
                     />
                   </div>
                   <div className="flex-1">

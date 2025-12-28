@@ -177,7 +177,7 @@ export function InventoryForm({ item, categories }: InventoryFormProps) {
           type="number"
           step="0.01"
           label="Selling Price *"
-          prefix="₹"
+          startIcon="₹"
           error={errors.unitPrice?.message}
           {...register('unitPrice', { valueAsNumber: true })}
         />
@@ -185,7 +185,7 @@ export function InventoryForm({ item, categories }: InventoryFormProps) {
           type="number"
           step="0.01"
           label="Cost Price"
-          prefix="₹"
+          startIcon="₹"
           error={errors.costPrice?.message}
           {...register('costPrice', { valueAsNumber: true })}
         />
