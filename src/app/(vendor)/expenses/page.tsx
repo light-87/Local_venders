@@ -82,7 +82,7 @@ export default async function ExpensesPage() {
           </div>
         ) : (
           <EmptyState
-            icon={Receipt}
+            icon={<Receipt className="h-8 w-8" />}
             title="No expenses recorded"
             description="Track your business expenses here"
             actionLabel="Add Expense"
