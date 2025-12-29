@@ -157,11 +157,7 @@ export default async function InventoryPage({
                 : 'Add your first inventory item to get started'
             }
             actionLabel={!params.search && !params.category ? 'Add Item' : undefined}
-            onAction={
-              !params.search && !params.category
-                ? () => (window.location.href = '/inventory/new')
-                : undefined
-            }
+            actionHref={!params.search && !params.category ? '/inventory/new' : undefined}
           />
         )}
       </div>

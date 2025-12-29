@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui';
-import { Share2, Copy, Check, Download } from 'lucide-react';
+import { Share2, Copy, Check, Download, MessageCircle, Printer } from 'lucide-react';
 
 interface BillActionsProps {
   billId: string;
@@ -10,6 +10,8 @@ interface BillActionsProps {
 
 export function BillActions({ billId }: BillActionsProps) {
   const [copied, setCopied] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState(false);
 
   const billUrl = typeof window !== 'undefined'
     ? `${window.location.origin}/bill/${billId}`
@@ -33,6 +35,12 @@ export function BillActions({ billId }: BillActionsProps) {
     }
   };
 
+  const handleWhatsAppShare = () => {
+    const message = `Here is your bill: ${billUrl}`;
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
   const handleShare = async () => {
     if (navigator.share) {
       try {
@@ -42,22 +50,57 @@ export function BillActions({ billId }: BillActionsProps) {
           url: billUrl,
         });
       } catch {
-        // User cancelled or error
+        // User cancelled or error - try WhatsApp fallback
+        handleWhatsAppShare();
       }
     } else {
       // Fallback to WhatsApp
-      const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(`Here is your bill: ${billUrl}`)}`;
-      window.open(whatsappUrl, '_blank');
+      handleWhatsAppShare();
     }
   };
 
-  const handleDownload = () => {
-    // For now, just print the page
+  const handleDownloadPdf = async () => {
+    setDownloading(true);
+    setDownloadError(false);
+    try {
+      const response = await fetch(`/api/bills/${billId}/pdf`);
+
+      if (!response.ok) {
+        throw new Error('Failed to generate PDF');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `bill-${billId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('PDF download error:', err);
+      setDownloadError(true);
+      // Fallback to print
+      window.print();
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const handlePrint = () => {
     window.print();
   };
 
   return (
     <div className="mt-6 space-y-3">
+      {downloadError && (
+        <p className="text-sm text-amber-600 text-center">
+          PDF generation unavailable. Using print instead.
+        </p>
+      )}
+
+      {/* Copy and Share */}
       <div className="flex gap-3">
         <Button
           variant="secondary"
@@ -76,14 +119,38 @@ export function BillActions({ billId }: BillActionsProps) {
           Share
         </Button>
       </div>
+
+      {/* WhatsApp Share */}
       <Button
-        variant="primary"
+        variant="secondary"
         fullWidth
-        onClick={handleDownload}
-        icon={<Download className="w-5 h-5" />}
+        onClick={handleWhatsAppShare}
+        icon={<MessageCircle className="w-5 h-5" />}
+        className="bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
       >
-        Download / Print
+        Send via WhatsApp
       </Button>
+
+      {/* Download and Print */}
+      <div className="flex gap-3">
+        <Button
+          variant="primary"
+          fullWidth
+          onClick={handleDownloadPdf}
+          loading={downloading}
+          icon={<Download className="w-5 h-5" />}
+        >
+          Download PDF
+        </Button>
+        <Button
+          variant="secondary"
+          fullWidth
+          onClick={handlePrint}
+          icon={<Printer className="w-5 h-5" />}
+        >
+          Print
+        </Button>
+      </div>
     </div>
   );
 }
