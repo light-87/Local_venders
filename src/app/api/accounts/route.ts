@@ -64,7 +64,7 @@ export async function POST(request: Request) {
       .insert({
         vendor_id: session.id,
         name: result.data.name,
-        type: result.data.type,
+        type: 'Account', // Legacy field - keeping for DB compatibility
         balance: 0,
         is_default: false,
       })

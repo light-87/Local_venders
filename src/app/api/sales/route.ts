@@ -214,7 +214,7 @@ export async function POST(request: Request) {
         .eq('id', data.accountId);
     }
 
-    // Create income record
+    // Create income record (legacy)
     await supabase.from('income').insert({
       vendor_id: session.id,
       account_id: data.accountId,
@@ -222,6 +222,18 @@ export async function POST(request: Request) {
       amount: totalAmount,
       description: `Sale ${billNumber}`,
       income_date: new Date().toISOString().split('T')[0],
+    });
+
+    // Create transaction record for unified transaction view
+    await supabase.from('transactions').insert({
+      vendor_id: session.id,
+      account_id: data.accountId,
+      sale_id: sale.id,
+      name: `Sale #${billNumber}`,
+      description: customerId ? 'Customer sale' : 'Walk-in sale',
+      type: 'income',
+      amount: totalAmount,
+      transaction_date: new Date().toISOString().split('T')[0],
     });
 
     // Update customer stats if linked

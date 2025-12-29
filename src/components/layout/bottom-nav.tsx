@@ -7,15 +7,15 @@ import {
   LayoutDashboard,
   Package,
   PlusCircle,
-  Users,
+  Receipt,
   Menu,
 } from 'lucide-react';
 
 const navItems = [
   { href: '/dashboard', label: 'Home', icon: LayoutDashboard },
-  { href: '/inventory', label: 'Inventory', icon: Package },
+  { href: '/transactions', label: 'Money', icon: Receipt },
   { href: '/sales/new', label: 'New Sale', icon: PlusCircle, isMain: true },
-  { href: '/customers', label: 'Customers', icon: Users },
+  { href: '/inventory', label: 'Inventory', icon: Package },
   { href: '/settings', label: 'More', icon: Menu },
 ];
 

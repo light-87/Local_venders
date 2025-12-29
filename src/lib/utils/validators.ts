@@ -86,7 +86,16 @@ export const expenseCategorySchema = z.object({
 // Account schemas
 export const accountSchema = z.object({
   name: z.string().min(1, 'Account name is required'),
-  type: z.string().min(1, 'Account type is required'),
+});
+
+// Transaction schemas
+export const transactionSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  description: z.string().optional(),
+  accountId: z.string().uuid(),
+  type: z.enum(['income', 'expense']),
+  amount: z.number().positive('Amount must be positive'),
+  transactionDate: z.string().optional(),
 });
 
 // Vendor schemas
@@ -117,5 +126,6 @@ export type CreateSaleInput = z.infer<typeof createSaleSchema>;
 export type ExpenseInput = z.infer<typeof expenseSchema>;
 export type ExpenseCategoryInput = z.infer<typeof expenseCategorySchema>;
 export type AccountInput = z.infer<typeof accountSchema>;
+export type TransactionInput = z.infer<typeof transactionSchema>;
 export type VendorProfileInput = z.infer<typeof vendorProfileSchema>;
 export type CreateVendorInput = z.infer<typeof createVendorSchema>;

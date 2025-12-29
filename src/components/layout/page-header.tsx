@@ -38,18 +38,18 @@ export function PageHeader({
         className
       )}
     >
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 min-w-0 flex-1">
         {showBack && (
           <button
             onClick={handleBack}
-            className="p-2 -ml-2 rounded-full hover:bg-gray-100 text-gray-600"
+            className="p-2 -ml-2 rounded-full hover:bg-gray-100 text-gray-600 flex-shrink-0"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
         )}
-        <h1 className="text-lg font-semibold text-gray-900">{title}</h1>
+        <h1 className="text-lg font-semibold text-gray-900 truncate">{title}</h1>
       </div>
-      {action && <div>{action}</div>}
+      {action && <div className="flex-shrink-0">{action}</div>}
     </header>
   );
 }

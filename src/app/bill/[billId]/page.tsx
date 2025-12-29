@@ -2,6 +2,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { formatCurrency, formatDateShort } from '@/lib/utils/format';
 import { notFound } from 'next/navigation';
 import { BillActions } from './bill-actions';
+import { BillNavigation } from './bill-navigation';
 
 async function getBill(billId: string) {
   const supabase = createAdminClient();
@@ -56,6 +57,9 @@ export default async function BillPage({
 
   return (
     <div className="min-h-screen bg-surface-primary">
+      {/* Navigation Header */}
+      <BillNavigation />
+
       <div className="max-w-md mx-auto p-4">
         {/* Bill Card */}
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">

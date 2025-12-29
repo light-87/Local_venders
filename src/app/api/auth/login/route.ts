@@ -62,6 +62,32 @@ export async function POST(request: Request) {
     // Remember username for future logins
     await rememberUsername(vendor.username);
 
+    // Check if vendor has accounts, create defaults if not
+    const { data: existingAccounts } = await supabase
+      .from('accounts')
+      .select('id')
+      .eq('vendor_id', vendor.id)
+      .limit(1);
+
+    if (!existingAccounts || existingAccounts.length === 0) {
+      // Create default accounts for new vendor
+      const defaultAccounts = [
+        { name: 'Cash', is_default: true },
+        { name: 'UPI', is_default: false },
+        { name: 'Bank', is_default: false },
+      ];
+
+      await supabase.from('accounts').insert(
+        defaultAccounts.map((acc) => ({
+          vendor_id: vendor.id,
+          name: acc.name,
+          type: 'Account', // Legacy field - keeping for DB compatibility
+          balance: 0,
+          is_default: acc.is_default,
+        }))
+      );
+    }
+
     return NextResponse.json({
       success: true,
       isAdmin: vendor.is_admin,

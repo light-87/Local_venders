@@ -43,7 +43,6 @@ export async function PATCH(
       .from('accounts')
       .update({
         name: result.data.name,
-        type: result.data.type,
       })
       .eq('id', id)
       .select()
