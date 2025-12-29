@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Button, useToast } from '@/components/ui';
+import { Button } from '@/components/ui';
 import { Share2, Copy, Check, Download, MessageCircle, Printer } from 'lucide-react';
 
 interface BillActionsProps {
@@ -9,9 +9,9 @@ interface BillActionsProps {
 }
 
 export function BillActions({ billId }: BillActionsProps) {
-  const { success: toastSuccess, error: toastError } = useToast();
   const [copied, setCopied] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState(false);
 
   const billUrl = typeof window !== 'undefined'
     ? `${window.location.origin}/bill/${billId}`
@@ -21,7 +21,6 @@ export function BillActions({ billId }: BillActionsProps) {
     try {
       await navigator.clipboard.writeText(billUrl);
       setCopied(true);
-      toastSuccess('Link copied!');
       setTimeout(() => setCopied(false), 2000);
     } catch {
       // Fallback for older browsers
@@ -32,7 +31,6 @@ export function BillActions({ billId }: BillActionsProps) {
       document.execCommand('copy');
       document.body.removeChild(textArea);
       setCopied(true);
-      toastSuccess('Link copied!');
       setTimeout(() => setCopied(false), 2000);
     }
   };
@@ -63,6 +61,7 @@ export function BillActions({ billId }: BillActionsProps) {
 
   const handleDownloadPdf = async () => {
     setDownloading(true);
+    setDownloadError(false);
     try {
       const response = await fetch(`/api/bills/${billId}/pdf`);
 
@@ -79,11 +78,9 @@ export function BillActions({ billId }: BillActionsProps) {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-
-      toastSuccess('PDF downloaded!');
     } catch (err) {
       console.error('PDF download error:', err);
-      toastError('Failed to download PDF. Try printing instead.');
+      setDownloadError(true);
       // Fallback to print
       window.print();
     } finally {
@@ -97,6 +94,12 @@ export function BillActions({ billId }: BillActionsProps) {
 
   return (
     <div className="mt-6 space-y-3">
+      {downloadError && (
+        <p className="text-sm text-amber-600 text-center">
+          PDF generation unavailable. Using print instead.
+        </p>
+      )}
+
       {/* Copy and Share */}
       <div className="flex gap-3">
         <Button
