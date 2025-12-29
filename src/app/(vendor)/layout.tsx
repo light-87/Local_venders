@@ -22,9 +22,7 @@ export default async function VendorLayout({
   return (
     <ToastProvider>
       <div className="min-h-screen bg-surface-primary pb-20">
-        <div className="max-w-2xl mx-auto">
-          {children}
-        </div>
+        {children}
         <BottomNav />
       </div>
     </ToastProvider>

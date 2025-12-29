@@ -63,18 +63,8 @@ export default async function InventoryPage({
   );
 
   return (
-    <div>
-      <PageHeader
-        title="Inventory"
-        action={
-          <Link
-            href="/inventory/new"
-            className="p-2 bg-brand-500 text-white rounded-xl"
-          >
-            <Plus className="w-5 h-5" />
-          </Link>
-        }
-      />
+    <div className="relative pb-20">
+      <PageHeader title="Inventory" />
 
       <div className="p-4 space-y-4">
         {/* Search and Filter */}
@@ -161,6 +151,14 @@ export default async function InventoryPage({
           />
         )}
       </div>
+
+      {/* Floating Add Button */}
+      <Link
+        href="/inventory/new"
+        className="fixed bottom-24 right-4 w-14 h-14 bg-brand-500 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-brand-600 transition-colors z-30"
+      >
+        <Plus className="w-6 h-6" />
+      </Link>
     </div>
   );
 }
