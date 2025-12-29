@@ -75,7 +75,7 @@ export default async function SalesPage() {
           </div>
         ) : (
           <EmptyState
-            icon={ShoppingBag}
+            icon={<ShoppingBag className="h-8 w-8" />}
             title="No sales yet"
             description="Your sales history will appear here"
           />

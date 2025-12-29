@@ -65,7 +65,7 @@ export default async function CustomersPage({
           </div>
         ) : (
           <EmptyState
-            icon={Users}
+            icon={<Users className="h-8 w-8" />}
             title="No customers found"
             description={
               params.search

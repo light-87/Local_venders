@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server';
 import { SESSION_COOKIE_NAME } from '@/lib/constants';
 
 // Routes that require authentication
-const protectedRoutes = ['/dashboard', '/inventory', '/sales', '/customers', '/expenses', '/messages', '/settings'];
+const protectedRoutes = ['/dashboard', '/inventory', '/sales', '/customers', '/expenses', '/messages', '/settings', '/transactions', '/analytics'];
 const adminRoutes = ['/admin'];
 const publicRoutes = ['/login', '/bill'];
 

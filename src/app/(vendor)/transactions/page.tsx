@@ -244,7 +244,7 @@ export default function TransactionsPage() {
           </div>
         ) : (
           <EmptyState
-            icon={Receipt}
+            icon={<Receipt className="h-8 w-8" />}
             title="No transactions found"
             description={
               typeFilter || accountFilter

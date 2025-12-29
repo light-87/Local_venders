@@ -139,7 +139,7 @@ export default async function InventoryPage({
           </div>
         ) : (
           <EmptyState
-            icon={Package}
+            icon={<Package className="h-8 w-8" />}
             title="No items found"
             description={
               params.search || params.category
