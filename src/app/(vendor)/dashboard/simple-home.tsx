@@ -10,6 +10,7 @@ import {
   Users,
   Settings,
   TrendingUp,
+  BarChart3,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -151,6 +152,20 @@ export function SimpleHome({ vendorName }: SimpleHomeProps) {
                 <div className="flex-1">
                   <p className="font-medium text-gray-900">Sales History</p>
                   <p className="text-sm text-gray-500">View past sales</p>
+                </div>
+              </div>
+            </Card>
+          </Link>
+
+          <Link href="/analytics">
+            <Card variant="interactive">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center">
+                  <BarChart3 className="w-5 h-5 text-indigo-600" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-gray-900">Dashboard</p>
+                  <p className="text-sm text-gray-500">Charts & analytics</p>
                 </div>
               </div>
             </Card>

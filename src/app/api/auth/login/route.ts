@@ -81,6 +81,7 @@ export async function POST(request: Request) {
         defaultAccounts.map((acc) => ({
           vendor_id: vendor.id,
           name: acc.name,
+          type: 'Account', // Legacy field - keeping for DB compatibility
           balance: 0,
           is_default: acc.is_default,
         }))
