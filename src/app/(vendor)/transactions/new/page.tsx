@@ -4,44 +4,38 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { PageHeader } from '@/components/layout';
 import { Button, Input, Select, Textarea, useToast } from '@/components/ui';
-import type { ExpenseCategory, Account } from '@/types';
+import type { Account } from '@/types';
 
-export default function NewExpensePage() {
+export default function NewTransactionPage() {
   const router = useRouter();
   const { success, error } = useToast();
   const [loading, setLoading] = useState(false);
   const [dataLoading, setDataLoading] = useState(true);
 
-  const [categories, setCategories] = useState<ExpenseCategory[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
 
-  const [categoryId, setCategoryId] = useState('');
-  const [accountId, setAccountId] = useState('');
-  const [amount, setAmount] = useState('');
+  const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [expenseDate, setExpenseDate] = useState(
+  const [accountId, setAccountId] = useState('');
+  const [type, setType] = useState<'income' | 'expense'>('expense');
+  const [amount, setAmount] = useState('');
+  const [transactionDate, setTransactionDate] = useState(
     new Date().toISOString().split('T')[0]
   );
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [catRes, accRes] = await Promise.all([
-          fetch('/api/expenses/categories'),
-          fetch('/api/accounts'),
-        ]);
-
-        const catData = await catRes.json();
+        const accRes = await fetch('/api/accounts');
         const accData = await accRes.json();
 
-        if (catData.success) setCategories(catData.categories);
         if (accData.success) {
           setAccounts(accData.accounts);
           const defaultAcc = accData.accounts.find((a: Account) => a.is_default);
           if (defaultAcc) setAccountId(defaultAcc.id);
         }
       } catch {
-        error('Failed to load data');
+        error('Failed to load accounts');
       } finally {
         setDataLoading(false);
       }
@@ -53,32 +47,33 @@ export default function NewExpensePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!categoryId || !accountId || !amount) {
+    if (!name || !accountId || !amount) {
       error('Please fill in all required fields');
       return;
     }
 
     setLoading(true);
     try {
-      const res = await fetch('/api/expenses', {
+      const res = await fetch('/api/transactions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          categoryId,
-          accountId,
-          amount: parseFloat(amount),
+          name,
           description,
-          expenseDate,
+          accountId,
+          type,
+          amount: parseFloat(amount),
+          transactionDate,
         }),
       });
 
       if (res.ok) {
-        success('Expense recorded');
-        router.push('/expenses');
+        success('Transaction recorded');
+        router.push('/transactions');
         router.refresh();
       } else {
         const data = await res.json();
-        error(data.error || 'Failed to record expense');
+        error(data.error || 'Failed to record transaction');
       }
     } catch {
       error('Something went wrong');
@@ -90,7 +85,7 @@ export default function NewExpensePage() {
   if (dataLoading) {
     return (
       <div>
-        <PageHeader title="Add Expense" showBack />
+        <PageHeader title="Add Transaction" showBack />
         <div className="p-4 space-y-4">
           {[1, 2, 3].map((i) => (
             <div key={i} className="h-14 bg-gray-100 rounded-xl animate-pulse" />
@@ -102,15 +97,45 @@ export default function NewExpensePage() {
 
   return (
     <div>
-      <PageHeader title="Add Expense" showBack />
+      <PageHeader title="Add Transaction" showBack />
 
       <form onSubmit={handleSubmit} className="p-4 space-y-4">
-        <Select
-          label="Category *"
-          options={categories.map((c) => ({ value: c.id, label: c.name }))}
-          value={categoryId}
-          onChange={(e) => setCategoryId(e.target.value)}
-          placeholder="Select category"
+        {/* Type Toggle */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Type *
+          </label>
+          <div className="flex rounded-xl overflow-hidden border border-gray-200">
+            <button
+              type="button"
+              onClick={() => setType('expense')}
+              className={`flex-1 py-3 text-sm font-medium transition-colors ${
+                type === 'expense'
+                  ? 'bg-red-500 text-white'
+                  : 'bg-white text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              Expense
+            </button>
+            <button
+              type="button"
+              onClick={() => setType('income')}
+              className={`flex-1 py-3 text-sm font-medium transition-colors ${
+                type === 'income'
+                  ? 'bg-green-500 text-white'
+                  : 'bg-white text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              Income
+            </button>
+          </div>
+        </div>
+
+        <Input
+          label="Name *"
+          placeholder="e.g., Electricity Bill, Rent"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
         />
 
         <Input
@@ -124,31 +149,32 @@ export default function NewExpensePage() {
         />
 
         <Select
-          label="Payment Account *"
+          label="Account *"
           options={accounts.map((a) => ({
             value: a.id,
             label: a.name,
           }))}
           value={accountId}
           onChange={(e) => setAccountId(e.target.value)}
+          placeholder="Select account"
         />
 
         <Input
           type="date"
           label="Date"
-          value={expenseDate}
-          onChange={(e) => setExpenseDate(e.target.value)}
+          value={transactionDate}
+          onChange={(e) => setTransactionDate(e.target.value)}
         />
 
         <Textarea
-          label="Description"
-          placeholder="Optional description..."
+          label="Description (Optional)"
+          placeholder="Add notes about this transaction..."
           value={description}
           onChange={(e) => setDescription(e.target.value)}
         />
 
         <Button type="submit" fullWidth loading={loading}>
-          Record Expense
+          {type === 'expense' ? 'Record Expense' : 'Record Income'}
         </Button>
       </form>
     </div>

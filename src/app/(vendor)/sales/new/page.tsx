@@ -354,7 +354,20 @@ export default function NewSalePage() {
                       >
                         <Minus className="w-4 h-4" />
                       </button>
-                      <span className="w-8 text-center font-medium">{item.quantity}</span>
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        min={1}
+                        max={item.availableStock}
+                        value={item.quantity}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value, 10);
+                          if (!isNaN(val) && val >= 1) {
+                            updateQuantity(item.inventoryItemId, Math.min(val, item.availableStock));
+                          }
+                        }}
+                        className="w-14 h-8 text-center font-medium bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                      />
                       <button
                         onClick={() => updateQuantity(item.inventoryItemId, item.quantity + 1)}
                         className="p-2 rounded-full bg-gray-100"
@@ -430,7 +443,7 @@ export default function NewSalePage() {
             <Select
               options={accounts.map((a) => ({
                 value: a.id,
-                label: `${a.name} (${a.type})`,
+                label: a.name,
               }))}
               value={selectedAccountId}
               onChange={(e) => setSelectedAccountId(e.target.value)}

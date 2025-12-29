@@ -40,7 +40,7 @@ export default function SettingsPage() {
 
   // Form states
   const [pinForm, setPinForm] = useState({ current: '', new: '', confirm: '' });
-  const [accountForm, setAccountForm] = useState({ name: '', type: '' });
+  const [accountForm, setAccountForm] = useState({ name: '' });
   const [profileForm, setProfileForm] = useState({ name: '', businessName: '', phone: '' });
   const [pinLoading, setPinLoading] = useState(false);
   const [accountLoading, setAccountLoading] = useState(false);
@@ -102,8 +102,8 @@ export default function SettingsPage() {
   };
 
   const handleSaveAccount = async () => {
-    if (!accountForm.name || !accountForm.type) {
-      error('Please fill in all fields');
+    if (!accountForm.name) {
+      error('Please enter an account name');
       return;
     }
 
@@ -124,7 +124,7 @@ export default function SettingsPage() {
         success(editingAccount ? 'Account updated' : 'Account created');
         setShowAccountModal(false);
         setEditingAccount(null);
-        setAccountForm({ name: '', type: '' });
+        setAccountForm({ name: '' });
         fetchSettings();
       } else {
         const json = await res.json();
@@ -213,13 +213,13 @@ export default function SettingsPage() {
 
   const openEditAccount = (account: Account) => {
     setEditingAccount(account);
-    setAccountForm({ name: account.name, type: account.type });
+    setAccountForm({ name: account.name });
     setShowAccountModal(true);
   };
 
   const openAddAccount = () => {
     setEditingAccount(null);
-    setAccountForm({ name: '', type: '' });
+    setAccountForm({ name: '' });
     setShowAccountModal(true);
   };
 
@@ -332,7 +332,6 @@ export default function SettingsPage() {
                           <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
                         )}
                       </div>
-                      <p className="text-sm text-gray-500">{account.type}</p>
                     </div>
                   </div>
                   <ChevronRight className="w-5 h-5 text-gray-400" />
@@ -448,16 +447,10 @@ export default function SettingsPage() {
         <div className="space-y-4">
           <Input
             label="Account Name"
-            placeholder="e.g., Business Account"
+            placeholder="e.g., Cash, UPI Axis, Shop Account"
             value={accountForm.name}
             onChange={(e) => setAccountForm((p) => ({ ...p, name: e.target.value }))}
-          />
-          <Input
-            label="Account Type"
-            placeholder="e.g., HDFC Bank, PhonePe, Cash"
-            value={accountForm.type}
-            onChange={(e) => setAccountForm((p) => ({ ...p, type: e.target.value }))}
-            helperText="Examples: Cash, Axis Bank, PhonePe, Google Pay"
+            helperText="Examples: Cash, UPI Axis, Mangesh Personal, Google Pay"
           />
           <Button fullWidth loading={accountLoading} onClick={handleSaveAccount}>
             {editingAccount ? 'Update' : 'Add Account'}

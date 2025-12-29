@@ -64,7 +64,6 @@ export async function POST(request: Request) {
       .insert({
         vendor_id: session.id,
         name: result.data.name,
-        type: result.data.type,
         balance: 0,
         is_default: false,
       })

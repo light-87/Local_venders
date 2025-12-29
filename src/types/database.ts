@@ -16,7 +16,6 @@ export interface Account {
   id: string;
   vendor_id: string;
   name: string;
-  type: string;
   balance: number;
   is_default: boolean;
   created_at: string;
@@ -124,6 +123,22 @@ export interface Income {
   description: string | null;
   income_date: string;
   created_at: string;
+}
+
+export interface Transaction {
+  id: string;
+  vendor_id: string;
+  account_id: string;
+  sale_id: string | null;
+  name: string;
+  description: string | null;
+  type: 'income' | 'expense';
+  amount: number;
+  transaction_date: string;
+  created_at: string;
+  // Joined fields
+  account?: Account;
+  sale?: Sale;
 }
 
 export interface ScheduledMessage {
