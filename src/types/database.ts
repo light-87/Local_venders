@@ -8,6 +8,8 @@ export interface Vendor {
   business_logo: string | null;
   is_admin: boolean;
   is_active: boolean;
+  whatsapp_phone_number_id: string | null;
+  whatsapp_access_token: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -151,7 +153,10 @@ export interface ScheduledMessage {
   status: 'pending' | 'sent' | 'failed' | 'cancelled';
   sent_at: string | null;
   error_message: string | null;
-  aisensy_message_id: string | null;
+  external_message_id: string | null;
+  template_name: string | null;
+  template_params: string[];
+  template_language: string;
   created_at: string;
   // Joined fields
   customer?: Customer;
@@ -169,6 +174,8 @@ export interface MessageLog {
   channel: string;
   status: string;
   external_id: string | null;
+  template_name: string | null;
+  whatsapp_message_id: string | null;
   sent_at: string;
 }
 
@@ -194,4 +201,18 @@ export interface BillSequence {
   vendor_id: string;
   last_number: number;
   prefix: string;
+}
+
+export interface VendorWhatsAppTemplate {
+  id: string;
+  vendor_id: string;
+  template_name: string;
+  display_name: string;
+  description: string | null;
+  category: 'MARKETING' | 'UTILITY' | 'AUTHENTICATION';
+  param_count: number;
+  sample_params: string[] | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 }

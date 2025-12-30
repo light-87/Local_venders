@@ -11,10 +11,10 @@ export async function GET() {
 
     const supabase = createAdminClient();
 
-    // Get vendor details
+    // Get vendor details (including WhatsApp config)
     const { data: vendor } = await supabase
       .from('vendors')
-      .select('id, username, name, business_name, phone')
+      .select('id, username, name, business_name, phone, whatsapp_phone_number_id, whatsapp_access_token')
       .eq('id', session.id)
       .single();
 
