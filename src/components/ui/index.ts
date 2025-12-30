@@ -17,6 +17,8 @@ export { EmptyState } from './empty-state';
 
 export { Modal, ConfirmModal } from './modal';
 
+export { TransactionDetailModal } from './transaction-detail-modal';
+
 export { Select } from './select';
 export type { SelectOption, SelectProps } from './select';
 
