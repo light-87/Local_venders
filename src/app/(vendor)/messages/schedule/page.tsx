@@ -173,7 +173,7 @@ export default function ScheduleMessagePage() {
                   setShowCustomerList(true);
                 }}
                 onFocus={() => setShowCustomerList(true)}
-                icon={<Search className="w-5 h-5 text-gray-400" />}
+                startIcon={<Search className="w-5 h-5" />}
               />
 
               {showCustomerList && customerSearch.length >= 2 && (
