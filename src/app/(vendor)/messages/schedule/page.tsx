@@ -39,7 +39,8 @@ export default function ScheduleMessagePage() {
   useEffect(() => {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
-    setScheduledDate(tomorrow.toISOString().split('T')[0]);
+    const dateStr = tomorrow.toISOString().split('T')[0] ?? '';
+    setScheduledDate(dateStr);
   }, []);
 
   // Search customers
