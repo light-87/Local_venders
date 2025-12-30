@@ -1,15 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { PageHeader } from '@/components/layout';
-import { Card, Badge, EmptyState, Select, useToast } from '@/components/ui';
+import { Card, Badge, EmptyState, Select, useToast, TransactionDetailModal } from '@/components/ui';
 import { formatCurrency, formatDateShort } from '@/lib/utils/format';
 import { ArrowDownLeft, ArrowUpRight, Plus, Filter, Receipt } from 'lucide-react';
 import Link from 'next/link';
 import type { Transaction, Account } from '@/types';
 
 export default function TransactionsPage() {
-  const { error } = useToast();
+  const { error, success } = useToast();
   const [loading, setLoading] = useState(true);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -19,6 +19,61 @@ export default function TransactionsPage() {
   const [typeFilter, setTypeFilter] = useState<string>('');
   const [accountFilter, setAccountFilter] = useState<string>('');
   const [showFilters, setShowFilters] = useState(false);
+
+  // Transaction detail modal
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+
+  // Fetch transactions function (reusable)
+  const fetchTransactions = useCallback(async () => {
+    try {
+      const params = new URLSearchParams();
+      if (typeFilter) params.append('type', typeFilter);
+      if (accountFilter) params.append('accountId', accountFilter);
+
+      const res = await fetch(`/api/transactions?${params.toString()}`);
+      const data = await res.json();
+
+      if (data.success) {
+        setTransactions(data.transactions);
+        setTotals(data.totals);
+      }
+    } catch {
+      error('Failed to load transactions');
+    }
+  }, [typeFilter, accountFilter, error]);
+
+  // Handle transaction click - fetch full details
+  const handleTransactionClick = async (transaction: Transaction) => {
+    try {
+      const res = await fetch(`/api/transactions/${transaction.id}`);
+      const data = await res.json();
+
+      if (data.success) {
+        setSelectedTransaction(data.transaction);
+        setShowDetailModal(true);
+      } else {
+        error('Failed to load transaction details');
+      }
+    } catch {
+      error('Failed to load transaction details');
+    }
+  };
+
+  // Handle transaction delete
+  const handleDeleteTransaction = async (id: string) => {
+    const res = await fetch(`/api/transactions/${id}`, {
+      method: 'DELETE',
+    });
+    const data = await res.json();
+
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || 'Failed to delete transaction');
+    }
+
+    success(data.deletedSale ? 'Transaction and sale deleted' : 'Transaction deleted');
+    await fetchTransactions();
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -189,7 +244,11 @@ export default function TransactionsPage() {
         {transactions.length > 0 ? (
           <div className="space-y-2">
             {transactions.map((transaction) => (
-              <Card key={transaction.id}>
+              <Card
+                key={transaction.id}
+                className="cursor-pointer active:scale-[0.98] transition-transform"
+                onClick={() => handleTransactionClick(transaction)}
+              >
                 <div className="flex items-center gap-3">
                   <div
                     className={`w-10 h-10 rounded-full flex items-center justify-center ${
@@ -256,6 +315,17 @@ export default function TransactionsPage() {
           />
         )}
       </div>
+
+      {/* Transaction Detail Modal */}
+      <TransactionDetailModal
+        isOpen={showDetailModal}
+        onClose={() => {
+          setShowDetailModal(false);
+          setSelectedTransaction(null);
+        }}
+        transaction={selectedTransaction}
+        onDelete={handleDeleteTransaction}
+      />
     </div>
   );
 }
