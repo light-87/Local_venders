@@ -123,14 +123,11 @@ export default function MessagesPage() {
         <PageHeader title="Messages" />
         <div className="p-4">
           <EmptyState
-            icon={<MessageCircle className="w-12 h-12" />}
+            icon={MessageCircle}
             title="WhatsApp Not Configured"
             description="Set up WhatsApp Cloud API to send messages to your customers"
-            action={
-              <Button onClick={() => router.push('/settings')}>
-                Go to Settings
-              </Button>
-            }
+            actionLabel="Go to Settings"
+            actionHref="/settings"
           />
         </div>
       </div>
@@ -178,20 +175,15 @@ export default function MessagesPage() {
         {/* Messages List */}
         {filteredMessages.length === 0 ? (
           <EmptyState
-            icon={<MessageCircle className="w-12 h-12" />}
+            icon={MessageCircle}
             title={filter === 'all' ? 'No Messages Yet' : `No ${filter} messages`}
             description={
               filter === 'all'
                 ? 'Schedule your first message to a customer'
                 : `You don't have any ${filter} messages`
             }
-            action={
-              filter === 'all' ? (
-                <Button onClick={() => router.push('/messages/schedule')}>
-                  Schedule Message
-                </Button>
-              ) : undefined
-            }
+            actionLabel={filter === 'all' ? 'Schedule Message' : undefined}
+            actionHref={filter === 'all' ? '/messages/schedule' : undefined}
           />
         ) : (
           <div className="space-y-3">
