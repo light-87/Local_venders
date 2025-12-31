@@ -174,7 +174,7 @@ export default function MessagesPage() {
             {pendingCount > 0 && (
               <Button
                 size="sm"
-                variant="outline"
+                variant="secondary"
                 icon={sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                 onClick={handleSendNow}
                 disabled={sending}
