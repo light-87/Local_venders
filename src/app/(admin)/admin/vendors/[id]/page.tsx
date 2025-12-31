@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useParams } from 'next/navigation';
 import { PageHeader } from '@/components/layout';
 import {
   Card,
@@ -55,12 +55,9 @@ interface Account {
   is_default: boolean;
 }
 
-export default function VendorDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const resolvedParams = use(params);
+export default function VendorDetailPage() {
+  const params = useParams();
+  const vendorId = params.id as string;
   const router = useRouter();
   const { toast } = useToast();
 
@@ -86,11 +83,11 @@ export default function VendorDetailPage({
 
   useEffect(() => {
     fetchVendor();
-  }, [resolvedParams.id]);
+  }, [vendorId]);
 
   const fetchVendor = async () => {
     try {
-      const response = await fetch(`/api/admin/vendors/${resolvedParams.id}`);
+      const response = await fetch(`/api/admin/vendors/${vendorId}`);
       const data = await response.json();
 
       if (!response.ok) {
