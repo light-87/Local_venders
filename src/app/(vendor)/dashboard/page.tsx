@@ -5,5 +5,11 @@ export default async function DashboardPage() {
   const session = await validateSession();
   if (!session) return null;
 
-  return <SimpleHome vendorName={session.name} />;
+  return (
+    <SimpleHome
+      vendorName={session.name}
+      businessName={session.businessName}
+      businessLogo={session.businessLogo}
+    />
+  );
 }

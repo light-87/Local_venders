@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { PageHeader } from '@/components/layout';
-import { Card, Button, Input, Modal, ConfirmModal, Badge, useToast } from '@/components/ui';
+import { Card, Button, Input, Modal, ConfirmModal, Badge, useToast, VendorLogo, LogoUpload } from '@/components/ui';
 import {
   User,
   Lock,
@@ -25,7 +25,7 @@ import {
 import type { Account, Vendor } from '@/types';
 
 interface SettingsData {
-  vendor: Pick<Vendor, 'id' | 'username' | 'name' | 'business_name' | 'phone' | 'whatsapp_phone_number_id' | 'whatsapp_access_token'>;
+  vendor: Pick<Vendor, 'id' | 'username' | 'name' | 'business_name' | 'phone' | 'business_logo' | 'whatsapp_phone_number_id' | 'whatsapp_access_token'>;
   accounts: Account[];
 }
 
@@ -347,9 +347,12 @@ export default function SettingsPage() {
           </div>
           <Card>
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 bg-brand-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <User className="w-6 h-6 text-brand-600" />
-              </div>
+              <VendorLogo
+                src={data?.vendor.business_logo}
+                businessName={data?.vendor.business_name || ''}
+                size="md"
+                className="flex-shrink-0"
+              />
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-gray-900">{data?.vendor.name}</p>
                 <div className="flex items-center gap-1 text-sm text-gray-500 mt-1">
@@ -365,6 +368,33 @@ export default function SettingsPage() {
                   <p className="text-sm text-gray-400 mt-1">No phone number</p>
                 )}
               </div>
+            </div>
+          </Card>
+        </section>
+
+        {/* Business Logo Section */}
+        <section>
+          <h2 className="text-sm font-medium text-gray-500 mb-3">Business Logo</h2>
+          <Card>
+            <div className="py-2">
+              <LogoUpload
+                currentLogo={data?.vendor.business_logo}
+                businessName={data?.vendor.business_name || ''}
+                onUploadComplete={(logoUrl) => {
+                  setData((prev) => prev ? {
+                    ...prev,
+                    vendor: { ...prev.vendor, business_logo: logoUrl }
+                  } : null);
+                  success('Logo updated successfully');
+                }}
+                onRemoveComplete={() => {
+                  setData((prev) => prev ? {
+                    ...prev,
+                    vendor: { ...prev.vendor, business_logo: null }
+                  } : null);
+                  success('Logo removed');
+                }}
+              />
             </div>
           </Card>
         </section>

@@ -150,6 +150,7 @@ export default function NewVendorPage() {
               <li>• Default expense categories are set up</li>
               <li>• Bill sequence is initialized</li>
               <li>• Vendor can log in immediately</li>
+              <li>• Business logo can be added after creation</li>
             </ul>
           </CardContent>
         </Card>

@@ -17,7 +17,7 @@ export async function GET() {
     // First try with WhatsApp columns
     const { data: vendorWithWhatsApp, error: whatsappError } = await supabase
       .from('vendors')
-      .select('id, username, name, business_name, phone, whatsapp_phone_number_id, whatsapp_access_token')
+      .select('id, username, name, business_name, phone, business_logo, whatsapp_phone_number_id, whatsapp_access_token')
       .eq('id', session.id)
       .single();
 
@@ -25,7 +25,7 @@ export async function GET() {
       // WhatsApp columns don't exist yet, fall back to basic fields
       const { data: basicVendor } = await supabase
         .from('vendors')
-        .select('id, username, name, business_name, phone')
+        .select('id, username, name, business_name, phone, business_logo')
         .eq('id', session.id)
         .single();
 
