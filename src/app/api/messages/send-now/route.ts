@@ -1,13 +1,11 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { validateSession } from '@/lib/auth';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { validateSession } from '@/lib/auth/session';
 import { sendTemplateWithBodyParams, formatPhoneForWhatsApp } from '@/lib/whatsapp';
 
 // Manual trigger to send all pending messages for today (for the current vendor)
 export async function POST() {
-  const supabase = await createClient();
-  const session = await validateSession(supabase);
+  const session = await validateSession();
 
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
