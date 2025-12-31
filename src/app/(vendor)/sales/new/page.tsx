@@ -21,6 +21,10 @@ import {
   ShoppingCart,
   User,
   Check,
+  ChevronDown,
+  ChevronUp,
+  Shield,
+  Wrench,
 } from 'lucide-react';
 import type { InventoryItem, Account, Customer, CartItem } from '@/types';
 
@@ -48,6 +52,7 @@ export default function NewSalePage() {
   const [selectedAccountId, setSelectedAccountId] = useState('');
   const [discountAmount, setDiscountAmount] = useState(0);
   const [discountPercent, setDiscountPercent] = useState(0);
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
 
   // Load initial data
   useEffect(() => {
@@ -149,6 +154,52 @@ export default function NewSalePage() {
   // Remove item from cart
   const removeFromCart = (itemId: string) => {
     setCart((prev) => prev.filter((item) => item.inventoryItemId !== itemId));
+    setExpandedItems((prev) => {
+      const newSet = new Set(prev);
+      newSet.delete(itemId);
+      return newSet;
+    });
+  };
+
+  // Toggle expanded state for cart item
+  const toggleExpanded = (itemId: string) => {
+    setExpandedItems((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(itemId)) {
+        newSet.delete(itemId);
+      } else {
+        newSet.add(itemId);
+      }
+      return newSet;
+    });
+  };
+
+  // Update warranty for a cart item
+  const updateWarranty = (itemId: string, value: number, unit: 'months' | 'years') => {
+    setCart((prev) =>
+      prev.map((item) =>
+        item.inventoryItemId === itemId
+          ? { ...item, warrantyValue: value, warrantyUnit: unit }
+          : item
+      )
+    );
+  };
+
+  // Update maintenance interval for a cart item
+  const updateMaintenanceInterval = (itemId: string, months: number) => {
+    setCart((prev) =>
+      prev.map((item) =>
+        item.inventoryItemId === itemId
+          ? { ...item, maintenanceIntervalMonths: months }
+          : item
+      )
+    );
+  };
+
+  // Helper to convert warranty to months
+  const getWarrantyMonths = (item: CartItem): number => {
+    if (!item.warrantyValue) return 0;
+    return item.warrantyUnit === 'years' ? item.warrantyValue * 12 : item.warrantyValue;
   };
 
   // Select customer
@@ -186,6 +237,8 @@ export default function NewSalePage() {
             inventoryItemId: item.inventoryItemId,
             quantity: item.quantity,
             unitPrice: item.unitPrice,
+            warrantyMonths: getWarrantyMonths(item),
+            maintenanceIntervalMonths: item.maintenanceIntervalMonths || 0,
           })),
           discountAmount: discountPercent > 0 ? 0 : discountAmount,
           discountPercent: discountPercent > 0 ? discountPercent : 0,
@@ -349,53 +402,169 @@ export default function NewSalePage() {
             </h2>
             <Card>
               <div className="space-y-3">
-                {cart.map((item) => (
-                  <div
-                    key={item.inventoryItemId}
-                    className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-900 truncate">{item.name}</p>
-                      <p className="text-sm text-gray-500">
-                        {formatCurrency(item.unitPrice)} × {item.quantity}
-                      </p>
+                {cart.map((item) => {
+                  const isExpanded = expandedItems.has(item.inventoryItemId);
+                  const hasWarrantyOrMaintenance = item.warrantyValue || item.maintenanceIntervalMonths;
+
+                  return (
+                    <div
+                      key={item.inventoryItemId}
+                      className="py-2 border-b border-gray-100 last:border-0"
+                    >
+                      {/* Main item row */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-gray-900 truncate">{item.name}</p>
+                          <p className="text-sm text-gray-500">
+                            {formatCurrency(item.unitPrice)} × {item.quantity}
+                          </p>
+                          {/* Show warranty/maintenance badges if set */}
+                          {hasWarrantyOrMaintenance && (
+                            <div className="flex gap-2 mt-1">
+                              {item.warrantyValue && (
+                                <span className="inline-flex items-center gap-1 text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
+                                  <Shield className="w-3 h-3" />
+                                  {item.warrantyValue} {item.warrantyUnit}
+                                </span>
+                              )}
+                              {item.maintenanceIntervalMonths && (
+                                <span className="inline-flex items-center gap-1 text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+                                  <Wrench className="w-3 h-3" />
+                                  Every {item.maintenanceIntervalMonths}mo
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => updateQuantity(item.inventoryItemId, item.quantity - 1)}
+                            className="p-2 rounded-full bg-gray-100"
+                          >
+                            <Minus className="w-4 h-4" />
+                          </button>
+                          <input
+                            type="number"
+                            inputMode="numeric"
+                            min={1}
+                            max={item.availableStock}
+                            value={item.quantity}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value, 10);
+                              if (!isNaN(val) && val >= 1) {
+                                updateQuantity(item.inventoryItemId, Math.min(val, item.availableStock));
+                              }
+                            }}
+                            className="w-14 h-8 text-center font-medium bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                          />
+                          <button
+                            onClick={() => updateQuantity(item.inventoryItemId, item.quantity + 1)}
+                            className="p-2 rounded-full bg-gray-100"
+                          >
+                            <Plus className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => removeFromCart(item.inventoryItemId)}
+                            className="p-2 rounded-full text-red-500"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Expand/Collapse button */}
+                      <button
+                        onClick={() => toggleExpanded(item.inventoryItemId)}
+                        className="mt-2 w-full flex items-center justify-center gap-1 text-xs text-gray-500 hover:text-gray-700 py-1"
+                      >
+                        {isExpanded ? (
+                          <>
+                            <ChevronUp className="w-3 h-3" />
+                            Hide warranty & service
+                          </>
+                        ) : (
+                          <>
+                            <ChevronDown className="w-3 h-3" />
+                            Add warranty & service
+                          </>
+                        )}
+                      </button>
+
+                      {/* Expanded warranty/maintenance section */}
+                      {isExpanded && (
+                        <div className="mt-3 p-3 bg-gray-50 rounded-xl space-y-3">
+                          {/* Warranty */}
+                          <div>
+                            <label className="flex items-center gap-1.5 text-xs font-medium text-gray-600 mb-1.5">
+                              <Shield className="w-3.5 h-3.5" />
+                              Warranty
+                            </label>
+                            <div className="flex gap-2">
+                              <input
+                                type="number"
+                                inputMode="numeric"
+                                min={0}
+                                placeholder="0"
+                                value={item.warrantyValue || ''}
+                                onChange={(e) => {
+                                  const val = parseInt(e.target.value, 10) || 0;
+                                  updateWarranty(item.inventoryItemId, val, item.warrantyUnit || 'months');
+                                }}
+                                className="flex-1 h-9 px-3 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+                              />
+                              <select
+                                value={item.warrantyUnit || 'months'}
+                                onChange={(e) => {
+                                  updateWarranty(
+                                    item.inventoryItemId,
+                                    item.warrantyValue || 0,
+                                    e.target.value as 'months' | 'years'
+                                  );
+                                }}
+                                className="h-9 px-3 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+                              >
+                                <option value="months">Months</option>
+                                <option value="years">Years</option>
+                              </select>
+                            </div>
+                          </div>
+
+                          {/* Maintenance Interval */}
+                          <div>
+                            <label className="flex items-center gap-1.5 text-xs font-medium text-gray-600 mb-1.5">
+                              <Wrench className="w-3.5 h-3.5" />
+                              Service Reminder (Every X months)
+                            </label>
+                            <select
+                              value={item.maintenanceIntervalMonths || ''}
+                              onChange={(e) => {
+                                updateMaintenanceInterval(item.inventoryItemId, parseInt(e.target.value, 10) || 0);
+                              }}
+                              className="w-full h-9 px-3 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+                            >
+                              <option value="">No reminder</option>
+                              <option value="1">Every 1 month</option>
+                              <option value="2">Every 2 months</option>
+                              <option value="3">Every 3 months</option>
+                              <option value="6">Every 6 months</option>
+                              <option value="12">Every 12 months</option>
+                            </select>
+                            {item.maintenanceIntervalMonths && (selectedCustomer || newCustomerName) && (
+                              <p className="mt-1.5 text-xs text-green-600">
+                                ✓ Reminder will be auto-scheduled
+                              </p>
+                            )}
+                            {item.maintenanceIntervalMonths && !selectedCustomer && !newCustomerName && (
+                              <p className="mt-1.5 text-xs text-amber-600">
+                                ⚠ Add customer to enable reminders
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => updateQuantity(item.inventoryItemId, item.quantity - 1)}
-                        className="p-2 rounded-full bg-gray-100"
-                      >
-                        <Minus className="w-4 h-4" />
-                      </button>
-                      <input
-                        type="number"
-                        inputMode="numeric"
-                        min={1}
-                        max={item.availableStock}
-                        value={item.quantity}
-                        onChange={(e) => {
-                          const val = parseInt(e.target.value, 10);
-                          if (!isNaN(val) && val >= 1) {
-                            updateQuantity(item.inventoryItemId, Math.min(val, item.availableStock));
-                          }
-                        }}
-                        className="w-14 h-8 text-center font-medium bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
-                      />
-                      <button
-                        onClick={() => updateQuantity(item.inventoryItemId, item.quantity + 1)}
-                        className="p-2 rounded-full bg-gray-100"
-                      >
-                        <Plus className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => removeFromCart(item.inventoryItemId)}
-                        className="p-2 rounded-full text-red-500"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {/* Discount */}

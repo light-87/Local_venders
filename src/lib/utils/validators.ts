@@ -57,6 +57,8 @@ export const saleItemSchema = z.object({
   inventoryItemId: z.string().uuid(),
   quantity: z.number().positive('Quantity must be positive'),
   unitPrice: z.number().min(0, 'Price cannot be negative'),
+  warrantyMonths: z.number().min(0).optional(),
+  maintenanceIntervalMonths: z.number().min(0).optional(),
 });
 
 export const createSaleSchema = z.object({

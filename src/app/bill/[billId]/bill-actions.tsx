@@ -3,12 +3,27 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui';
 import { Share2, Copy, Check, Download, MessageCircle, Printer } from 'lucide-react';
+import {
+  createWhatsAppLink,
+  generateBillMessage,
+  formatItemsForBill,
+} from '@/lib/utils/whatsapp';
+
+interface BillData {
+  customerName: string;
+  customerPhone: string | null;
+  businessName: string;
+  items: Array<{ name: string; quantity: number; price: number }>;
+  total: number;
+  date: string;
+}
 
 interface BillActionsProps {
   billId: string;
+  billData?: BillData;
 }
 
-export function BillActions({ billId }: BillActionsProps) {
+export function BillActions({ billId, billData }: BillActionsProps) {
   const [copied, setCopied] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState(false);
@@ -36,9 +51,26 @@ export function BillActions({ billId }: BillActionsProps) {
   };
 
   const handleWhatsAppShare = () => {
-    const message = `Here is your bill: ${billUrl}`;
-    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank');
+    // If we have bill data and customer phone, send formatted message directly
+    if (billData?.customerPhone) {
+      const formattedItems = formatItemsForBill(billData.items);
+      const message = generateBillMessage({
+        customerName: billData.customerName,
+        businessName: billData.businessName,
+        items: formattedItems,
+        total: billData.total,
+        date: billData.date,
+      });
+      // Append bill link
+      const fullMessage = `${message}\n\n📄 *View Bill:* ${billUrl}`;
+      const whatsappUrl = createWhatsAppLink(billData.customerPhone, fullMessage);
+      window.open(whatsappUrl, '_blank');
+    } else {
+      // Fallback to simple link share (opens WhatsApp without recipient)
+      const message = `Here is your bill: ${billUrl}`;
+      const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+      window.open(whatsappUrl, '_blank');
+    }
   };
 
   const handleShare = async () => {
