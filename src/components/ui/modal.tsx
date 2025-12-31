@@ -57,10 +57,10 @@ export function Modal({
       <div className="absolute inset-x-0 bottom-0 sm:inset-0 sm:flex sm:items-center sm:justify-center sm:p-4">
         <div
           className={cn(
-            'relative w-full bg-white',
+            'relative w-full bg-white flex flex-col',
             // Mobile: bottom sheet style
             'rounded-t-3xl sm:rounded-2xl',
-            'max-h-[90vh] overflow-hidden',
+            'max-h-[90vh]',
             'sm:max-w-lg',
             'animate-in slide-in-from-bottom sm:slide-in-from-bottom-0 sm:zoom-in-95',
             'duration-200',
@@ -70,7 +70,7 @@ export function Modal({
         >
           {/* Header */}
           {(title || showCloseButton) && (
-            <div className="flex items-center justify-between border-b border-gray-100 px-4 py-4 sm:px-6">
+            <div className="flex-shrink-0 flex items-center justify-between border-b border-gray-100 px-4 py-4 sm:px-6">
               {/* Drag handle for mobile */}
               <div className="absolute left-1/2 top-2 h-1 w-10 -translate-x-1/2 rounded-full bg-gray-300 sm:hidden" />
 
@@ -89,7 +89,7 @@ export function Modal({
           )}
 
           {/* Content */}
-          <div className="overflow-y-auto px-4 py-4 sm:px-6 safe-area-bottom">
+          <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6 safe-area-bottom">
             {children}
           </div>
         </div>
