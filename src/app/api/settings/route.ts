@@ -11,12 +11,32 @@ export async function GET() {
 
     const supabase = createAdminClient();
 
-    // Get vendor details
-    const { data: vendor } = await supabase
+    // Get vendor details - try with WhatsApp fields first, fall back if columns don't exist
+    let vendor = null;
+
+    // First try with WhatsApp columns
+    const { data: vendorWithWhatsApp, error: whatsappError } = await supabase
       .from('vendors')
-      .select('id, username, name, business_name, phone')
+      .select('id, username, name, business_name, phone, whatsapp_phone_number_id, whatsapp_access_token')
       .eq('id', session.id)
       .single();
+
+    if (whatsappError && whatsappError.message?.includes('column')) {
+      // WhatsApp columns don't exist yet, fall back to basic fields
+      const { data: basicVendor } = await supabase
+        .from('vendors')
+        .select('id, username, name, business_name, phone')
+        .eq('id', session.id)
+        .single();
+
+      vendor = basicVendor ? {
+        ...basicVendor,
+        whatsapp_phone_number_id: null,
+        whatsapp_access_token: null,
+      } : null;
+    } else {
+      vendor = vendorWithWhatsApp;
+    }
 
     // Get accounts
     const { data: accounts } = await supabase

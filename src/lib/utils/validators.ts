@@ -62,6 +62,7 @@ export const saleItemSchema = z.object({
 export const createSaleSchema = z.object({
   customerId: z.string().uuid().optional().nullable(),
   customerName: z.string().optional(),
+  customerPhone: z.string().optional(),
   accountId: z.string().uuid(),
   items: z.array(saleItemSchema).min(1, 'At least one item is required'),
   discountAmount: z.number().min(0).optional(),

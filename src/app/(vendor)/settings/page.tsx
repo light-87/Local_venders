@@ -17,11 +17,15 @@ import {
   Pencil,
   Phone,
   Building2,
+  MessageCircle,
+  CheckCircle2,
+  XCircle,
+  Loader2,
 } from 'lucide-react';
 import type { Account, Vendor } from '@/types';
 
 interface SettingsData {
-  vendor: Pick<Vendor, 'id' | 'username' | 'name' | 'business_name' | 'phone'>;
+  vendor: Pick<Vendor, 'id' | 'username' | 'name' | 'business_name' | 'phone' | 'whatsapp_phone_number_id' | 'whatsapp_access_token'>;
   accounts: Account[];
 }
 
@@ -36,16 +40,21 @@ export default function SettingsPage() {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showAccountModal, setShowAccountModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
 
   // Form states
   const [pinForm, setPinForm] = useState({ current: '', new: '', confirm: '' });
   const [accountForm, setAccountForm] = useState({ name: '' });
   const [profileForm, setProfileForm] = useState({ name: '', businessName: '', phone: '' });
+  const [whatsappForm, setWhatsappForm] = useState({ phoneNumberId: '', accessToken: '' });
   const [pinLoading, setPinLoading] = useState(false);
   const [accountLoading, setAccountLoading] = useState(false);
   const [profileLoading, setProfileLoading] = useState(false);
   const [logoutLoading, setLogoutLoading] = useState(false);
+  const [whatsappLoading, setWhatsappLoading] = useState(false);
+  const [whatsappTesting, setWhatsappTesting] = useState(false);
+  const [whatsappTestResult, setWhatsappTestResult] = useState<{ success: boolean; message: string } | null>(null);
 
   useEffect(() => {
     fetchSettings();
@@ -223,6 +232,89 @@ export default function SettingsPage() {
     setShowAccountModal(true);
   };
 
+  const openWhatsAppModal = () => {
+    if (data?.vendor) {
+      setWhatsappForm({
+        phoneNumberId: data.vendor.whatsapp_phone_number_id || '',
+        accessToken: data.vendor.whatsapp_access_token || '',
+      });
+    }
+    setWhatsappTestResult(null);
+    setShowWhatsAppModal(true);
+  };
+
+  const handleTestWhatsApp = async () => {
+    if (!whatsappForm.phoneNumberId.trim() || !whatsappForm.accessToken.trim()) {
+      error('Please enter both Phone Number ID and Access Token');
+      return;
+    }
+
+    setWhatsappTesting(true);
+    setWhatsappTestResult(null);
+    try {
+      const res = await fetch('/api/settings/whatsapp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phoneNumberId: whatsappForm.phoneNumberId.trim(),
+          accessToken: whatsappForm.accessToken.trim(),
+        }),
+      });
+      const json = await res.json();
+
+      if (res.ok) {
+        setWhatsappTestResult({
+          success: true,
+          message: `Connected! Phone: ${json.phoneNumber || 'N/A'}`,
+        });
+      } else {
+        setWhatsappTestResult({
+          success: false,
+          message: json.error || 'Connection failed',
+        });
+      }
+    } catch {
+      setWhatsappTestResult({
+        success: false,
+        message: 'Connection test failed',
+      });
+    } finally {
+      setWhatsappTesting(false);
+    }
+  };
+
+  const handleSaveWhatsApp = async () => {
+    if (!whatsappForm.phoneNumberId.trim() || !whatsappForm.accessToken.trim()) {
+      error('Please enter both Phone Number ID and Access Token');
+      return;
+    }
+
+    setWhatsappLoading(true);
+    try {
+      const res = await fetch('/api/settings/whatsapp', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phoneNumberId: whatsappForm.phoneNumberId.trim(),
+          accessToken: whatsappForm.accessToken.trim(),
+        }),
+      });
+
+      if (res.ok) {
+        success('WhatsApp settings saved');
+        setShowWhatsAppModal(false);
+        fetchSettings();
+      } else {
+        const json = await res.json();
+        error(json.error || 'Failed to save WhatsApp settings');
+      }
+    } catch {
+      error('Something went wrong');
+    } finally {
+      setWhatsappLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div>
@@ -357,6 +449,40 @@ export default function SettingsPage() {
                 <div>
                   <p className="font-medium text-gray-900">Sales History</p>
                   <p className="text-sm text-gray-500">View all your sales</p>
+                </div>
+              </div>
+              <ChevronRight className="w-5 h-5 text-gray-400" />
+            </div>
+          </Card>
+        </section>
+
+        {/* WhatsApp Integration */}
+        <section>
+          <h2 className="text-sm font-medium text-gray-500 mb-3">WhatsApp Integration</h2>
+          <Card
+            variant="interactive"
+            className="cursor-pointer"
+            onClick={openWhatsAppModal}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                  <MessageCircle className="w-5 h-5 text-green-600" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium text-gray-900">WhatsApp Cloud API</p>
+                    {data?.vendor.whatsapp_phone_number_id ? (
+                      <Badge variant="success" size="sm">Connected</Badge>
+                    ) : (
+                      <Badge variant="default" size="sm">Not configured</Badge>
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-500">
+                    {data?.vendor.whatsapp_phone_number_id
+                      ? 'Send reminders to customers'
+                      : 'Set up to send messages'}
+                  </p>
                 </div>
               </div>
               <ChevronRight className="w-5 h-5 text-gray-400" />
@@ -513,6 +639,82 @@ export default function SettingsPage() {
         confirmLabel="Sign Out"
         loading={logoutLoading}
       />
+
+      {/* WhatsApp Settings Modal */}
+      <Modal
+        isOpen={showWhatsAppModal}
+        onClose={() => setShowWhatsAppModal(false)}
+        title="WhatsApp Cloud API"
+      >
+        <div className="space-y-4">
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-sm text-blue-800">
+            <p className="font-medium mb-1">How to get these values:</p>
+            <ol className="list-decimal list-inside space-y-1 text-blue-700">
+              <li>Go to developers.facebook.com</li>
+              <li>Select your app → WhatsApp → API Setup</li>
+              <li>Copy Phone Number ID and Access Token</li>
+            </ol>
+          </div>
+
+          <Input
+            label="Phone Number ID"
+            placeholder="e.g., 123456789012345"
+            value={whatsappForm.phoneNumberId}
+            onChange={(e) =>
+              setWhatsappForm((p) => ({ ...p, phoneNumberId: e.target.value }))
+            }
+            helperText="Found in WhatsApp → API Setup"
+          />
+
+          <Input
+            label="Access Token"
+            type="password"
+            placeholder="Your permanent access token"
+            value={whatsappForm.accessToken}
+            onChange={(e) =>
+              setWhatsappForm((p) => ({ ...p, accessToken: e.target.value }))
+            }
+            helperText="Use a permanent token from System User"
+          />
+
+          {/* Test Result */}
+          {whatsappTestResult && (
+            <div
+              className={`flex items-center gap-2 p-3 rounded-xl ${
+                whatsappTestResult.success
+                  ? 'bg-green-50 text-green-700'
+                  : 'bg-red-50 text-red-700'
+              }`}
+            >
+              {whatsappTestResult.success ? (
+                <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
+              ) : (
+                <XCircle className="w-5 h-5 flex-shrink-0" />
+              )}
+              <span className="text-sm">{whatsappTestResult.message}</span>
+            </div>
+          )}
+
+          <div className="flex gap-2">
+            <Button
+              variant="secondary"
+              fullWidth
+              onClick={handleTestWhatsApp}
+              loading={whatsappTesting}
+              icon={whatsappTesting ? <Loader2 className="w-4 h-4 animate-spin" /> : undefined}
+            >
+              Test Connection
+            </Button>
+            <Button
+              fullWidth
+              onClick={handleSaveWhatsApp}
+              loading={whatsappLoading}
+            >
+              Save
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

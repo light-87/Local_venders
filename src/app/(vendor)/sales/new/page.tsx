@@ -44,6 +44,7 @@ export default function NewSalePage() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [newCustomerName, setNewCustomerName] = useState('');
+  const [newCustomerPhone, setNewCustomerPhone] = useState('');
   const [selectedAccountId, setSelectedAccountId] = useState('');
   const [discountAmount, setDiscountAmount] = useState(0);
   const [discountPercent, setDiscountPercent] = useState(0);
@@ -87,10 +88,14 @@ export default function NewSalePage() {
     const timeout = setTimeout(async () => {
       try {
         const res = await fetch(`/api/customers/search?q=${encodeURIComponent(customerSearch)}`);
-        const data = await res.json();
-        if (data.success) setCustomers(data.customers);
+        const json = await res.json();
+        if (json.success && Array.isArray(json.data)) {
+          setCustomers(json.data);
+        } else {
+          setCustomers([]);
+        }
       } catch {
-        // Ignore search errors
+        setCustomers([]);
       }
     }, 300);
 
@@ -152,6 +157,7 @@ export default function NewSalePage() {
     setShowCustomerModal(false);
     setCustomerSearch('');
     setNewCustomerName('');
+    setNewCustomerPhone('');
   };
 
   // Create sale
@@ -174,6 +180,7 @@ export default function NewSalePage() {
         body: JSON.stringify({
           customerId: selectedCustomer?.id,
           customerName: !selectedCustomer && newCustomerName ? newCustomerName : undefined,
+          customerPhone: !selectedCustomer && newCustomerPhone ? newCustomerPhone : undefined,
           accountId: selectedAccountId,
           items: cart.map((item) => ({
             inventoryItemId: item.inventoryItemId,
@@ -222,11 +229,12 @@ export default function NewSalePage() {
         <section>
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-sm font-medium text-gray-500">Customer</h2>
-            {selectedCustomer && (
+            {(selectedCustomer || newCustomerName) && (
               <button
                 onClick={() => {
                   setSelectedCustomer(null);
                   setNewCustomerName('');
+                  setNewCustomerPhone('');
                 }}
                 className="text-sm text-brand-500"
               >
@@ -257,11 +265,16 @@ export default function NewSalePage() {
                   </div>
                   <div>
                     <p className="font-medium text-gray-900">{newCustomerName}</p>
-                    <p className="text-sm text-gray-500">New customer</p>
+                    <p className="text-sm text-gray-500">
+                      {newCustomerPhone ? newCustomerPhone : 'New customer'}
+                    </p>
                   </div>
                 </div>
                 <button
-                  onClick={() => setNewCustomerName('')}
+                  onClick={() => {
+                    setNewCustomerName('');
+                    setNewCustomerPhone('');
+                  }}
                   className="p-2 text-gray-400"
                 >
                   <X className="w-4 h-4" />
@@ -500,11 +513,19 @@ export default function NewSalePage() {
 
           <div className="pt-4 border-t border-gray-100">
             <p className="text-sm text-gray-500 mb-2">Or create a new customer</p>
-            <Input
-              placeholder="Enter customer name"
-              value={newCustomerName}
-              onChange={(e) => setNewCustomerName(e.target.value)}
-            />
+            <div className="space-y-3">
+              <Input
+                placeholder="Enter customer name"
+                value={newCustomerName}
+                onChange={(e) => setNewCustomerName(e.target.value)}
+              />
+              <Input
+                placeholder="Phone number (optional)"
+                value={newCustomerPhone}
+                onChange={(e) => setNewCustomerPhone(e.target.value)}
+                type="tel"
+              />
+            </div>
             <Button
               fullWidth
               className="mt-3"
@@ -526,6 +547,7 @@ export default function NewSalePage() {
               setShowCustomerModal(false);
               setCustomerSearch('');
               setNewCustomerName('');
+              setNewCustomerPhone('');
             }}
           >
             Skip (Walk-in Customer)

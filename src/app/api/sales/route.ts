@@ -96,6 +96,7 @@ export async function POST(request: Request) {
         .insert({
           vendor_id: session.id,
           name: data.customerName,
+          phone: data.customerPhone || null,
         })
         .select()
         .single();
