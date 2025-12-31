@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
     const { data: admin, error: fetchError } = await supabase
       .from('vendors')
       .select('id, pin_hash')
-      .eq('id', session.vendorId)
+      .eq('id', session.id)
       .eq('is_admin', true)
       .single();
 
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     const { error: updateError } = await supabase
       .from('vendors')
       .update({ pin_hash: newPinHash })
-      .eq('id', session.vendorId);
+      .eq('id', session.id);
 
     if (updateError) {
       console.error('Error updating admin PIN:', updateError);
