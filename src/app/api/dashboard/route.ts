@@ -3,6 +3,8 @@ import { validateSession } from '@/lib/auth';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { startOfDay, startOfWeek, startOfMonth, subMonths, format } from 'date-fns';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: Request) {
   try {
     const session = await validateSession();
