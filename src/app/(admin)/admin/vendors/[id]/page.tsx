@@ -12,6 +12,7 @@ import {
   Spinner,
   Modal,
   useToast,
+  EmptyState,
 } from '@/components/ui';
 import { formatCurrency, formatDate } from '@/lib/utils/format';
 import {
@@ -27,6 +28,10 @@ import {
   Power,
   RefreshCw,
   Save,
+  Trash2,
+  ShoppingCart,
+  Receipt,
+  ChevronRight,
 } from 'lucide-react';
 
 interface VendorDetails {
@@ -55,6 +60,41 @@ interface Account {
   is_default: boolean;
 }
 
+interface InventoryItem {
+  id: string;
+  name: string;
+  sku: string | null;
+  selling_price: number;
+  stock_quantity: number;
+  is_active: boolean;
+}
+
+interface Customer {
+  id: string;
+  name: string;
+  phone: string | null;
+  total_purchases: number;
+  created_at: string;
+}
+
+interface Sale {
+  id: string;
+  bill_number: string;
+  total_amount: number;
+  customer_name: string | null;
+  created_at: string;
+}
+
+interface Expense {
+  id: string;
+  description: string;
+  amount: number;
+  category_name: string;
+  created_at: string;
+}
+
+type DataTab = 'inventory' | 'customers' | 'sales' | 'expenses';
+
 export default function VendorDetailPage() {
   const params = useParams();
   const vendorId = params.id as string;
@@ -80,6 +120,18 @@ export default function VendorDetailPage() {
 
   const [showDeactivateModal, setShowDeactivateModal] = useState(false);
   const [deactivating, setDeactivating] = useState(false);
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [deleting, setDeleting] = useState(false);
+
+  // Data viewing
+  const [activeTab, setActiveTab] = useState<DataTab | null>(null);
+  const [dataLoading, setDataLoading] = useState(false);
+  const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [sales, setSales] = useState<Sale[]>([]);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
 
   useEffect(() => {
     fetchVendor();
@@ -109,6 +161,46 @@ export default function VendorDetailPage() {
       toast('error', 'Failed to load vendor');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchVendorData = async (tab: DataTab) => {
+    if (activeTab === tab) {
+      setActiveTab(null);
+      return;
+    }
+
+    setActiveTab(tab);
+    setDataLoading(true);
+
+    try {
+      const response = await fetch(`/api/admin/vendors/${vendorId}/data?type=${tab}`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast('error', data.error || 'Failed to load data');
+        return;
+      }
+
+      switch (tab) {
+        case 'inventory':
+          setInventoryItems(data.items || []);
+          break;
+        case 'customers':
+          setCustomers(data.customers || []);
+          break;
+        case 'sales':
+          setSales(data.sales || []);
+          break;
+        case 'expenses':
+          setExpenses(data.expenses || []);
+          break;
+      }
+    } catch (error) {
+      console.error('Error fetching vendor data:', error);
+      toast('error', 'Failed to load data');
+    } finally {
+      setDataLoading(false);
     }
   };
 
@@ -205,6 +297,32 @@ export default function VendorDetailPage() {
     }
   };
 
+  const handleDelete = async () => {
+    if (!vendor || deleteConfirmText !== 'DELETE') return;
+    setDeleting(true);
+
+    try {
+      const response = await fetch(`/api/admin/vendors/${vendor.id}`, {
+        method: 'DELETE',
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast('error', data.error || 'Failed to delete vendor');
+        return;
+      }
+
+      toast('success', 'Vendor and all data deleted permanently');
+      router.push('/admin/vendors');
+    } catch (error) {
+      console.error('Error deleting vendor:', error);
+      toast('error', 'Something went wrong');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[50vh]">
@@ -216,7 +334,7 @@ export default function VendorDetailPage() {
   if (!vendor) return null;
 
   return (
-    <div className="p-4 space-y-4">
+    <div className="p-4 space-y-4 pb-24">
       <PageHeader title="Vendor Details" backHref="/admin/vendors" />
 
       {/* Vendor Header */}
@@ -286,6 +404,245 @@ export default function VendorDetailPage() {
           </Card>
         </div>
       )}
+
+      {/* View Vendor Data */}
+      <Card>
+        <CardContent className="pt-4">
+          <h2 className="font-medium text-gray-900 mb-3">View Vendor Data</h2>
+          <div className="space-y-2">
+            {/* Inventory Tab */}
+            <button
+              onClick={() => fetchVendorData('inventory')}
+              className={`w-full flex items-center justify-between p-3 rounded-lg transition-colors ${
+                activeTab === 'inventory'
+                  ? 'bg-brand-50 border border-brand-200'
+                  : 'bg-gray-50 hover:bg-gray-100'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Package className="h-5 w-5 text-orange-500" />
+                <span className="font-medium text-gray-900">Inventory Items</span>
+              </div>
+              <ChevronRight
+                className={`h-5 w-5 text-gray-400 transition-transform ${
+                  activeTab === 'inventory' ? 'rotate-90' : ''
+                }`}
+              />
+            </button>
+            {activeTab === 'inventory' && (
+              <div className="pl-4 pr-2 py-2 space-y-2 max-h-64 overflow-y-auto">
+                {dataLoading ? (
+                  <div className="flex justify-center py-4">
+                    <Spinner />
+                  </div>
+                ) : inventoryItems.length === 0 ? (
+                  <p className="text-sm text-gray-500 text-center py-4">
+                    No inventory items
+                  </p>
+                ) : (
+                  inventoryItems.map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex items-center justify-between p-2 bg-white rounded border"
+                    >
+                      <div>
+                        <p className="font-medium text-gray-900 text-sm">
+                          {item.name}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          Stock: {item.stock_quantity}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-medium tabular-nums">
+                          {formatCurrency(item.selling_price)}
+                        </p>
+                        <Badge
+                          variant={item.is_active ? 'success' : 'default'}
+                          className="text-xs"
+                        >
+                          {item.is_active ? 'Active' : 'Inactive'}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+
+            {/* Customers Tab */}
+            <button
+              onClick={() => fetchVendorData('customers')}
+              className={`w-full flex items-center justify-between p-3 rounded-lg transition-colors ${
+                activeTab === 'customers'
+                  ? 'bg-brand-50 border border-brand-200'
+                  : 'bg-gray-50 hover:bg-gray-100'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Users className="h-5 w-5 text-purple-500" />
+                <span className="font-medium text-gray-900">Customers</span>
+              </div>
+              <ChevronRight
+                className={`h-5 w-5 text-gray-400 transition-transform ${
+                  activeTab === 'customers' ? 'rotate-90' : ''
+                }`}
+              />
+            </button>
+            {activeTab === 'customers' && (
+              <div className="pl-4 pr-2 py-2 space-y-2 max-h-64 overflow-y-auto">
+                {dataLoading ? (
+                  <div className="flex justify-center py-4">
+                    <Spinner />
+                  </div>
+                ) : customers.length === 0 ? (
+                  <p className="text-sm text-gray-500 text-center py-4">
+                    No customers
+                  </p>
+                ) : (
+                  customers.map((customer) => (
+                    <div
+                      key={customer.id}
+                      className="flex items-center justify-between p-2 bg-white rounded border"
+                    >
+                      <div>
+                        <p className="font-medium text-gray-900 text-sm">
+                          {customer.name}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {customer.phone || 'No phone'}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-medium tabular-nums">
+                          {formatCurrency(customer.total_purchases)}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {formatDate(customer.created_at)}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+
+            {/* Sales Tab */}
+            <button
+              onClick={() => fetchVendorData('sales')}
+              className={`w-full flex items-center justify-between p-3 rounded-lg transition-colors ${
+                activeTab === 'sales'
+                  ? 'bg-brand-50 border border-brand-200'
+                  : 'bg-gray-50 hover:bg-gray-100'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <ShoppingCart className="h-5 w-5 text-green-500" />
+                <span className="font-medium text-gray-900">Sales</span>
+              </div>
+              <ChevronRight
+                className={`h-5 w-5 text-gray-400 transition-transform ${
+                  activeTab === 'sales' ? 'rotate-90' : ''
+                }`}
+              />
+            </button>
+            {activeTab === 'sales' && (
+              <div className="pl-4 pr-2 py-2 space-y-2 max-h-64 overflow-y-auto">
+                {dataLoading ? (
+                  <div className="flex justify-center py-4">
+                    <Spinner />
+                  </div>
+                ) : sales.length === 0 ? (
+                  <p className="text-sm text-gray-500 text-center py-4">
+                    No sales
+                  </p>
+                ) : (
+                  sales.map((sale) => (
+                    <div
+                      key={sale.id}
+                      className="flex items-center justify-between p-2 bg-white rounded border"
+                    >
+                      <div>
+                        <p className="font-medium text-gray-900 text-sm">
+                          {sale.bill_number}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {sale.customer_name || 'Walk-in'}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-medium tabular-nums">
+                          {formatCurrency(sale.total_amount)}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {formatDate(sale.created_at)}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+
+            {/* Expenses Tab */}
+            <button
+              onClick={() => fetchVendorData('expenses')}
+              className={`w-full flex items-center justify-between p-3 rounded-lg transition-colors ${
+                activeTab === 'expenses'
+                  ? 'bg-brand-50 border border-brand-200'
+                  : 'bg-gray-50 hover:bg-gray-100'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Receipt className="h-5 w-5 text-red-500" />
+                <span className="font-medium text-gray-900">Expenses</span>
+              </div>
+              <ChevronRight
+                className={`h-5 w-5 text-gray-400 transition-transform ${
+                  activeTab === 'expenses' ? 'rotate-90' : ''
+                }`}
+              />
+            </button>
+            {activeTab === 'expenses' && (
+              <div className="pl-4 pr-2 py-2 space-y-2 max-h-64 overflow-y-auto">
+                {dataLoading ? (
+                  <div className="flex justify-center py-4">
+                    <Spinner />
+                  </div>
+                ) : expenses.length === 0 ? (
+                  <p className="text-sm text-gray-500 text-center py-4">
+                    No expenses
+                  </p>
+                ) : (
+                  expenses.map((expense) => (
+                    <div
+                      key={expense.id}
+                      className="flex items-center justify-between p-2 bg-white rounded border"
+                    >
+                      <div>
+                        <p className="font-medium text-gray-900 text-sm">
+                          {expense.description}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {expense.category_name}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-medium tabular-nums text-red-600">
+                          -{formatCurrency(expense.amount)}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {formatDate(expense.created_at)}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Edit Form */}
       <Card>
@@ -423,6 +780,25 @@ export default function VendorDetailPage() {
         </CardContent>
       </Card>
 
+      {/* Danger Zone */}
+      <Card className="border-red-200 bg-red-50">
+        <CardContent className="pt-4">
+          <h2 className="font-medium text-red-900 mb-2">Danger Zone</h2>
+          <p className="text-sm text-red-700 mb-4">
+            Permanently delete this vendor and all their data. This action cannot
+            be undone.
+          </p>
+          <Button
+            variant="danger"
+            fullWidth
+            icon={<Trash2 className="h-5 w-5" />}
+            onClick={() => setShowDeleteModal(true)}
+          >
+            Delete Vendor Permanently
+          </Button>
+        </CardContent>
+      </Card>
+
       {/* Reset PIN Modal */}
       <Modal
         isOpen={showPinModal}
@@ -481,7 +857,7 @@ export default function VendorDetailPage() {
           {vendor.isActive ? (
             <p className="text-gray-600">
               Are you sure you want to deactivate{' '}
-              <strong>{vendor.name}</strong>? They will be logged out and won't
+              <strong>{vendor.name}</strong>? They will be logged out and won&apos;t
               be able to access the system until reactivated.
             </p>
           ) : (
@@ -507,6 +883,65 @@ export default function VendorDetailPage() {
               loading={deactivating}
             >
               {vendor.isActive ? 'Deactivate' : 'Activate'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setDeleteConfirmText('');
+        }}
+        title="Delete Vendor Permanently"
+      >
+        <div className="space-y-4">
+          <div className="p-4 bg-red-50 rounded-lg border border-red-200">
+            <p className="text-red-800 font-medium mb-2">
+              This will permanently delete:
+            </p>
+            <ul className="text-sm text-red-700 space-y-1">
+              <li>- All {stats?.inventoryCount || 0} inventory items</li>
+              <li>- All {stats?.customersCount || 0} customers</li>
+              <li>- All {stats?.salesCount || 0} sales records</li>
+              <li>- All expenses and reminders</li>
+              <li>- All accounts and balances</li>
+            </ul>
+          </div>
+
+          <p className="text-gray-600">
+            Type <strong>DELETE</strong> to confirm permanent deletion of{' '}
+            <strong>{vendor.name}</strong> and all their data.
+          </p>
+
+          <Input
+            label="Confirmation"
+            placeholder="Type DELETE to confirm"
+            value={deleteConfirmText}
+            onChange={(e) => setDeleteConfirmText(e.target.value.toUpperCase())}
+          />
+
+          <div className="flex gap-3">
+            <Button
+              variant="secondary"
+              fullWidth
+              onClick={() => {
+                setShowDeleteModal(false);
+                setDeleteConfirmText('');
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              fullWidth
+              onClick={handleDelete}
+              loading={deleting}
+              disabled={deleteConfirmText !== 'DELETE'}
+            >
+              Delete Forever
             </Button>
           </div>
         </div>
