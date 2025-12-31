@@ -85,13 +85,20 @@ async function getCustomer(vendorId: string, customerId: string) {
     .eq('sale.customer_id', customerId)
     .order('created_at', { ascending: false });
 
-  // Filter items that have warranty or maintenance
-  const itemsWithWarranty = (saleItems ?? []).filter(
-    (item: SaleItem) => (item.warranty_months && item.warranty_months > 0) ||
-                        (item.maintenance_interval_months && item.maintenance_interval_months > 0)
-  );
+  // Transform and filter items that have warranty or maintenance
+  const itemsWithWarranty: SaleItem[] = (saleItems ?? [])
+    .map((item) => ({
+      ...item,
+      // Supabase returns joined relation as array, take first element
+      sale: Array.isArray(item.sale) ? item.sale[0] : item.sale,
+    }))
+    .filter(
+      (item) =>
+        (item.warranty_months && item.warranty_months > 0) ||
+        (item.maintenance_interval_months && item.maintenance_interval_months > 0)
+    ) as SaleItem[];
 
-  return { customer, sales: sales ?? [], itemsWithWarranty: itemsWithWarranty as SaleItem[] };
+  return { customer, sales: sales ?? [], itemsWithWarranty };
 }
 
 export default async function CustomerDetailPage({
