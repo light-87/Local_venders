@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { PageHeader } from '@/components/layout';
-import { Card, Button, Badge, EmptyState } from '@/components/ui';
+import { Card, Button, Badge, EmptyState, useToast } from '@/components/ui';
 import {
   MessageCircle,
   Plus,
@@ -13,7 +13,8 @@ import {
   AlertCircle,
   User,
   Calendar,
-  ChevronRight,
+  Send,
+  Loader2,
 } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import type { ScheduledMessage, Customer } from '@/types';
@@ -26,10 +27,12 @@ type FilterStatus = 'all' | 'pending' | 'sent' | 'failed';
 
 export default function MessagesPage() {
   const router = useRouter();
+  const { success, error: showError } = useToast();
   const [messages, setMessages] = useState<MessageWithCustomer[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterStatus>('all');
   const [hasWhatsApp, setHasWhatsApp] = useState(false);
+  const [sending, setSending] = useState(false);
 
   useEffect(() => {
     fetchMessages();
@@ -61,6 +64,34 @@ export default function MessagesPage() {
       console.error('Failed to check WhatsApp setup:', error);
     }
   };
+
+  const handleSendNow = async () => {
+    setSending(true);
+    try {
+      const res = await fetch('/api/messages/send-now', { method: 'POST' });
+      const json = await res.json();
+
+      if (json.success) {
+        if (json.sent > 0) {
+          success(`Sent ${json.sent} message${json.sent > 1 ? 's' : ''} successfully!`);
+        } else if (json.processed === 0) {
+          showError('No pending messages for today');
+        } else {
+          showError(`Failed to send ${json.failed} message${json.failed > 1 ? 's' : ''}`);
+        }
+        // Refresh messages list
+        fetchMessages();
+      } else {
+        showError(json.error || 'Failed to send messages');
+      }
+    } catch (err) {
+      showError('Failed to send messages');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const pendingCount = messages.filter((m) => m.status === 'pending').length;
 
   const filteredMessages = messages.filter((msg) => {
     if (filter === 'all') return true;
@@ -139,13 +170,26 @@ export default function MessagesPage() {
       <PageHeader
         title="Messages"
         action={
-          <Button
-            size="sm"
-            icon={<Plus className="w-4 h-4" />}
-            onClick={() => router.push('/messages/schedule')}
-          >
-            Schedule
-          </Button>
+          <div className="flex gap-2">
+            {pendingCount > 0 && (
+              <Button
+                size="sm"
+                variant="outline"
+                icon={sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                onClick={handleSendNow}
+                disabled={sending}
+              >
+                {sending ? 'Sending...' : `Send Now (${pendingCount})`}
+              </Button>
+            )}
+            <Button
+              size="sm"
+              icon={<Plus className="w-4 h-4" />}
+              onClick={() => router.push('/messages/schedule')}
+            >
+              Schedule
+            </Button>
+          </div>
         }
       />
 
