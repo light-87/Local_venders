@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils/cn';
 import {
   LayoutDashboard,
-  MessageCircle,
+  Bell,
   PlusCircle,
   Receipt,
   Menu,
@@ -13,7 +13,7 @@ import {
 
 const navItems = [
   { href: '/dashboard', label: 'Home', icon: LayoutDashboard },
-  { href: '/messages', label: 'Messages', icon: MessageCircle },
+  { href: '/reminders', label: 'Reminders', icon: Bell },
   { href: '/sales/new', label: 'New Sale', icon: PlusCircle, isMain: true },
   { href: '/transactions', label: 'Money', icon: Receipt },
   { href: '/settings', label: 'More', icon: Menu },

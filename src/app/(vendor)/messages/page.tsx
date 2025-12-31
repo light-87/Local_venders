@@ -157,7 +157,7 @@ export default function MessagesPage() {
         <PageHeader title="Messages" />
         <div className="p-4">
           <EmptyState
-            icon={MessageCircle}
+            icon={<MessageCircle className="w-8 h-8" />}
             title="WhatsApp Not Configured"
             description="Set up WhatsApp Cloud API to send messages to your customers"
             actionLabel="Go to Settings"
@@ -222,7 +222,7 @@ export default function MessagesPage() {
         {/* Messages List */}
         {filteredMessages.length === 0 ? (
           <EmptyState
-            icon={MessageCircle}
+            icon={<MessageCircle className="w-8 h-8" />}
             title={filter === 'all' ? 'No Messages Yet' : `No ${filter} messages`}
             description={
               filter === 'all'

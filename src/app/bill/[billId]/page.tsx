@@ -196,7 +196,21 @@ export default async function BillPage({
         </div>
 
         {/* Actions */}
-        <BillActions billId={billId} />
+        <BillActions
+          billId={billId}
+          billData={{
+            customerName: customer?.name || 'Customer',
+            customerPhone: customer?.phone || null,
+            businessName: vendor.business_name,
+            items: items.map((item) => ({
+              name: item.item_name,
+              quantity: item.quantity,
+              price: item.subtotal,
+            })),
+            total: sale.total_amount,
+            date: formatDateShort(sale.created_at),
+          }}
+        />
       </div>
     </div>
   );

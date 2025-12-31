@@ -43,6 +43,9 @@ export interface CartItem {
   unitPrice: number;
   unit: string;
   availableStock: number;
+  warrantyValue?: number;
+  warrantyUnit?: 'months' | 'years';
+  maintenanceIntervalMonths?: number;
 }
 
 // Bill types (for public viewing)

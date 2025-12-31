@@ -133,6 +133,8 @@ export async function POST(request: Request) {
         quantity: item.quantity,
         unit_price: item.unitPrice,
         subtotal: itemSubtotal,
+        warranty_months: item.warrantyMonths || 0,
+        maintenance_interval_months: item.maintenanceIntervalMonths || null,
       });
     }
 
@@ -177,7 +179,37 @@ export async function POST(request: Request) {
       ...item,
     }));
 
-    await supabase.from('sale_items').insert(saleItems);
+    const { data: insertedSaleItems } = await supabase
+      .from('sale_items')
+      .insert(saleItems)
+      .select();
+
+    // Auto-create maintenance reminders for items with maintenance interval
+    if (customerId && insertedSaleItems) {
+      const remindersToCreate = insertedSaleItems
+        .filter((item) => item.maintenance_interval_months && item.maintenance_interval_months > 0)
+        .map((item) => {
+          const nextDate = new Date();
+          nextDate.setMonth(nextDate.getMonth() + item.maintenance_interval_months);
+
+          return {
+            vendor_id: session.id,
+            customer_id: customerId,
+            message_type: 'maintenance',
+            message_text: `Hi, your ${item.item_name} is due for maintenance. Please schedule a visit at your convenience.`,
+            scheduled_date: nextDate.toISOString(),
+            status: 'pending',
+            reminder_type: 'maintenance',
+            related_sale_id: sale.id,
+            related_sale_item_id: item.id,
+            item_name: item.item_name,
+          };
+        });
+
+      if (remindersToCreate.length > 0) {
+        await supabase.from('scheduled_messages').insert(remindersToCreate);
+      }
+    }
 
     // Update inventory stock
     for (const item of data.items) {
