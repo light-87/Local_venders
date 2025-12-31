@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card } from '@/components/ui';
+import { Card, VendorLogo } from '@/components/ui';
 import { formatCurrency } from '@/lib/utils/format';
 import {
   ShoppingCart,
@@ -21,9 +21,11 @@ interface HomeData {
 
 interface SimpleHomeProps {
   vendorName: string;
+  businessName: string;
+  businessLogo: string | null;
 }
 
-export function SimpleHome({ vendorName }: SimpleHomeProps) {
+export function SimpleHome({ vendorName, businessName, businessLogo }: SimpleHomeProps) {
   const [data, setData] = useState<HomeData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -52,6 +54,13 @@ export function SimpleHome({ vendorName }: SimpleHomeProps) {
     <div className="p-4 space-y-6">
       {/* Welcome Section */}
       <section className="text-center pt-4 pb-2">
+        <div className="flex justify-center mb-3">
+          <VendorLogo
+            src={businessLogo}
+            businessName={businessName}
+            size="xl"
+          />
+        </div>
         <h1 className="text-2xl font-semibold text-gray-900">
           Welcome, {firstName}!
         </h1>

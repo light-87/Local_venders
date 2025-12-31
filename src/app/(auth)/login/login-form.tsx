@@ -1,12 +1,17 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button, Input } from '@/components/ui';
+import { Button, Input, VendorLogo } from '@/components/ui';
 import { User, Lock } from 'lucide-react';
 
 interface LoginFormProps {
   rememberedUsername: string | null;
+}
+
+interface VendorInfo {
+  businessName: string;
+  businessLogo: string | null;
 }
 
 export function LoginForm({ rememberedUsername }: LoginFormProps) {
@@ -15,14 +20,40 @@ export function LoginForm({ rememberedUsername }: LoginFormProps) {
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [vendorInfo, setVendorInfo] = useState<VendorInfo | null>(null);
   const pinInputRef = useRef<HTMLInputElement>(null);
 
-  // If username is remembered, focus on PIN input
-  useEffect(() => {
-    if (rememberedUsername && pinInputRef.current) {
-      pinInputRef.current.focus();
+  // Fetch vendor info for personalization
+  const fetchVendorInfo = useCallback(async (user: string) => {
+    if (!user.trim()) {
+      setVendorInfo(null);
+      return;
     }
-  }, [rememberedUsername]);
+    try {
+      const res = await fetch(`/api/auth/vendor-info?username=${encodeURIComponent(user.trim())}`);
+      const data = await res.json();
+      if (data.found) {
+        setVendorInfo({
+          businessName: data.businessName,
+          businessLogo: data.businessLogo,
+        });
+      } else {
+        setVendorInfo(null);
+      }
+    } catch {
+      setVendorInfo(null);
+    }
+  }, []);
+
+  // If username is remembered, focus on PIN input and fetch vendor info
+  useEffect(() => {
+    if (rememberedUsername) {
+      fetchVendorInfo(rememberedUsername);
+      if (pinInputRef.current) {
+        pinInputRef.current.focus();
+      }
+    }
+  }, [rememberedUsername, fetchVendorInfo]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,6 +100,7 @@ export function LoginForm({ rememberedUsername }: LoginFormProps) {
     setUsername('');
     setPin('');
     setError('');
+    setVendorInfo(null);
     // Clear remembered username by making API call
     fetch('/api/auth/forget-username', { method: 'POST' });
   };
@@ -80,12 +112,16 @@ export function LoginForm({ rememberedUsername }: LoginFormProps) {
         <div className="bg-white rounded-xl border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-brand-100 rounded-full flex items-center justify-center">
-                <User className="w-5 h-5 text-brand-600" />
-              </div>
+              <VendorLogo
+                src={vendorInfo?.businessLogo}
+                businessName={vendorInfo?.businessName || rememberedUsername}
+                size="sm"
+              />
               <div>
                 <p className="text-sm text-gray-500">Logging in as</p>
-                <p className="font-medium text-gray-900">{rememberedUsername}</p>
+                <p className="font-medium text-gray-900">
+                  {vendorInfo?.businessName || rememberedUsername}
+                </p>
               </div>
             </div>
             <button

@@ -341,9 +341,12 @@ export default function VendorDetailPage() {
       <Card>
         <CardContent className="pt-4">
           <div className="flex items-start gap-4">
-            <div className="h-16 w-16 bg-brand-100 rounded-full flex items-center justify-center shrink-0">
-              <Store className="h-8 w-8 text-brand-600" />
-            </div>
+            <VendorLogo
+              src={vendor.businessLogo}
+              businessName={vendor.businessName}
+              size="lg"
+              className="shrink-0"
+            />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="text-xl font-semibold text-gray-900">
@@ -360,6 +363,24 @@ export default function VendorDetailPage() {
               </p>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Business Logo */}
+      <Card>
+        <CardContent className="pt-4">
+          <h2 className="font-medium text-gray-900 mb-4">Business Logo</h2>
+          <LogoUpload
+            currentLogo={vendor.businessLogo}
+            businessName={vendor.businessName}
+            vendorId={vendor.id}
+            onUploadComplete={(logoUrl) => {
+              setVendor((prev) => prev ? { ...prev, businessLogo: logoUrl } : null);
+            }}
+            onRemoveComplete={() => {
+              setVendor((prev) => prev ? { ...prev, businessLogo: null } : null);
+            }}
+          />
         </CardContent>
       </Card>
 

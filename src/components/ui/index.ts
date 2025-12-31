@@ -23,3 +23,7 @@ export { Select } from './select';
 export type { SelectOption, SelectProps } from './select';
 
 export { ToastProvider, useToast } from './toast';
+
+export { VendorLogo } from './vendor-logo';
+
+export { LogoUpload } from './logo-upload';
