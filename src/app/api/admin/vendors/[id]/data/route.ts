@@ -93,13 +93,16 @@ export async function GET(request: NextRequest, context: RouteContext) {
           return NextResponse.json({ error: 'Failed to fetch sales' }, { status: 500 });
         }
 
-        const formattedSales = (sales || []).map((sale) => ({
-          id: sale.id,
-          bill_number: sale.bill_number,
-          total_amount: sale.total_amount,
-          customer_name: sale.customers?.name || null,
-          created_at: sale.created_at,
-        }));
+        const formattedSales = (sales || []).map((sale) => {
+          const customer = sale.customers as { name: string } | null;
+          return {
+            id: sale.id,
+            bill_number: sale.bill_number,
+            total_amount: sale.total_amount,
+            customer_name: customer?.name || null,
+            created_at: sale.created_at,
+          };
+        });
 
         return NextResponse.json({ sales: formattedSales });
       }
@@ -123,13 +126,16 @@ export async function GET(request: NextRequest, context: RouteContext) {
           return NextResponse.json({ error: 'Failed to fetch expenses' }, { status: 500 });
         }
 
-        const formattedExpenses = (expenses || []).map((expense) => ({
-          id: expense.id,
-          description: expense.description,
-          amount: expense.amount,
-          category_name: expense.expense_categories?.name || 'Uncategorized',
-          created_at: expense.created_at,
-        }));
+        const formattedExpenses = (expenses || []).map((expense) => {
+          const category = expense.expense_categories as { name: string } | null;
+          return {
+            id: expense.id,
+            description: expense.description,
+            amount: expense.amount,
+            category_name: category?.name || 'Uncategorized',
+            created_at: expense.created_at,
+          };
+        });
 
         return NextResponse.json({ expenses: formattedExpenses });
       }
