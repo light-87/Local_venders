@@ -55,8 +55,10 @@ export default function ScheduleMessagePage() {
       try {
         const res = await fetch(`/api/customers/search?q=${encodeURIComponent(customerSearch)}&hasPhone=true`);
         const json = await res.json();
-        if (json.success) {
+        if (json.success && Array.isArray(json.data)) {
           setCustomers(json.data);
+        } else {
+          setCustomers([]);
         }
       } catch (err) {
         console.error('Search error:', err);

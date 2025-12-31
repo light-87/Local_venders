@@ -13,18 +13,26 @@ export async function GET(request: Request) {
     const query = searchParams.get('q');
 
     if (!query || query.length < 2) {
-      return NextResponse.json({ success: true, customers: [] });
+      return NextResponse.json({ success: true, data: [] });
     }
 
     const supabase = createAdminClient();
 
-    const { data: customers, error } = await supabase
+    const hasPhone = searchParams.get('hasPhone') === 'true';
+
+    let queryBuilder = supabase
       .from('customers')
       .select('id, name, phone, total_purchases, total_spent')
       .eq('vendor_id', session.id)
-      .ilike('name', `%${query}%`)
+      .ilike('name', `%${query}%`);
+
+    if (hasPhone) {
+      queryBuilder = queryBuilder.not('phone', 'is', null);
+    }
+
+    const { data: customers, error } = await queryBuilder
       .order('total_purchases', { ascending: false })
-      .limit(5);
+      .limit(10);
 
     if (error) {
       return NextResponse.json(
@@ -35,7 +43,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       success: true,
-      customers: customers ?? [],
+      data: customers ?? [],
     });
   } catch (error) {
     console.error('Customer search error:', error);
