@@ -61,9 +61,7 @@ export function BillActions({ billId, billData }: BillActionsProps) {
         total: billData.total,
         date: billData.date,
       });
-      // Append bill link
-      const fullMessage = `${message}\n\n📄 *View Bill:* ${billUrl}`;
-      const whatsappUrl = createWhatsAppLink(billData.customerPhone, fullMessage);
+      const whatsappUrl = createWhatsAppLink(billData.customerPhone, message);
       window.open(whatsappUrl, '_blank');
     } else {
       // Fallback to simple link share (opens WhatsApp without recipient)

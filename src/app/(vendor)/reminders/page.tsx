@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { PageHeader } from '@/components/layout';
-import { Card, Button, Badge, EmptyState, useToast, Modal } from '@/components/ui';
+import { Card, Button, Badge, EmptyState, useToast, Modal, Input } from '@/components/ui';
 import {
   Bell,
   MessageCircle,
@@ -15,7 +15,8 @@ import {
   Wrench,
   Trash2,
   RotateCcw,
-  ChevronRight,
+  Plus,
+  Search,
 } from 'lucide-react';
 import { formatDistanceToNow, format, isToday, isPast, isFuture } from 'date-fns';
 import {
@@ -43,6 +44,12 @@ interface Reminder {
   };
 }
 
+interface Customer {
+  id: string;
+  name: string;
+  phone: string | null;
+}
+
 type TabType = 'overdue' | 'today' | 'upcoming' | 'completed';
 
 export default function RemindersPage() {
@@ -56,10 +63,49 @@ export default function RemindersPage() {
     reminder: null,
   });
 
+  // Add Reminder Modal State
+  const [addModal, setAddModal] = useState(false);
+  const [customerSearch, setCustomerSearch] = useState('');
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [newCustomerName, setNewCustomerName] = useState('');
+  const [newCustomerPhone, setNewCustomerPhone] = useState('');
+  const [itemName, setItemName] = useState('');
+  const [warrantyValue, setWarrantyValue] = useState('');
+  const [warrantyUnit, setWarrantyUnit] = useState<'months' | 'years'>('months');
+  const [serviceInterval, setServiceInterval] = useState('');
+  const [reminderDate, setReminderDate] = useState('');
+  const [notes, setNotes] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
   useEffect(() => {
     fetchReminders();
     fetchBusinessName();
   }, []);
+
+  // Search customers when typing
+  useEffect(() => {
+    if (customerSearch.length < 2) {
+      setCustomers([]);
+      return;
+    }
+
+    const timeout = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/customers/search?q=${encodeURIComponent(customerSearch)}`);
+        const json = await res.json();
+        if (json.success && Array.isArray(json.data)) {
+          setCustomers(json.data);
+        } else {
+          setCustomers([]);
+        }
+      } catch {
+        setCustomers([]);
+      }
+    }, 300);
+
+    return () => clearTimeout(timeout);
+  }, [customerSearch]);
 
   const fetchReminders = async () => {
     try {
@@ -118,14 +164,12 @@ export default function RemindersPage() {
 
     let message: string;
     if (isOverdue && reminder.sent_count > 0) {
-      // Follow-up message for overdue items
       message = generateFollowUpReminderMessage({
         customerName: reminder.customer.name,
         itemName: reminder.item_name || 'equipment',
         businessName,
       });
     } else {
-      // First reminder or today's reminder
       message = generateMaintenanceReminderMessage({
         customerName: reminder.customer.name,
         itemName: reminder.item_name || 'equipment',
@@ -137,8 +181,6 @@ export default function RemindersPage() {
 
     const link = createWhatsAppLink(reminder.customer.phone, message);
     window.open(link, '_blank');
-
-    // Mark as sent
     handleMarkSent(reminder.id);
   };
 
@@ -227,6 +269,68 @@ export default function RemindersPage() {
     }
   };
 
+  const resetAddModal = () => {
+    setSelectedCustomer(null);
+    setNewCustomerName('');
+    setNewCustomerPhone('');
+    setCustomerSearch('');
+    setCustomers([]);
+    setItemName('');
+    setWarrantyValue('');
+    setWarrantyUnit('months');
+    setServiceInterval('');
+    setReminderDate('');
+    setNotes('');
+  };
+
+  const handleAddReminder = async () => {
+    if (!itemName.trim()) {
+      showError('Item name is required');
+      return;
+    }
+    if (!reminderDate) {
+      showError('Reminder date is required');
+      return;
+    }
+    if (!selectedCustomer && !newCustomerName.trim()) {
+      showError('Please select or enter a customer');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const res = await fetch('/api/reminders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerId: selectedCustomer?.id,
+          customerName: !selectedCustomer ? newCustomerName : undefined,
+          customerPhone: !selectedCustomer ? newCustomerPhone : undefined,
+          itemName,
+          scheduledDate: reminderDate,
+          warrantyMonths: warrantyValue ? (warrantyUnit === 'years' ? parseInt(warrantyValue) * 12 : parseInt(warrantyValue)) : null,
+          maintenanceIntervalMonths: serviceInterval ? parseInt(serviceInterval) : null,
+          notes,
+        }),
+      });
+
+      const json = await res.json();
+
+      if (json.success) {
+        success('Reminder added!');
+        setAddModal(false);
+        resetAddModal();
+        fetchReminders();
+      } else {
+        showError(json.error || 'Failed to add reminder');
+      }
+    } catch (err) {
+      showError('Failed to add reminder');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const currentReminders = categorizedReminders[activeTab];
 
   if (loading) {
@@ -244,7 +348,18 @@ export default function RemindersPage() {
 
   return (
     <div>
-      <PageHeader title="Reminders" />
+      <PageHeader
+        title="Reminders"
+        action={
+          <Button
+            size="sm"
+            icon={<Plus className="w-4 h-4" />}
+            onClick={() => setAddModal(true)}
+          >
+            Add
+          </Button>
+        }
+      />
 
       <div className="p-4 space-y-4">
         {/* Tabs */}
@@ -297,7 +412,7 @@ export default function RemindersPage() {
                 : activeTab === 'today'
                 ? 'You have no maintenance reminders scheduled for today'
                 : activeTab === 'upcoming'
-                ? 'Schedule maintenance reminders during sales'
+                ? 'Add reminders for existing customers using the + button'
                 : 'Completed maintenance will appear here'
             }
           />
@@ -347,6 +462,191 @@ export default function RemindersPage() {
               onClick={handleDelete}
             >
               Delete
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Add Reminder Modal */}
+      <Modal
+        isOpen={addModal}
+        onClose={() => {
+          setAddModal(false);
+          resetAddModal();
+        }}
+        title="Add Reminder"
+      >
+        <div className="space-y-4">
+          {/* Customer Selection */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Customer
+            </label>
+            {selectedCustomer ? (
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                <div className="flex items-center gap-2">
+                  <User className="w-4 h-4 text-gray-400" />
+                  <span className="font-medium">{selectedCustomer.name}</span>
+                  {selectedCustomer.phone && (
+                    <span className="text-sm text-gray-500">({selectedCustomer.phone})</span>
+                  )}
+                </div>
+                <button
+                  onClick={() => setSelectedCustomer(null)}
+                  className="text-sm text-brand-500"
+                >
+                  Change
+                </button>
+              </div>
+            ) : (
+              <>
+                <Input
+                  placeholder="Search existing customers..."
+                  value={customerSearch}
+                  onChange={(e) => setCustomerSearch(e.target.value)}
+                  startIcon={<Search className="w-4 h-4" />}
+                />
+                {customers.length > 0 && (
+                  <div className="mt-2 max-h-32 overflow-y-auto space-y-1">
+                    {customers.map((customer) => (
+                      <button
+                        key={customer.id}
+                        onClick={() => {
+                          setSelectedCustomer(customer);
+                          setCustomerSearch('');
+                          setCustomers([]);
+                        }}
+                        className="w-full p-2 text-left rounded-lg hover:bg-gray-50 text-sm"
+                      >
+                        <span className="font-medium">{customer.name}</span>
+                        {customer.phone && (
+                          <span className="text-gray-500 ml-2">{customer.phone}</span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <div className="mt-3 pt-3 border-t border-gray-100">
+                  <p className="text-xs text-gray-500 mb-2">Or add new customer:</p>
+                  <div className="space-y-2">
+                    <Input
+                      placeholder="Customer name"
+                      value={newCustomerName}
+                      onChange={(e) => setNewCustomerName(e.target.value)}
+                    />
+                    <Input
+                      placeholder="Phone number"
+                      value={newCustomerPhone}
+                      onChange={(e) => setNewCustomerPhone(e.target.value)}
+                      type="tel"
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Item Name */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Item / Equipment *
+            </label>
+            <Input
+              placeholder="e.g., RO Water Purifier, AC Unit"
+              value={itemName}
+              onChange={(e) => setItemName(e.target.value)}
+            />
+          </div>
+
+          {/* Warranty (Optional) */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Warranty (Optional)
+            </label>
+            <div className="flex gap-2">
+              <Input
+                type="number"
+                placeholder="0"
+                value={warrantyValue}
+                onChange={(e) => setWarrantyValue(e.target.value)}
+                className="flex-1"
+              />
+              <select
+                value={warrantyUnit}
+                onChange={(e) => setWarrantyUnit(e.target.value as 'months' | 'years')}
+                className="h-10 px-3 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500"
+              >
+                <option value="months">Months</option>
+                <option value="years">Years</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Service Interval */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Service Interval
+            </label>
+            <select
+              value={serviceInterval}
+              onChange={(e) => setServiceInterval(e.target.value)}
+              className="w-full h-10 px-3 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500"
+            >
+              <option value="">No recurring reminder</option>
+              <option value="1">Every 1 month</option>
+              <option value="2">Every 2 months</option>
+              <option value="3">Every 3 months</option>
+              <option value="6">Every 6 months</option>
+              <option value="12">Every 12 months</option>
+            </select>
+          </div>
+
+          {/* First Reminder Date */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Reminder Date *
+            </label>
+            <input
+              type="date"
+              value={reminderDate}
+              onChange={(e) => setReminderDate(e.target.value)}
+              min={new Date().toISOString().split('T')[0]}
+              className="w-full h-10 px-3 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500"
+            />
+          </div>
+
+          {/* Notes */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Notes (Optional)
+            </label>
+            <textarea
+              placeholder="Any additional details..."
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={2}
+              className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
+            />
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-3 pt-2">
+            <Button
+              variant="secondary"
+              fullWidth
+              onClick={() => {
+                setAddModal(false);
+                resetAddModal();
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              fullWidth
+              onClick={handleAddReminder}
+              loading={submitting}
+            >
+              Add Reminder
             </Button>
           </div>
         </div>

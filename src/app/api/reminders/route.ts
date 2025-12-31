@@ -57,19 +57,46 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { customerId, itemName, scheduledDate, timeSlot, messageText, reminderType } = body;
+    const { customerId, customerName, customerPhone, itemName, scheduledDate, timeSlot, messageText, reminderType } = body;
 
-    if (!customerId || !scheduledDate) {
-      return NextResponse.json({ error: 'Customer and scheduled date are required' }, { status: 400 });
+    if (!scheduledDate) {
+      return NextResponse.json({ error: 'Scheduled date is required' }, { status: 400 });
+    }
+
+    if (!customerId && !customerName) {
+      return NextResponse.json({ error: 'Customer is required' }, { status: 400 });
     }
 
     const supabase = createAdminClient();
+
+    // If no customerId, create a new customer
+    let finalCustomerId = customerId;
+    if (!customerId && customerName) {
+      const { data: newCustomer, error: customerError } = await supabase
+        .from('customers')
+        .insert({
+          vendor_id: session.id,
+          name: customerName,
+          phone: customerPhone || null,
+          total_purchases: 0,
+          total_spent: 0,
+        })
+        .select('id')
+        .single();
+
+      if (customerError) {
+        console.error('Failed to create customer:', customerError);
+        return NextResponse.json({ error: 'Failed to create customer' }, { status: 500 });
+      }
+
+      finalCustomerId = newCustomer.id;
+    }
 
     const { data: reminder, error } = await supabase
       .from('scheduled_messages')
       .insert({
         vendor_id: session.id,
-        customer_id: customerId,
+        customer_id: finalCustomerId,
         message_type: reminderType || 'maintenance',
         message_text: messageText || `Maintenance reminder for ${itemName || 'your equipment'}`,
         scheduled_date: scheduledDate,

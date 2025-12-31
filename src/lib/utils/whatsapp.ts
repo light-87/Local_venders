@@ -26,7 +26,7 @@ export function formatPhoneForWhatsApp(phone: string): string {
 }
 
 /**
- * Encode text for URL (handles emojis and special characters)
+ * Encode text for URL (handles special characters)
  */
 export function encodeWhatsAppMessage(text: string): string {
   return encodeURIComponent(text);
@@ -42,7 +42,7 @@ export function createWhatsAppLink(phone: string, message: string): string {
 }
 
 /**
- * Generate maintenance reminder message
+ * Generate maintenance reminder message (Health-focused for water purifiers)
  */
 export function generateMaintenanceReminderMessage(params: {
   customerName: string;
@@ -54,13 +54,21 @@ export function generateMaintenanceReminderMessage(params: {
   const { customerName, itemName, scheduledDate, timeSlot, businessName } = params;
 
   let message = `Hi *${customerName}*,\n\n`;
-  message += `We're scheduling a maintenance visit for your *${itemName}*.\n\n`;
-  message += `📅 *Date:* ${scheduledDate}\n`;
+  message += `*MAINTENANCE ALERT*\n\n`;
+  message += `*Date:* ${scheduledDate}\n`;
   if (timeSlot) {
-    message += `🕐 *Time:* ${timeSlot}\n`;
+    message += `*Time:* ${timeSlot}\n`;
   }
-  message += `\nPlease confirm if this time slot works for you.\n\n`;
-  message += `_Thank you for choosing ${businessName}_`;
+  message += `\n`;
+  message += `Your *${itemName}* needs servicing to keep your drinking water safe.\n\n`;
+  message += `Skipping maintenance can lead to:\n`;
+  message += `- Impure water\n`;
+  message += `- Bacterial growth\n`;
+  message += `- Filter damage\n\n`;
+  message += `Let's keep your family healthy!\n\n`;
+  message += `*Reply 1 to Confirm*\n`;
+  message += `*Reply 2 to Reschedule*\n\n`;
+  message += `_${businessName}_`;
 
   return message;
 }
@@ -76,9 +84,12 @@ export function generateFollowUpReminderMessage(params: {
   const { customerName, itemName, businessName } = params;
 
   let message = `Hi *${customerName}*,\n\n`;
+  message += `*URGENT: Maintenance Overdue*\n\n`;
   message += `Your *${itemName}* maintenance is overdue.\n\n`;
-  message += `Please contact us to schedule a visit at your earliest convenience.\n\n`;
-  message += `_— ${businessName}_`;
+  message += `Don't risk your family's health - impure water can cause serious problems.\n\n`;
+  message += `Please contact us immediately to schedule a visit.\n\n`;
+  message += `*Reply 1 to Schedule Now*\n\n`;
+  message += `_${businessName}_`;
 
   return message;
 }
@@ -95,7 +106,7 @@ export function generatePaymentReminderMessage(params: {
 
   let message = `Hi *${customerName}*,\n\n`;
   message += `This is a friendly reminder from *${businessName}*.\n\n`;
-  message += `💰 *Pending Amount:* ₹${amount.toLocaleString('en-IN')}\n\n`;
+  message += `*Pending Amount:* Rs.${amount.toLocaleString('en-IN')}\n\n`;
   message += `Please clear your dues at your earliest convenience.\n\n`;
   message += `_We appreciate your continued support!_`;
 
@@ -103,26 +114,26 @@ export function generatePaymentReminderMessage(params: {
 }
 
 /**
- * Generate bill notification message
+ * Generate bill notification message (without link)
  */
 export function generateBillMessage(params: {
   customerName: string;
   businessName: string;
-  items: string; // Pre-formatted items string like "Rice 5kg ₹250 • Oil 1L ₹180"
+  items: string; // Pre-formatted items string like "Rice 5kg Rs.250 | Oil 1L Rs.180"
   total: number;
   date: string;
 }): string {
   const { customerName, businessName, items, total, date } = params;
 
   let message = `Hi *${customerName}*,\n\n`;
-  message += `Thank you for shopping at *${businessName}*! 🛍️\n\n`;
-  message += `📋 *BILL SUMMARY*\n`;
-  message += `━━━━━━━━━━━━━━━━━━\n\n`;
-  message += `🛒 *Items:*\n${items}\n\n`;
-  message += `💵 *Total:* ₹${total.toLocaleString('en-IN')}\n`;
-  message += `📅 *Date:* ${date}\n\n`;
-  message += `━━━━━━━━━━━━━━━━━━\n`;
-  message += `_Thank you for your business!_ 🙏`;
+  message += `Thank you for shopping at *${businessName}*!\n\n`;
+  message += `*BILL SUMMARY*\n`;
+  message += `------------------------\n\n`;
+  message += `*Items:*\n${items}\n\n`;
+  message += `*Total:* Rs.${total.toLocaleString('en-IN')}\n`;
+  message += `*Date:* ${date}\n\n`;
+  message += `------------------------\n`;
+  message += `_Thank you for your business!_`;
 
   return message;
 }
@@ -154,8 +165,8 @@ export function formatItemsForBill(
 ): string {
   return items
     .map((item) => {
-      const qty = item.unit ? `${item.quantity}${item.unit}` : `×${item.quantity}`;
-      return `${item.name} ${qty} ₹${item.price.toLocaleString('en-IN')}`;
+      const qty = item.unit ? `${item.quantity}${item.unit}` : `x${item.quantity}`;
+      return `${item.name} ${qty} Rs.${item.price.toLocaleString('en-IN')}`;
     })
-    .join(' • ');
+    .join(' | ');
 }
