@@ -62,6 +62,7 @@ export default function ScheduleMessagePage() {
         }
       } catch (err) {
         console.error('Search error:', err);
+        setCustomers([]);
       } finally {
         setSearchLoading(false);
       }

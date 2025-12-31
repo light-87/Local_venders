@@ -43,11 +43,14 @@ export default function MessagesPage() {
     try {
       const res = await fetch('/api/messages');
       const json = await res.json();
-      if (json.success) {
+      if (json.success && Array.isArray(json.data)) {
         setMessages(json.data);
+      } else {
+        setMessages([]);
       }
     } catch (error) {
       console.error('Failed to fetch messages:', error);
+      setMessages([]);
     } finally {
       setLoading(false);
     }
@@ -57,7 +60,7 @@ export default function MessagesPage() {
     try {
       const res = await fetch('/api/settings');
       const json = await res.json();
-      if (json.success && json.data.vendor.whatsapp_phone_number_id) {
+      if (json.success && json.data?.vendor?.whatsapp_phone_number_id) {
         setHasWhatsApp(true);
       }
     } catch (error) {
