@@ -94,7 +94,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
         }
 
         const formattedSales = (sales || []).map((sale) => {
-          const customer = sale.customers as { name: string } | null;
+          const customer = sale.customers as unknown as { name: string } | null;
           return {
             id: sale.id,
             bill_number: sale.bill_number,
@@ -127,7 +127,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
         }
 
         const formattedExpenses = (expenses || []).map((expense) => {
-          const category = expense.expense_categories as { name: string } | null;
+          const category = expense.expense_categories as unknown as { name: string } | null;
           return {
             id: expense.id,
             description: expense.description,
