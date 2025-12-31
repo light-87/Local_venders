@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { validateSession } from '@/lib/auth';
+import { validateSession, deleteAllVendorSessions } from '@/lib/auth';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { vendorProfileSchema, pinSchema } from '@/lib/utils/validators';
+import { pinSchema } from '@/lib/utils/validators';
 import { hashPin } from '@/lib/auth';
 import { z } from 'zod';
+
+export const dynamic = 'force-dynamic';
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -175,6 +177,96 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     });
   } catch (error) {
     console.error('Error in PATCH /api/admin/vendors/[id]:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+// DELETE /api/admin/vendors/[id] - Permanently delete vendor and all data
+export async function DELETE(request: NextRequest, context: RouteContext) {
+  try {
+    const session = await validateSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    if (!session.isAdmin) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    const { id } = await context.params;
+    const supabase = createAdminClient();
+
+    // Check vendor exists and is not admin
+    const { data: existingVendor } = await supabase
+      .from('vendors')
+      .select('id, name')
+      .eq('id', id)
+      .eq('is_admin', false)
+      .single();
+
+    if (!existingVendor) {
+      return NextResponse.json({ error: 'Vendor not found' }, { status: 404 });
+    }
+
+    // Delete all vendor sessions first
+    await deleteAllVendorSessions(id);
+
+    // Delete in order to respect foreign key constraints
+    // 1. Delete sale_items (depends on sales)
+    await supabase.from('sale_items').delete().eq('vendor_id', id);
+
+    // 2. Delete message_logs (depends on scheduled_messages)
+    await supabase.from('message_logs').delete().eq('vendor_id', id);
+
+    // 3. Delete scheduled_messages
+    await supabase.from('scheduled_messages').delete().eq('vendor_id', id);
+
+    // 4. Delete sales
+    await supabase.from('sales').delete().eq('vendor_id', id);
+
+    // 5. Delete expenses
+    await supabase.from('expenses').delete().eq('vendor_id', id);
+
+    // 6. Delete expense_categories
+    await supabase.from('expense_categories').delete().eq('vendor_id', id);
+
+    // 7. Delete income
+    await supabase.from('income').delete().eq('vendor_id', id);
+
+    // 8. Delete inventory_items
+    await supabase.from('inventory_items').delete().eq('vendor_id', id);
+
+    // 9. Delete inventory_categories
+    await supabase.from('inventory_categories').delete().eq('vendor_id', id);
+
+    // 10. Delete customers
+    await supabase.from('customers').delete().eq('vendor_id', id);
+
+    // 11. Delete accounts
+    await supabase.from('accounts').delete().eq('vendor_id', id);
+
+    // 12. Delete bill_sequences
+    await supabase.from('bill_sequences').delete().eq('vendor_id', id);
+
+    // 13. Delete vendor_sessions
+    await supabase.from('vendor_sessions').delete().eq('vendor_id', id);
+
+    // 14. Finally delete the vendor
+    const { error: deleteError } = await supabase
+      .from('vendors')
+      .delete()
+      .eq('id', id);
+
+    if (deleteError) {
+      console.error('Error deleting vendor:', deleteError);
+      return NextResponse.json({ error: 'Failed to delete vendor' }, { status: 500 });
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: `Vendor "${existingVendor.name}" and all associated data deleted permanently`
+    });
+  } catch (error) {
+    console.error('Error in DELETE /api/admin/vendors/[id]:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
