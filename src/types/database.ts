@@ -72,10 +72,12 @@ export interface Sale {
   subtotal: number;
   discount_amount: number;
   discount_percent: number;
+  discount_description: string | null;
   tax_amount: number;
   total_amount: number;
   payment_status: 'paid' | 'pending' | 'partial';
   notes: string | null;
+  sale_date: string;
   created_at: string;
   // Joined fields
   customer?: Customer;
@@ -132,6 +134,7 @@ export interface Transaction {
   vendor_id: string;
   account_id: string;
   sale_id: string | null;
+  expense_id: string | null;
   name: string;
   description: string | null;
   type: 'income' | 'expense';
@@ -141,6 +144,7 @@ export interface Transaction {
   // Joined fields
   account?: Account;
   sale?: Sale;
+  expense?: Expense;
 }
 
 export interface ScheduledMessage {

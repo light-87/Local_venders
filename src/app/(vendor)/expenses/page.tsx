@@ -1,31 +1,136 @@
-import { validateSession } from '@/lib/auth';
-import { createAdminClient } from '@/lib/supabase/admin';
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
 import { formatCurrency, formatDateShort } from '@/lib/utils/format';
 import { PageHeader } from '@/components/layout';
-import { Card, Badge, EmptyState } from '@/components/ui';
+import { Card, EmptyState, ExpenseEditModal, useToast } from '@/components/ui';
 import { Receipt, Plus } from 'lucide-react';
 import Link from 'next/link';
+import type { Expense, ExpenseCategory, Account } from '@/types';
 
-async function getExpenses(vendorId: string) {
-  const supabase = createAdminClient();
+export default function ExpensesPage() {
+  const { error, success } = useToast();
+  const [loading, setLoading] = useState(true);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [categories, setCategories] = useState<ExpenseCategory[]>([]);
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [total, setTotal] = useState(0);
 
-  const { data: expenses } = await supabase
-    .from('expenses')
-    .select('*, category:expense_categories(id, name), account:accounts(id, name)')
-    .eq('vendor_id', vendorId)
-    .order('expense_date', { ascending: false })
-    .limit(50);
+  // Modal states
+  const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
 
-  const total = expenses?.reduce((sum, e) => sum + Number(e.amount), 0) ?? 0;
+  // Fetch data
+  const fetchData = useCallback(async () => {
+    try {
+      const [expRes, catRes, accRes] = await Promise.all([
+        fetch('/api/expenses'),
+        fetch('/api/expenses/categories'),
+        fetch('/api/accounts'),
+      ]);
 
-  return { expenses: expenses ?? [], total };
-}
+      const expData = await expRes.json();
+      const catData = await catRes.json();
+      const accData = await accRes.json();
 
-export default async function ExpensesPage() {
-  const session = await validateSession();
-  if (!session) return null;
+      if (expData.success) {
+        setExpenses(expData.expenses);
+        setTotal(expData.total);
+      }
+      if (catData.success) {
+        setCategories(catData.categories);
+      }
+      if (accData.success) {
+        setAccounts(accData.accounts);
+      }
+    } catch {
+      error('Failed to load data');
+    } finally {
+      setLoading(false);
+    }
+  }, [error]);
 
-  const { expenses, total } = await getExpenses(session.id);
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // Handle expense click - fetch full details
+  const handleExpenseClick = async (expense: Expense) => {
+    try {
+      const res = await fetch(`/api/expenses/${expense.id}`);
+      const data = await res.json();
+
+      if (data.success) {
+        setSelectedExpense(data.expense);
+        setShowEditModal(true);
+      } else {
+        error('Failed to load expense details');
+      }
+    } catch {
+      error('Failed to load expense details');
+    }
+  };
+
+  // Handle expense update
+  const handleUpdateExpense = async (id: string, updateData: {
+    categoryId?: string;
+    accountId?: string;
+    amount?: number;
+    description?: string | null;
+    expenseDate?: string;
+  }) => {
+    const res = await fetch(`/api/expenses/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updateData),
+    });
+    const data = await res.json();
+
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || 'Failed to update expense');
+    }
+
+    success('Expense updated');
+    await fetchData();
+  };
+
+  // Handle expense delete
+  const handleDeleteExpense = async (id: string) => {
+    const res = await fetch(`/api/expenses/${id}`, {
+      method: 'DELETE',
+    });
+    const data = await res.json();
+
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || 'Failed to delete expense');
+    }
+
+    success('Expense deleted');
+    await fetchData();
+  };
+
+  if (loading) {
+    return (
+      <div>
+        <PageHeader
+          title="Expenses"
+          action={
+            <Link
+              href="/expenses/new"
+              className="p-2 bg-brand-500 text-white rounded-xl"
+            >
+              <Plus className="w-5 h-5" />
+            </Link>
+          }
+        />
+        <div className="p-4 space-y-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-20 bg-gray-100 rounded-2xl animate-pulse" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -59,7 +164,12 @@ export default async function ExpensesPage() {
         {expenses.length > 0 ? (
           <div className="space-y-2">
             {expenses.map((expense) => (
-              <Card key={expense.id}>
+              <Card
+                key={expense.id}
+                variant="interactive"
+                className="cursor-pointer"
+                onClick={() => handleExpenseClick(expense)}
+              >
                 <div className="flex justify-between items-start">
                   <div>
                     <p className="font-medium text-gray-900">
@@ -90,6 +200,20 @@ export default async function ExpensesPage() {
           />
         )}
       </div>
+
+      {/* Expense Edit Modal */}
+      <ExpenseEditModal
+        isOpen={showEditModal}
+        onClose={() => {
+          setShowEditModal(false);
+          setSelectedExpense(null);
+        }}
+        expense={selectedExpense}
+        categories={categories}
+        accounts={accounts}
+        onUpdate={handleUpdateExpense}
+        onDelete={handleDeleteExpense}
+      />
     </div>
   );
 }

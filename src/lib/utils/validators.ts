@@ -69,8 +69,28 @@ export const createSaleSchema = z.object({
   items: z.array(saleItemSchema).min(1, 'At least one item is required'),
   discountAmount: z.number().min(0).optional(),
   discountPercent: z.number().min(0).max(100).optional(),
+  discountDescription: z.string().optional(),
   taxAmount: z.number().min(0).optional(),
   notes: z.string().optional(),
+  saleDate: z.string().optional(),
+});
+
+// Schema for updating a sale (only editable fields)
+export const updateSaleSchema = z.object({
+  discountAmount: z.number().min(0).optional(),
+  discountPercent: z.number().min(0).max(100).optional(),
+  discountDescription: z.string().optional().nullable(),
+  saleDate: z.string().optional(),
+  notes: z.string().optional().nullable(),
+});
+
+// Schema for updating an expense
+export const updateExpenseSchema = z.object({
+  categoryId: z.string().uuid().optional(),
+  accountId: z.string().uuid().optional(),
+  amount: z.number().positive('Amount must be positive').optional(),
+  description: z.string().optional().nullable(),
+  expenseDate: z.string().optional(),
 });
 
 // Expense schemas
@@ -126,6 +146,8 @@ export type CustomerInput = z.infer<typeof customerSchema>;
 export type InventoryItemInput = z.infer<typeof inventoryItemSchema>;
 export type InventoryCategoryInput = z.infer<typeof inventoryCategorySchema>;
 export type CreateSaleInput = z.infer<typeof createSaleSchema>;
+export type UpdateSaleInput = z.infer<typeof updateSaleSchema>;
+export type UpdateExpenseInput = z.infer<typeof updateExpenseSchema>;
 export type ExpenseInput = z.infer<typeof expenseSchema>;
 export type ExpenseCategoryInput = z.infer<typeof expenseCategorySchema>;
 export type AccountInput = z.infer<typeof accountSchema>;

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { validateSession } from '@/lib/auth';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { expenseSchema } from '@/lib/utils/validators';
+import { getISTDateString } from '@/lib/utils/format';
 
 export async function GET(request: Request) {
   try {
@@ -88,6 +89,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid category' }, { status: 400 });
     }
 
+    // Use provided date or current IST date
+    const expenseDate = data.expenseDate || getISTDateString();
+
     // Create expense
     const { data: expense, error: expenseError } = await supabase
       .from('expenses')
@@ -98,7 +102,7 @@ export async function POST(request: Request) {
         category_name: category.name,
         amount: data.amount,
         description: data.description ?? null,
-        expense_date: data.expenseDate ?? new Date().toISOString().split('T')[0],
+        expense_date: expenseDate,
       })
       .select()
       .single();
@@ -123,6 +127,18 @@ export async function POST(request: Request) {
         .update({ balance: account.balance - data.amount })
         .eq('id', data.accountId);
     }
+
+    // Create transaction record for unified transaction view (Money tab)
+    await supabase.from('transactions').insert({
+      vendor_id: session.id,
+      account_id: data.accountId,
+      expense_id: expense.id,
+      name: category.name,
+      description: data.description ?? null,
+      type: 'expense',
+      amount: data.amount,
+      transaction_date: expenseDate,
+    });
 
     return NextResponse.json({ success: true, expense });
   } catch (error) {

@@ -63,6 +63,14 @@ export async function DELETE(
 
     const account = transaction.account as { id: string; balance: number } | null;
 
+    // If transaction is linked to an expense, delete the expense
+    if (transaction.expense_id) {
+      await supabase
+        .from('expenses')
+        .delete()
+        .eq('id', transaction.expense_id);
+    }
+
     // If transaction is linked to a sale, delete the sale and all related records
     if (transaction.sale_id) {
       // Get sale details for customer update
@@ -161,6 +169,7 @@ export async function DELETE(
     return NextResponse.json({
       success: true,
       deletedSale: !!transaction.sale_id,
+      deletedExpense: !!transaction.expense_id,
     });
   } catch (error) {
     console.error('Transaction delete error:', error);

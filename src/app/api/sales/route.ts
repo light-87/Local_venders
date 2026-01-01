@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { validateSession } from '@/lib/auth';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createSaleSchema } from '@/lib/utils/validators';
+import { getISTDateString } from '@/lib/utils/format';
 import { randomBytes } from 'crypto';
 
 export async function GET(request: Request) {
@@ -145,6 +146,9 @@ export async function POST(request: Request) {
 
     const totalAmount = subtotal - discountAmount + (data.taxAmount ?? 0);
 
+    // Use provided sale date or current IST date
+    const saleDate = data.saleDate || getISTDateString();
+
     // Create sale
     const { data: sale, error: saleError } = await supabase
       .from('sales')
@@ -157,10 +161,12 @@ export async function POST(request: Request) {
         subtotal,
         discount_amount: discountAmount,
         discount_percent: data.discountPercent ?? 0,
+        discount_description: data.discountDescription ?? null,
         tax_amount: data.taxAmount ?? 0,
         total_amount: totalAmount,
         payment_status: 'paid',
         notes: data.notes ?? null,
+        sale_date: saleDate,
       })
       .select()
       .single();
@@ -254,7 +260,7 @@ export async function POST(request: Request) {
       sale_id: sale.id,
       amount: totalAmount,
       description: `Sale ${billNumber}`,
-      income_date: new Date().toISOString().split('T')[0],
+      income_date: saleDate,
     });
 
     // Create transaction record for unified transaction view
@@ -266,7 +272,7 @@ export async function POST(request: Request) {
       description: customerId ? 'Customer sale' : 'Walk-in sale',
       type: 'income',
       amount: totalAmount,
-      transaction_date: new Date().toISOString().split('T')[0],
+      transaction_date: saleDate,
     });
 
     // Update customer stats if linked
