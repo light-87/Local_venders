@@ -60,6 +60,30 @@ export default function TransactionsPage() {
     }
   };
 
+  // Handle transaction update
+  const handleUpdateTransaction = async (id: string, updateData: {
+    name?: string;
+    description?: string | null;
+    amount?: number;
+    accountId?: string;
+    transactionDate?: string;
+  }) => {
+    const res = await fetch(`/api/transactions/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updateData),
+    });
+    const data = await res.json();
+
+    if (!res.ok || !data.success) {
+      error(data.error || 'Failed to update transaction');
+      throw new Error(data.error || 'Failed to update transaction');
+    }
+
+    success('Transaction updated');
+    await fetchTransactions();
+  };
+
   // Handle transaction delete
   const handleDeleteTransaction = async (id: string) => {
     const res = await fetch(`/api/transactions/${id}`, {
@@ -71,7 +95,7 @@ export default function TransactionsPage() {
       throw new Error(data.error || 'Failed to delete transaction');
     }
 
-    success(data.deletedSale ? 'Transaction and sale deleted' : 'Transaction deleted');
+    success(data.deletedSale ? 'Transaction and sale deleted' : data.deletedExpense ? 'Transaction and expense deleted' : 'Transaction deleted');
     await fetchTransactions();
   };
 
@@ -324,6 +348,8 @@ export default function TransactionsPage() {
           setSelectedTransaction(null);
         }}
         transaction={selectedTransaction}
+        accounts={accounts}
+        onUpdate={handleUpdateTransaction}
         onDelete={handleDeleteTransaction}
       />
     </div>

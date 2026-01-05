@@ -12,7 +12,7 @@ import {
   Badge,
   useToast,
 } from '@/components/ui';
-import { formatCurrency, formatQuantity } from '@/lib/utils/format';
+import { formatCurrency, formatQuantity, getISTDateString } from '@/lib/utils/format';
 import {
   Search,
   Plus,
@@ -25,6 +25,7 @@ import {
   ChevronUp,
   Shield,
   Wrench,
+  Calendar,
 } from 'lucide-react';
 import type { InventoryItem, Account, Customer, CartItem } from '@/types';
 
@@ -52,6 +53,8 @@ export default function NewSalePage() {
   const [selectedAccountId, setSelectedAccountId] = useState('');
   const [discountAmount, setDiscountAmount] = useState(0);
   const [discountPercent, setDiscountPercent] = useState(0);
+  const [discountDescription, setDiscountDescription] = useState('');
+  const [saleDate, setSaleDate] = useState(getISTDateString());
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
 
   // Load initial data
@@ -242,6 +245,8 @@ export default function NewSalePage() {
           })),
           discountAmount: discountPercent > 0 ? 0 : discountAmount,
           discountPercent: discountPercent > 0 ? discountPercent : 0,
+          discountDescription: discountDescription || undefined,
+          saleDate,
         }),
       });
 
@@ -568,7 +573,7 @@ export default function NewSalePage() {
               </div>
 
               {/* Discount */}
-              <div className="mt-4 pt-4 border-t border-gray-100">
+              <div className="mt-4 pt-4 border-t border-gray-100 space-y-3">
                 <div className="flex gap-2">
                   <div className="flex-1">
                     <Input
@@ -595,6 +600,26 @@ export default function NewSalePage() {
                     />
                   </div>
                 </div>
+                {(discountAmount > 0 || discountPercent > 0) && (
+                  <Input
+                    placeholder="Discount reason (e.g., Festival offer, Loyal customer)"
+                    value={discountDescription}
+                    onChange={(e) => setDiscountDescription(e.target.value)}
+                  />
+                )}
+              </div>
+
+              {/* Sale Date */}
+              <div className="mt-4 pt-4 border-t border-gray-100">
+                <label className="flex items-center gap-1.5 text-sm font-medium text-gray-600 mb-2">
+                  <Calendar className="w-4 h-4" />
+                  Sale Date
+                </label>
+                <Input
+                  type="date"
+                  value={saleDate}
+                  onChange={(e) => setSaleDate(e.target.value)}
+                />
               </div>
 
               {/* Totals */}

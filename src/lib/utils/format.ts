@@ -1,4 +1,37 @@
 import { format, formatDistanceToNow, isToday, isYesterday } from 'date-fns';
+import { toZonedTime, formatInTimeZone } from 'date-fns-tz';
+
+// Indian Standard Time timezone
+const IST_TIMEZONE = 'Asia/Kolkata';
+
+/**
+ * Get current date in IST
+ */
+export function getISTDate(): Date {
+  return toZonedTime(new Date(), IST_TIMEZONE);
+}
+
+/**
+ * Get current date string in IST (YYYY-MM-DD format)
+ */
+export function getISTDateString(): string {
+  return formatInTimeZone(new Date(), IST_TIMEZONE, 'yyyy-MM-dd');
+}
+
+/**
+ * Get current datetime string in IST (ISO format)
+ */
+export function getISTDateTimeString(): string {
+  return formatInTimeZone(new Date(), IST_TIMEZONE, "yyyy-MM-dd'T'HH:mm:ssXXX");
+}
+
+/**
+ * Format a date in IST timezone
+ */
+export function formatDateIST(date: Date | string, formatStr: string = 'd MMM yyyy'): string {
+  const d = typeof date === 'string' ? new Date(date) : date;
+  return formatInTimeZone(d, IST_TIMEZONE, formatStr);
+}
 
 /**
  * Format currency in INR
@@ -20,28 +53,29 @@ export function formatNumber(num: number): string {
 }
 
 /**
- * Format date in a user-friendly way
+ * Format date in a user-friendly way (IST timezone)
  */
 export function formatDate(date: Date | string): string {
   const d = typeof date === 'string' ? new Date(date) : date;
+  const istDate = toZonedTime(d, IST_TIMEZONE);
 
-  if (isToday(d)) {
-    return `Today, ${format(d, 'h:mm a')}`;
+  if (isToday(istDate)) {
+    return `Today, ${formatInTimeZone(d, IST_TIMEZONE, 'h:mm a')}`;
   }
 
-  if (isYesterday(d)) {
-    return `Yesterday, ${format(d, 'h:mm a')}`;
+  if (isYesterday(istDate)) {
+    return `Yesterday, ${formatInTimeZone(d, IST_TIMEZONE, 'h:mm a')}`;
   }
 
-  return format(d, 'd MMM yyyy');
+  return formatInTimeZone(d, IST_TIMEZONE, 'd MMM yyyy');
 }
 
 /**
- * Format date for display (short)
+ * Format date for display (short) - IST timezone
  */
 export function formatDateShort(date: Date | string): string {
   const d = typeof date === 'string' ? new Date(date) : date;
-  return format(d, 'd MMM yyyy');
+  return formatInTimeZone(d, IST_TIMEZONE, 'd MMM yyyy');
 }
 
 /**

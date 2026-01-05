@@ -1,31 +1,111 @@
-import { validateSession } from '@/lib/auth';
-import { createAdminClient } from '@/lib/supabase/admin';
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
 import { formatCurrency, formatDate } from '@/lib/utils/format';
 import { PageHeader } from '@/components/layout';
-import { Card, EmptyState } from '@/components/ui';
-import { ShoppingBag } from 'lucide-react';
+import { Card, EmptyState, SaleEditModal, useToast } from '@/components/ui';
+import { ShoppingBag, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
+import type { Sale } from '@/types';
 
-async function getSales(vendorId: string) {
-  const supabase = createAdminClient();
+export default function SalesPage() {
+  const { error, success } = useToast();
+  const [loading, setLoading] = useState(true);
+  const [sales, setSales] = useState<Sale[]>([]);
+  const [total, setTotal] = useState(0);
 
-  const { data: sales } = await supabase
-    .from('sales')
-    .select('*, customer:customers(id, name)')
-    .eq('vendor_id', vendorId)
-    .order('created_at', { ascending: false })
-    .limit(50);
+  // Modal states
+  const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
 
-  const total = sales?.reduce((sum, s) => sum + Number(s.total_amount), 0) ?? 0;
+  // Fetch sales
+  const fetchSales = useCallback(async () => {
+    try {
+      const res = await fetch('/api/sales');
+      const data = await res.json();
 
-  return { sales: sales ?? [], total };
-}
+      if (data.success) {
+        setSales(data.sales);
+        setTotal(data.total);
+      }
+    } catch {
+      error('Failed to load sales');
+    } finally {
+      setLoading(false);
+    }
+  }, [error]);
 
-export default async function SalesPage() {
-  const session = await validateSession();
-  if (!session) return null;
+  useEffect(() => {
+    fetchSales();
+  }, [fetchSales]);
 
-  const { sales, total } = await getSales(session.id);
+  // Handle sale click - fetch full details
+  const handleSaleClick = async (sale: Sale) => {
+    try {
+      const res = await fetch(`/api/sales/${sale.id}`);
+      const data = await res.json();
+
+      if (data.success) {
+        setSelectedSale(data.sale);
+        setShowEditModal(true);
+      } else {
+        error('Failed to load sale details');
+      }
+    } catch {
+      error('Failed to load sale details');
+    }
+  };
+
+  // Handle sale update
+  const handleUpdateSale = async (id: string, updateData: {
+    discountAmount?: number;
+    discountPercent?: number;
+    discountDescription?: string | null;
+    saleDate?: string;
+    notes?: string | null;
+  }) => {
+    const res = await fetch(`/api/sales/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updateData),
+    });
+    const data = await res.json();
+
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || 'Failed to update sale');
+    }
+
+    success('Sale updated');
+    await fetchSales();
+  };
+
+  // Handle sale delete
+  const handleDeleteSale = async (id: string) => {
+    const res = await fetch(`/api/sales/${id}`, {
+      method: 'DELETE',
+    });
+    const data = await res.json();
+
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || 'Failed to delete sale');
+    }
+
+    success('Sale deleted');
+    await fetchSales();
+  };
+
+  if (loading) {
+    return (
+      <div>
+        <PageHeader title="Sales History" showBack backHref="/settings" />
+        <div className="p-4 space-y-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-20 bg-gray-100 rounded-2xl animate-pulse" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -53,16 +133,29 @@ export default async function SalesPage() {
                 ? (sale.customer as { name: string }).name
                 : 'Walk-in';
               return (
-              <Link key={sale.id} href={`/bill/${sale.bill_id}`}>
-                <Card variant="interactive">
+                <Card
+                  key={sale.id}
+                  variant="interactive"
+                  className="cursor-pointer"
+                  onClick={() => handleSaleClick(sale)}
+                >
                   <div className="flex justify-between items-start">
-                    <div>
-                      <p className="font-medium text-gray-900">{sale.bill_number}</p>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-gray-900">{sale.bill_number}</p>
+                        <Link
+                          href={`/bill/${sale.bill_id}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-brand-500 hover:text-brand-600"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                        </Link>
+                      </div>
                       <p className="text-sm text-gray-500">
                         {customerName}
                       </p>
                       <p className="text-xs text-gray-400 mt-1">
-                        {formatDate(sale.created_at)}
+                        {formatDate(sale.sale_date || sale.created_at)}
                       </p>
                     </div>
                     <p className="font-semibold text-green-600 tabular-nums">
@@ -70,8 +163,8 @@ export default async function SalesPage() {
                     </p>
                   </div>
                 </Card>
-              </Link>
-            )})}
+              );
+            })}
           </div>
         ) : (
           <EmptyState
@@ -81,6 +174,18 @@ export default async function SalesPage() {
           />
         )}
       </div>
+
+      {/* Sale Edit Modal */}
+      <SaleEditModal
+        isOpen={showEditModal}
+        onClose={() => {
+          setShowEditModal(false);
+          setSelectedSale(null);
+        }}
+        sale={selectedSale}
+        onUpdate={handleUpdateSale}
+        onDelete={handleDeleteSale}
+      />
     </div>
   );
 }

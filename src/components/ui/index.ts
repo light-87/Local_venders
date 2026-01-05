@@ -19,6 +19,10 @@ export { Modal, ConfirmModal } from './modal';
 
 export { TransactionDetailModal } from './transaction-detail-modal';
 
+export { SaleEditModal } from './sale-edit-modal';
+
+export { ExpenseEditModal } from './expense-edit-modal';
+
 export { Select } from './select';
 export type { SelectOption, SelectProps } from './select';
 

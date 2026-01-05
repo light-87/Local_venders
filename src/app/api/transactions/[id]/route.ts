@@ -1,6 +1,16 @@
 import { NextResponse } from 'next/server';
 import { validateSession } from '@/lib/auth';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { z } from 'zod';
+
+// Schema for updating a transaction
+const updateTransactionSchema = z.object({
+  name: z.string().min(1).optional(),
+  description: z.string().optional().nullable(),
+  amount: z.number().positive().optional(),
+  accountId: z.string().uuid().optional(),
+  transactionDate: z.string().optional(),
+});
 
 export async function GET(
   request: Request,
@@ -36,6 +46,138 @@ export async function GET(
   }
 }
 
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await validateSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { id } = await params;
+    const body = await request.json();
+
+    // Validate input
+    const result = updateTransactionSchema.safeParse(body);
+    if (!result.success) {
+      return NextResponse.json(
+        { error: result.error.errors[0]?.message || 'Invalid data' },
+        { status: 400 }
+      );
+    }
+
+    const supabase = createAdminClient();
+    const data = result.data;
+
+    // Get existing transaction
+    const { data: existingTransaction, error: fetchError } = await supabase
+      .from('transactions')
+      .select('*, account:accounts(id, balance)')
+      .eq('id', id)
+      .eq('vendor_id', session.id)
+      .single();
+
+    if (fetchError || !existingTransaction) {
+      return NextResponse.json({ error: 'Transaction not found' }, { status: 404 });
+    }
+
+    // Don't allow editing linked sales/expenses - edit them directly instead
+    if (existingTransaction.sale_id) {
+      return NextResponse.json(
+        { error: 'Cannot edit sale transactions. Edit the sale directly from Sales History.' },
+        { status: 400 }
+      );
+    }
+
+    if (existingTransaction.expense_id) {
+      return NextResponse.json(
+        { error: 'Cannot edit expense transactions. Edit the expense directly from Expenses.' },
+        { status: 400 }
+      );
+    }
+
+    const oldAmount = existingTransaction.amount;
+    const oldAccountId = existingTransaction.account_id;
+    const newAmount = data.amount ?? oldAmount;
+    const newAccountId = data.accountId ?? oldAccountId;
+
+    // Prepare update data
+    const updateData: Record<string, unknown> = {};
+    if (data.name !== undefined) updateData.name = data.name;
+    if (data.description !== undefined) updateData.description = data.description;
+    if (data.amount !== undefined) updateData.amount = data.amount;
+    if (data.accountId !== undefined) updateData.account_id = data.accountId;
+    if (data.transactionDate !== undefined) updateData.transaction_date = data.transactionDate;
+
+    // Update transaction
+    const { data: updatedTransaction, error: updateError } = await supabase
+      .from('transactions')
+      .update(updateData)
+      .eq('id', id)
+      .select('*, account:accounts(id, name)')
+      .single();
+
+    if (updateError) {
+      console.error('Transaction update error:', updateError);
+      return NextResponse.json(
+        { error: 'Failed to update transaction' },
+        { status: 500 }
+      );
+    }
+
+    // Handle account balance changes
+    const transactionType = existingTransaction.type;
+
+    if (newAccountId !== oldAccountId) {
+      // Restore balance to old account
+      const oldAccount = existingTransaction.account as { id: string; balance: number } | null;
+      if (oldAccount) {
+        const restoreAmount = transactionType === 'income' ? -oldAmount : oldAmount;
+        await supabase
+          .from('accounts')
+          .update({ balance: oldAccount.balance + restoreAmount })
+          .eq('id', oldAccountId);
+      }
+
+      // Apply to new account
+      const { data: newAccount } = await supabase
+        .from('accounts')
+        .select('balance')
+        .eq('id', newAccountId)
+        .single();
+
+      if (newAccount) {
+        const applyAmount = transactionType === 'income' ? newAmount : -newAmount;
+        await supabase
+          .from('accounts')
+          .update({ balance: newAccount.balance + applyAmount })
+          .eq('id', newAccountId);
+      }
+    } else if (newAmount !== oldAmount) {
+      // Same account, just adjust the difference
+      const account = existingTransaction.account as { id: string; balance: number } | null;
+      if (account) {
+        const diff = newAmount - oldAmount;
+        const balanceChange = transactionType === 'income' ? diff : -diff;
+        await supabase
+          .from('accounts')
+          .update({ balance: account.balance + balanceChange })
+          .eq('id', oldAccountId);
+      }
+    }
+
+    return NextResponse.json({ success: true, transaction: updatedTransaction });
+  } catch (error) {
+    console.error('Transaction update error:', error);
+    return NextResponse.json(
+      { error: 'Failed to update transaction' },
+      { status: 500 }
+    );
+  }
+}
+
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -62,6 +204,14 @@ export async function DELETE(
     }
 
     const account = transaction.account as { id: string; balance: number } | null;
+
+    // If transaction is linked to an expense, delete the expense
+    if (transaction.expense_id) {
+      await supabase
+        .from('expenses')
+        .delete()
+        .eq('id', transaction.expense_id);
+    }
 
     // If transaction is linked to a sale, delete the sale and all related records
     if (transaction.sale_id) {
@@ -161,6 +311,7 @@ export async function DELETE(
     return NextResponse.json({
       success: true,
       deletedSale: !!transaction.sale_id,
+      deletedExpense: !!transaction.expense_id,
     });
   } catch (error) {
     console.error('Transaction delete error:', error);
