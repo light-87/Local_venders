@@ -41,7 +41,7 @@ async function getCustomer(vendorId: string, customerId: string) {
   // Get recent sales
   const { data: sales } = await supabase
     .from('sales')
-    .select('id, bill_number, bill_id, total_amount, created_at')
+    .select('id, bill_number, bill_id, total_amount, sale_date, created_at')
     .eq('customer_id', customerId)
     .order('created_at', { ascending: false })
     .limit(10);
@@ -162,7 +162,7 @@ export default async function CustomerDetailPage({
                         <div>
                           <p className="font-medium text-gray-900">{sale.bill_number}</p>
                           <p className="text-sm text-gray-500">
-                            {formatDate(sale.created_at)}
+                            {formatDate(sale.sale_date || sale.created_at)}
                           </p>
                         </div>
                       </div>
