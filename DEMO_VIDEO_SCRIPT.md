@@ -1,5 +1,5 @@
 # VendorFlow Demo Video Script
-## Duration: 4-5 Minutes
+## Duration: 5-5.5 Minutes
 
 ---
 
@@ -183,7 +183,7 @@ Your inventory practically manages itself."
 
 ---
 
-## SECTION 6: MONEY & EXPENSES (3:45 - 4:15)
+## SECTION 6: MONEY & EXPENSES (3:45 - 4:00)
 
 ### [SCREEN: Navigate to Money/Transactions tab]
 
@@ -197,20 +197,61 @@ Your inventory practically manages itself."
 
 Add an expense - rent, transport, supplies - and it's tracked. Click any transaction to edit or see details."
 
-### [SCREEN: Navigate to Analytics]
+---
+
+## SECTION 7: ANALYTICS - YOUR BUSINESS INTELLIGENCE (4:00 - 4:45)
+
+### [SCREEN: Navigate to Analytics from home page]
 
 **NARRATOR:**
-"Want the big picture? Analytics shows you:
-- Weekly sales trends
-- Expense breakdown
-- Net profit
-- All visualized in beautiful charts
+"Now let me show you the Analytics page - this is where you get the complete picture of your business."
 
-No more 'where did the money go?' You know exactly where you stand."
+### [ACTION: Click on Analytics card]
+
+### [SCREEN: Analytics page with period selector]
+
+**NARRATOR:**
+"First, choose your time period - Last 12 Months, This Year, or All Time. One tap to switch."
+
+### [ACTION: Show period selector]
+
+**NARRATOR:**
+"At the top, three key numbers: Total Income, Total Expenses, and Net Profit. Your business health at a glance."
+
+### [SCREEN: Scroll to Monthly Breakdown]
+
+**NARRATOR:**
+"Below that, a month-by-month breakdown. See exactly how each month performed - income, expenses, net profit. Green means you're making money, red means you need to cut costs."
+
+### [ACTION: Show table with month data]
+
+### [SCREEN: Maintenance Services Chart]
+
+**NARRATOR:**
+"This chart shows your maintenance services completed each month. Track your service business growth over time."
+
+### [SCREEN: Scroll to Restock Recommendations]
+
+**NARRATOR:**
+"Here's where it gets smart. After a few months of sales data, VendorFlow analyzes your patterns and shows Restock Recommendations."
+
+### [ACTION: Point to recommendation items]
+
+**NARRATOR:**
+"It tells you: 'This item sells 8 units per month, you have 2 left - order 15 units.' See the Top Seller badge? That's your best-moving inventory. Low Stock warning? Order immediately.
+
+No more guessing. Data-driven decisions."
+
+### [SCREEN: Profit Margin Analysis]
+
+**NARRATOR:**
+"And finally, Profit Analysis. See your top earners - items making you the most money. Best margins on the left, items needing price review on the right.
+
+Now you know exactly which products to push and which to reconsider."
 
 ---
 
-## SECTION 7: WHATSAPP INTEGRATION SUMMARY (4:15 - 4:30)
+## SECTION 8: WHATSAPP INTEGRATION SUMMARY (4:45 - 5:00)
 
 ### [SCREEN: Show WhatsApp messages being sent]
 
@@ -225,7 +266,7 @@ All messages are health-focused, professional, and designed to get responses. Yo
 
 ---
 
-## CLOSING (4:30 - 5:00)
+## CLOSING (5:00 - 5:30)
 
 ### [SCREEN: Dashboard overview]
 
@@ -234,12 +275,13 @@ All messages are health-focused, professional, and designed to get responses. Yo
 
 One - Automatic maintenance reminders. Never miss a service call.
 Two - Per-item warranty tracking. Instant answers for customers.
-Three - Smart inventory with low stock alerts and recommendations.
+Three - Smart inventory with low stock alerts.
 Four - Professional WhatsApp communication. One tap sends.
 Five - Complete financial tracking. Know your profit.
 Six - Digital bills. Shareable, professional, permanent.
+Seven - Powerful Analytics with restock recommendations and profit analysis.
 
-This is how you capture 100% of your maintenance revenue. This is how you never lose a customer to a forgotten reminder.
+This is how you capture 100% of your maintenance revenue. This is how you make data-driven business decisions.
 
 This is VendorFlow."
 
@@ -288,9 +330,10 @@ Download now and start capturing every rupee you're currently losing."
 | Reminders | 45 sec | 2:45 |
 | Customer Warranty | 30 sec | 3:15 |
 | Inventory | 30 sec | 3:45 |
-| Money & Expenses | 30 sec | 4:15 |
-| WhatsApp Summary | 15 sec | 4:30 |
-| Closing | 30 sec | 5:00 |
+| Money & Expenses | 15 sec | 4:00 |
+| Analytics | 45 sec | 4:45 |
+| WhatsApp Summary | 15 sec | 5:00 |
+| Closing | 30 sec | 5:30 |
 
 ## Sample Data to Prepare:
 
@@ -306,7 +349,9 @@ Download now and start capturing every rupee you're currently losing."
 2. "100% maintenance revenue" - the core value prop
 3. "One tap" - emphasize simplicity
 4. "Professional" - for customer communication
-5. "3-4 months" - when recommendations kick in
+5. "Data-driven decisions" - for Analytics section
+6. "Know your profit margins" - Analytics insight
+7. "Smart restock recommendations" - AI-powered inventory
 
 ---
 
