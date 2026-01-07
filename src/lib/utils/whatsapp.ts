@@ -43,6 +43,7 @@ export function createWhatsAppLink(phone: string, message: string): string {
 
 /**
  * Generate maintenance reminder message (Health-focused for water purifiers)
+ * Supports custom templates with placeholders: [Customer Name], [Item Name], [Date], [Time Slot], [Business Name]
  */
 export function generateMaintenanceReminderMessage(params: {
   customerName: string;
@@ -50,9 +51,30 @@ export function generateMaintenanceReminderMessage(params: {
   scheduledDate: string;
   timeSlot?: string;
   businessName: string;
+  customTemplate?: string | null;
 }): string {
-  const { customerName, itemName, scheduledDate, timeSlot, businessName } = params;
+  const { customerName, itemName, scheduledDate, timeSlot, businessName, customTemplate } = params;
 
+  // If custom template provided, use it with placeholder replacement
+  if (customTemplate) {
+    let message = customTemplate;
+    message = message.replace(/\[Customer Name\]/g, `*${customerName}*`);
+    message = message.replace(/\[Item Name\]/g, `*${itemName}*`);
+    message = message.replace(/\[Date\]/g, scheduledDate);
+    message = message.replace(/\[Business Name\]/g, `_${businessName}_`);
+
+    // Handle time slot - if no time slot, remove the placeholder line entirely
+    if (timeSlot) {
+      message = message.replace(/\[Time Slot\]/g, `Time: ${timeSlot}`);
+    } else {
+      // Remove lines containing only [Time Slot] and optional whitespace
+      message = message.replace(/^.*\[Time Slot\].*$\n?/gm, '');
+    }
+
+    return message.trim();
+  }
+
+  // Default template (fallback)
   let message = `Hi *${customerName}*,\n\n`;
   message += `*MAINTENANCE ALERT*\n\n`;
   message += `*Date:* ${scheduledDate}\n`;

@@ -58,6 +58,7 @@ export default function RemindersPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabType>('today');
   const [businessName, setBusinessName] = useState('');
+  const [customTemplate, setCustomTemplate] = useState<string | null>(null);
   const [deleteModal, setDeleteModal] = useState<{ open: boolean; reminder: Reminder | null }>({
     open: false,
     reminder: null,
@@ -81,6 +82,7 @@ export default function RemindersPage() {
   useEffect(() => {
     fetchReminders();
     fetchBusinessName();
+    fetchCustomTemplate();
   }, []);
 
   // Search customers when typing
@@ -133,6 +135,18 @@ export default function RemindersPage() {
     }
   };
 
+  const fetchCustomTemplate = async () => {
+    try {
+      const res = await fetch('/api/settings/message-template');
+      const json = await res.json();
+      if (json.success && json.data?.customTemplate) {
+        setCustomTemplate(json.data.customTemplate);
+      }
+    } catch (err) {
+      console.error('Failed to fetch custom template:', err);
+    }
+  };
+
   // Categorize reminders
   const categorizedReminders = {
     overdue: reminders.filter(
@@ -176,6 +190,7 @@ export default function RemindersPage() {
         scheduledDate: format(new Date(reminder.scheduled_date), 'MMMM d, yyyy'),
         timeSlot: reminder.time_slot || undefined,
         businessName,
+        customTemplate,
       });
     }
 
