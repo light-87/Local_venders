@@ -84,15 +84,15 @@ function TodayCardSkeleton() {
   return (
     <div className="grid grid-cols-2 gap-3">
       {/* Sales skeleton */}
-      <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4">
+      <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4 min-h-[120px]">
         <div className="animate-pulse">
-          <div className="h-4 w-16 bg-emerald-200 rounded mb-3" />
-          <div className="h-8 w-24 bg-emerald-200 rounded mb-2" />
-          <div className="h-3 w-20 bg-emerald-200 rounded" />
+          <div className="h-4 w-16 bg-gray-200 rounded mb-3" />
+          <div className="h-8 w-24 bg-gray-200 rounded mb-2" />
+          <div className="h-3 w-20 bg-gray-200 rounded" />
         </div>
       </div>
       {/* Reminders skeleton */}
-      <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4">
+      <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4 min-h-[120px]">
         <div className="animate-pulse">
           <div className="h-4 w-20 bg-gray-200 rounded mb-3" />
           <div className="h-8 w-16 bg-gray-200 rounded mb-2" />
@@ -100,6 +100,39 @@ function TodayCardSkeleton() {
         </div>
       </div>
     </div>
+  );
+}
+
+function SalesCard({ amount, count }: { amount: number; count: number }) {
+  const hasSales = count > 0;
+
+  // Dynamic styling based on sales
+  const bgColor = hasSales ? 'bg-blue-50' : 'bg-gray-50';
+  const borderColor = hasSales ? 'border-blue-200' : 'border-gray-200';
+  const iconBg = hasSales ? 'bg-blue-100' : 'bg-gray-100';
+  const iconColor = hasSales ? 'text-blue-600' : 'text-gray-500';
+  const amountColor = hasSales ? 'text-blue-700' : 'text-gray-500';
+  const textColor = hasSales ? 'text-blue-600' : 'text-gray-500';
+
+  return (
+    <Card className={`${bgColor} border ${borderColor} min-h-[120px] flex flex-col justify-between`}>
+      <div className="flex items-center gap-2 mb-2">
+        <div className={`w-6 h-6 rounded-full ${iconBg} flex items-center justify-center`}>
+          <TrendingUp className={`w-3.5 h-3.5 ${iconColor}`} />
+        </div>
+        <span className="text-sm font-medium text-gray-600">Sales</span>
+      </div>
+      <div className="flex-1">
+        <p className={`text-xl font-bold ${amountColor} tabular-nums`}>
+          {formatCurrency(amount)}
+        </p>
+        <p className={`text-sm ${textColor} mt-0.5`}>
+          {hasSales
+            ? `${count} ${count === 1 ? 'sale' : 'sales'} today`
+            : 'No sales yet'}
+        </p>
+      </div>
+    </Card>
   );
 }
 
@@ -213,22 +246,7 @@ export function SimpleHome({ vendorName }: SimpleHomeProps) {
         ) : data ? (
           <div className="grid grid-cols-2 gap-3">
             {/* Sales Card */}
-            <Card className="bg-emerald-50 border border-emerald-200 min-h-[120px] flex flex-col justify-between">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center">
-                  <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />
-                </div>
-                <span className="text-sm font-medium text-gray-600">Sales</span>
-              </div>
-              <div className="flex-1">
-                <p className="text-xl font-bold text-emerald-700 tabular-nums">
-                  {formatCurrency(data.todaySales)}
-                </p>
-                <p className="text-sm text-emerald-600 mt-0.5">
-                  {data.todaySalesCount} {data.todaySalesCount === 1 ? 'sale' : 'sales'} today
-                </p>
-              </div>
-            </Card>
+            <SalesCard amount={data.todaySales} count={data.todaySalesCount} />
 
             {/* Reminders Card */}
             <RemindersCard
