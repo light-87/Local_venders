@@ -23,6 +23,8 @@ export { SaleEditModal } from './sale-edit-modal';
 
 export { ExpenseEditModal } from './expense-edit-modal';
 
+export { WarrantyEditModal } from './warranty-edit-modal';
+
 export { Select } from './select';
 export type { SelectOption, SelectProps } from './select';
 

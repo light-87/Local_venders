@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { validateSession } from '@/lib/auth';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { updateSaleSchema } from '@/lib/utils/validators';
@@ -180,6 +181,11 @@ export async function PATCH(
         .eq('sale_id', id);
     }
 
+    // Revalidate customer page cache if this sale is linked to a customer
+    if (existingSale.customer_id) {
+      revalidatePath(`/customers/${existingSale.customer_id}`);
+    }
+
     return NextResponse.json({ success: true, sale: updatedSale });
   } catch (error) {
     console.error('Sale update error:', error);
@@ -299,6 +305,11 @@ export async function DELETE(
         { error: 'Failed to delete sale' },
         { status: 500 }
       );
+    }
+
+    // Revalidate customer page cache if this sale was linked to a customer
+    if (sale.customer_id) {
+      revalidatePath(`/customers/${sale.customer_id}`);
     }
 
     return NextResponse.json({ success: true });
