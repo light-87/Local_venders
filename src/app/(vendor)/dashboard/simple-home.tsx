@@ -11,27 +11,18 @@ import {
   TrendingUp,
   Bell,
   ChevronRight,
+  AlertCircle,
+  CheckCircle2,
 } from 'lucide-react';
 import Link from 'next/link';
-
-interface Reminder {
-  id: string;
-  item_name: string | null;
-  scheduled_date: string;
-  time_slot: string | null;
-  customer: {
-    id: string;
-    name: string;
-    phone: string | null;
-  } | null;
-}
 
 interface HomeData {
   todaySales: number;
   todaySalesCount: number;
   inventoryCount: number;
   customersCount: number;
-  todayReminders: Reminder[];
+  todayRemindersCount: number;
+  overdueRemindersCount: number;
 }
 
 interface SimpleHomeProps {
@@ -89,6 +80,98 @@ const navigationCards = [
   },
 ];
 
+function TodayCardSkeleton() {
+  return (
+    <div className="grid grid-cols-2 gap-3">
+      {/* Sales skeleton */}
+      <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4">
+        <div className="animate-pulse">
+          <div className="h-4 w-16 bg-emerald-200 rounded mb-3" />
+          <div className="h-8 w-24 bg-emerald-200 rounded mb-2" />
+          <div className="h-3 w-20 bg-emerald-200 rounded" />
+        </div>
+      </div>
+      {/* Reminders skeleton */}
+      <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4">
+        <div className="animate-pulse">
+          <div className="h-4 w-20 bg-gray-200 rounded mb-3" />
+          <div className="h-8 w-16 bg-gray-200 rounded mb-2" />
+          <div className="h-3 w-24 bg-gray-200 rounded" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RemindersCard({ todayCount, overdueCount }: { todayCount: number; overdueCount: number }) {
+  const hasToday = todayCount > 0;
+  const hasOverdue = overdueCount > 0;
+  const allCaughtUp = !hasToday && !hasOverdue;
+
+  // Determine styling based on state
+  let bgColor = 'bg-gray-50';
+  let borderColor = 'border-gray-200';
+  let iconBg = 'bg-gray-100';
+  let iconColor = 'text-gray-500';
+  let textColor = 'text-gray-600';
+  let StatusIcon = CheckCircle2;
+
+  if (hasOverdue) {
+    bgColor = 'bg-rose-50';
+    borderColor = 'border-rose-200';
+    iconBg = 'bg-rose-100';
+    iconColor = 'text-rose-600';
+    textColor = 'text-rose-700';
+    StatusIcon = AlertCircle;
+  } else if (hasToday) {
+    bgColor = 'bg-amber-50';
+    borderColor = 'border-amber-200';
+    iconBg = 'bg-amber-100';
+    iconColor = 'text-amber-600';
+    textColor = 'text-amber-700';
+    StatusIcon = Bell;
+  }
+
+  // Build status text
+  let statusText = '';
+  if (hasToday && hasOverdue) {
+    statusText = `${todayCount} today · ${overdueCount} overdue`;
+  } else if (hasToday) {
+    statusText = `${todayCount} for today`;
+  } else if (hasOverdue) {
+    statusText = `${overdueCount} overdue`;
+  } else {
+    statusText = 'All caught up!';
+  }
+
+  return (
+    <Link href="/reminders">
+      <Card
+        variant="interactive"
+        className={`${bgColor} border ${borderColor} h-full min-h-[120px] flex flex-col justify-between`}
+      >
+        <div className="flex items-center gap-2 mb-2">
+          <div className={`w-6 h-6 rounded-full ${iconBg} flex items-center justify-center`}>
+            <StatusIcon className={`w-3.5 h-3.5 ${iconColor}`} />
+          </div>
+          <span className="text-sm font-medium text-gray-600">Reminders</span>
+        </div>
+        <div className="flex-1">
+          <p className={`text-xl font-bold ${allCaughtUp ? 'text-gray-500' : textColor}`}>
+            {allCaughtUp ? '0' : (hasOverdue ? overdueCount : todayCount)}
+          </p>
+          <p className={`text-sm ${textColor} mt-0.5`}>
+            {statusText}
+          </p>
+        </div>
+        <div className="flex justify-end mt-2">
+          <ChevronRight className={`w-4 h-4 ${allCaughtUp ? 'text-gray-400' : iconColor}`} />
+        </div>
+      </Card>
+    </Link>
+  );
+}
+
 export function SimpleHome({ vendorName }: SimpleHomeProps) {
   const [data, setData] = useState<HomeData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -123,53 +206,38 @@ export function SimpleHome({ vendorName }: SimpleHomeProps) {
         <p className="text-gray-500 mt-0.5">Here&apos;s your business at a glance</p>
       </section>
 
-      {/* Today's Quick Stats */}
-      {!loading && data && (
-        <section>
-          <Card className="bg-gradient-to-br from-brand-500 to-brand-600 text-white border-0 shadow-md">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-brand-100 text-sm font-medium">Today&apos;s Sales</p>
-                <p className="text-3xl font-bold tabular-nums mt-1">
+      {/* Today at a Glance - Combined Sales + Reminders */}
+      <section>
+        {loading ? (
+          <TodayCardSkeleton />
+        ) : data ? (
+          <div className="grid grid-cols-2 gap-3">
+            {/* Sales Card */}
+            <Card className="bg-emerald-50 border border-emerald-200 min-h-[120px] flex flex-col justify-between">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center">
+                  <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />
+                </div>
+                <span className="text-sm font-medium text-gray-600">Sales</span>
+              </div>
+              <div className="flex-1">
+                <p className="text-xl font-bold text-emerald-700 tabular-nums">
                   {formatCurrency(data.todaySales)}
                 </p>
-                <p className="text-brand-200 text-sm mt-1">
+                <p className="text-sm text-emerald-600 mt-0.5">
                   {data.todaySalesCount} {data.todaySalesCount === 1 ? 'sale' : 'sales'} today
                 </p>
               </div>
-              <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center">
-                <TrendingUp className="w-7 h-7 text-white" />
-              </div>
-            </div>
-          </Card>
-        </section>
-      )}
-
-      {/* Today's Reminders - Only show if there are reminders */}
-      {!loading && data && data.todayReminders.length > 0 && (
-        <section>
-          <Link href="/reminders">
-            <Card variant="interactive" className="bg-orange-50 border-orange-200">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
-                  <Bell className="w-5 h-5 text-orange-600" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-orange-900">
-                    {data.todayReminders.length} reminder{data.todayReminders.length !== 1 ? 's' : ''} for today
-                  </p>
-                  <p className="text-sm text-orange-700 truncate">
-                    {data.todayReminders[0]?.customer?.name}
-                    {data.todayReminders[0]?.item_name && ` - ${data.todayReminders[0].item_name}`}
-                    {data.todayReminders.length > 1 && ` and ${data.todayReminders.length - 1} more`}
-                  </p>
-                </div>
-                <ChevronRight className="w-5 h-5 text-orange-400 flex-shrink-0" />
-              </div>
             </Card>
-          </Link>
-        </section>
-      )}
+
+            {/* Reminders Card */}
+            <RemindersCard
+              todayCount={data.todayRemindersCount}
+              overdueCount={data.overdueRemindersCount}
+            />
+          </div>
+        ) : null}
+      </section>
 
       {/* Main Navigation - 2x2 Grid */}
       <section className="pt-1">

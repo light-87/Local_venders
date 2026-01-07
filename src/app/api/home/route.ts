@@ -19,12 +19,15 @@ export async function GET() {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
+    const todayDateStr = today.toISOString().split('T')[0];
+
     // Run all queries in parallel for better performance
     const [
       salesResult,
       inventoryResult,
       customersResult,
-      remindersResult,
+      todayRemindersResult,
+      overdueRemindersResult,
     ] = await Promise.all([
       // Today's sales
       supabase
@@ -46,22 +49,21 @@ export async function GET() {
         .select('id', { count: 'exact', head: true })
         .eq('vendor_id', session.id),
 
-      // Today's pending reminders
+      // Today's pending reminders count
       supabase
         .from('scheduled_messages')
-        .select(`
-          id,
-          item_name,
-          scheduled_date,
-          time_slot,
-          customer:customers(id, name, phone)
-        `)
+        .select('id', { count: 'exact', head: true })
         .eq('vendor_id', session.id)
         .eq('status', 'pending')
-        .gte('scheduled_date', today.toISOString().split('T')[0])
-        .lte('scheduled_date', today.toISOString().split('T')[0])
-        .order('time_slot', { ascending: true })
-        .limit(5),
+        .eq('scheduled_date', todayDateStr),
+
+      // Overdue reminders count (before today, still pending)
+      supabase
+        .from('scheduled_messages')
+        .select('id', { count: 'exact', head: true })
+        .eq('vendor_id', session.id)
+        .eq('status', 'pending')
+        .lt('scheduled_date', todayDateStr),
     ]);
 
     const todaySalesTotal = salesResult.data?.reduce(
@@ -72,7 +74,8 @@ export async function GET() {
     const todaySalesCount = salesResult.data?.length ?? 0;
     const inventoryCount = inventoryResult.count ?? 0;
     const customersCount = customersResult.count ?? 0;
-    const todayReminders = remindersResult.data ?? [];
+    const todayRemindersCount = todayRemindersResult.count ?? 0;
+    const overdueRemindersCount = overdueRemindersResult.count ?? 0;
 
     return NextResponse.json({
       success: true,
@@ -81,7 +84,8 @@ export async function GET() {
         todaySalesCount,
         inventoryCount,
         customersCount,
-        todayReminders,
+        todayRemindersCount,
+        overdueRemindersCount,
       },
     });
   } catch (error) {
