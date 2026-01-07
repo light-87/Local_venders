@@ -229,14 +229,31 @@ export function SimpleHome({ vendorName }: SimpleHomeProps) {
 
   const firstName = vendorName.split(' ')[0];
 
+  // Time-based greeting
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    return 'Good evening';
+  };
+
+  // Format today's date
+  const formatDate = () => {
+    return new Date().toLocaleDateString('en-IN', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+    });
+  };
+
   return (
     <div className="p-4 space-y-5">
       {/* Welcome Section */}
-      <section className="pt-2">
+      <section className="pt-2 flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-gray-900">
-          Welcome, {firstName}!
+          {getGreeting()}, {firstName}!
         </h1>
-        <p className="text-gray-500 mt-0.5">Here&apos;s your business at a glance</p>
+        <p className="text-sm text-gray-500">{formatDate()}</p>
       </section>
 
       {/* Today at a Glance - Combined Sales + Reminders */}
