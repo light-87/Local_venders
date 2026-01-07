@@ -19,26 +19,69 @@ export async function GET() {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    // Simple query - just today's sales
-    const { data: todaySales } = await supabase
-      .from('sales')
-      .select('total_amount')
-      .eq('vendor_id', session.id)
-      .gte('created_at', today.toISOString())
-      .lt('created_at', tomorrow.toISOString());
+    // Run all queries in parallel for better performance
+    const [
+      salesResult,
+      inventoryResult,
+      customersResult,
+      remindersResult,
+    ] = await Promise.all([
+      // Today's sales
+      supabase
+        .from('sales')
+        .select('total_amount')
+        .eq('vendor_id', session.id)
+        .gte('created_at', today.toISOString())
+        .lt('created_at', tomorrow.toISOString()),
 
-    const todaySalesTotal = todaySales?.reduce(
+      // Inventory count
+      supabase
+        .from('inventory')
+        .select('id', { count: 'exact', head: true })
+        .eq('vendor_id', session.id),
+
+      // Customers count
+      supabase
+        .from('customers')
+        .select('id', { count: 'exact', head: true })
+        .eq('vendor_id', session.id),
+
+      // Today's pending reminders
+      supabase
+        .from('scheduled_messages')
+        .select(`
+          id,
+          item_name,
+          scheduled_date,
+          time_slot,
+          customer:customers(id, name, phone)
+        `)
+        .eq('vendor_id', session.id)
+        .eq('status', 'pending')
+        .gte('scheduled_date', today.toISOString().split('T')[0])
+        .lte('scheduled_date', today.toISOString().split('T')[0])
+        .order('time_slot', { ascending: true })
+        .limit(5),
+    ]);
+
+    const todaySalesTotal = salesResult.data?.reduce(
       (sum, s) => sum + Number(s.total_amount),
       0
     ) ?? 0;
 
-    const todaySalesCount = todaySales?.length ?? 0;
+    const todaySalesCount = salesResult.data?.length ?? 0;
+    const inventoryCount = inventoryResult.count ?? 0;
+    const customersCount = customersResult.count ?? 0;
+    const todayReminders = remindersResult.data ?? [];
 
     return NextResponse.json({
       success: true,
       data: {
         todaySales: todaySalesTotal,
         todaySalesCount,
+        inventoryCount,
+        customersCount,
+        todayReminders,
       },
     });
   } catch (error) {

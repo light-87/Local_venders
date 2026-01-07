@@ -4,24 +4,90 @@ import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui';
 import { formatCurrency } from '@/lib/utils/format';
 import {
-  ShoppingCart,
-  Receipt,
   Package,
   Users,
-  Settings,
-  TrendingUp,
+  ShoppingCart,
   BarChart3,
+  TrendingUp,
+  Bell,
+  ChevronRight,
 } from 'lucide-react';
 import Link from 'next/link';
+
+interface Reminder {
+  id: string;
+  item_name: string | null;
+  scheduled_date: string;
+  time_slot: string | null;
+  customer: {
+    id: string;
+    name: string;
+    phone: string | null;
+  } | null;
+}
 
 interface HomeData {
   todaySales: number;
   todaySalesCount: number;
+  inventoryCount: number;
+  customersCount: number;
+  todayReminders: Reminder[];
 }
 
 interface SimpleHomeProps {
   vendorName: string;
 }
+
+const navigationCards = [
+  {
+    title: 'Inventory',
+    description: 'Manage your items',
+    href: '/inventory',
+    icon: Package,
+    bgColor: 'bg-emerald-50',
+    iconBgColor: 'bg-emerald-100',
+    iconColor: 'text-emerald-600',
+    borderColor: 'border-emerald-200',
+    countKey: 'inventoryCount' as const,
+    countLabel: 'items',
+  },
+  {
+    title: 'Customers',
+    description: 'View your customers',
+    href: '/customers',
+    icon: Users,
+    bgColor: 'bg-violet-50',
+    iconBgColor: 'bg-violet-100',
+    iconColor: 'text-violet-600',
+    borderColor: 'border-violet-200',
+    countKey: 'customersCount' as const,
+    countLabel: 'saved',
+  },
+  {
+    title: 'Sales History',
+    description: 'View past sales',
+    href: '/sales',
+    icon: ShoppingCart,
+    bgColor: 'bg-amber-50',
+    iconBgColor: 'bg-amber-100',
+    iconColor: 'text-amber-600',
+    borderColor: 'border-amber-200',
+    countKey: null,
+    countLabel: null,
+  },
+  {
+    title: 'Dashboard',
+    description: 'Charts & analytics',
+    href: '/analytics',
+    icon: BarChart3,
+    bgColor: 'bg-indigo-50',
+    iconBgColor: 'bg-indigo-100',
+    iconColor: 'text-indigo-600',
+    borderColor: 'border-indigo-200',
+    countKey: null,
+    countLabel: null,
+  },
+];
 
 export function SimpleHome({ vendorName }: SimpleHomeProps) {
   const [data, setData] = useState<HomeData | null>(null);
@@ -30,7 +96,6 @@ export function SimpleHome({ vendorName }: SimpleHomeProps) {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Simple query - just today's sales
         const res = await fetch('/api/home');
         const json = await res.json();
         if (json.success) {
@@ -49,141 +114,96 @@ export function SimpleHome({ vendorName }: SimpleHomeProps) {
   const firstName = vendorName.split(' ')[0];
 
   return (
-    <div className="p-4 space-y-6">
+    <div className="p-4 space-y-5">
       {/* Welcome Section */}
-      <section className="text-center pt-4 pb-2">
+      <section className="pt-2">
         <h1 className="text-2xl font-semibold text-gray-900">
           Welcome, {firstName}!
         </h1>
-        <p className="text-gray-500 mt-1">What would you like to do?</p>
+        <p className="text-gray-500 mt-0.5">Here&apos;s your business at a glance</p>
       </section>
 
       {/* Today's Quick Stats */}
       {!loading && data && (
         <section>
-          <Card className="bg-gradient-to-r from-brand-500 to-brand-600 text-white">
+          <Card className="bg-gradient-to-br from-brand-500 to-brand-600 text-white border-0 shadow-md">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-brand-100 text-sm">Today's Sales</p>
-                <p className="text-3xl font-bold tabular-nums">
+                <p className="text-brand-100 text-sm font-medium">Today&apos;s Sales</p>
+                <p className="text-3xl font-bold tabular-nums mt-1">
                   {formatCurrency(data.todaySales)}
                 </p>
                 <p className="text-brand-200 text-sm mt-1">
-                  {data.todaySalesCount} {data.todaySalesCount === 1 ? 'sale' : 'sales'}
+                  {data.todaySalesCount} {data.todaySalesCount === 1 ? 'sale' : 'sales'} today
                 </p>
               </div>
-              <TrendingUp className="w-12 h-12 text-brand-200" />
+              <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center">
+                <TrendingUp className="w-7 h-7 text-white" />
+              </div>
             </div>
           </Card>
         </section>
       )}
 
-      {/* Primary Actions */}
-      <section>
-        <h2 className="text-sm font-medium text-gray-500 mb-3">Quick Actions</h2>
+      {/* Today's Reminders - Only show if there are reminders */}
+      {!loading && data && data.todayReminders.length > 0 && (
+        <section>
+          <Link href="/reminders">
+            <Card variant="interactive" className="bg-orange-50 border-orange-200">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
+                  <Bell className="w-5 h-5 text-orange-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-orange-900">
+                    {data.todayReminders.length} reminder{data.todayReminders.length !== 1 ? 's' : ''} for today
+                  </p>
+                  <p className="text-sm text-orange-700 truncate">
+                    {data.todayReminders[0]?.customer?.name}
+                    {data.todayReminders[0]?.item_name && ` - ${data.todayReminders[0].item_name}`}
+                    {data.todayReminders.length > 1 && ` and ${data.todayReminders.length - 1} more`}
+                  </p>
+                </div>
+                <ChevronRight className="w-5 h-5 text-orange-400 flex-shrink-0" />
+              </div>
+            </Card>
+          </Link>
+        </section>
+      )}
+
+      {/* Main Navigation - 2x2 Grid */}
+      <section className="pt-1">
         <div className="grid grid-cols-2 gap-3">
-          <Link href="/sales/new">
-            <Card variant="interactive" className="text-center py-6 border-2 border-brand-200 bg-brand-50">
-              <ShoppingCart className="w-8 h-8 text-brand-500 mx-auto mb-2" />
-              <p className="font-medium text-brand-700">New Sale</p>
-            </Card>
-          </Link>
-          <Link href="/transactions/new">
-            <Card variant="interactive" className="text-center py-6">
-              <Receipt className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-              <p className="font-medium text-gray-700">Add Transaction</p>
-            </Card>
-          </Link>
-        </div>
-      </section>
+          {navigationCards.map((card) => {
+            const Icon = card.icon;
+            const count = card.countKey && data ? data[card.countKey] : null;
 
-      {/* Navigation Links */}
-      <section>
-        <h2 className="text-sm font-medium text-gray-500 mb-3">Go To</h2>
-        <div className="space-y-2">
-          <Link href="/transactions">
-            <Card variant="interactive">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                  <Receipt className="w-5 h-5 text-blue-600" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium text-gray-900">Transactions</p>
-                  <p className="text-sm text-gray-500">View income & expenses</p>
-                </div>
-              </div>
-            </Card>
-          </Link>
-
-          <Link href="/inventory">
-            <Card variant="interactive">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-                  <Package className="w-5 h-5 text-green-600" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium text-gray-900">Inventory</p>
-                  <p className="text-sm text-gray-500">Manage your items</p>
-                </div>
-              </div>
-            </Card>
-          </Link>
-
-          <Link href="/customers">
-            <Card variant="interactive">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
-                  <Users className="w-5 h-5 text-purple-600" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium text-gray-900">Customers</p>
-                  <p className="text-sm text-gray-500">View your customers</p>
-                </div>
-              </div>
-            </Card>
-          </Link>
-
-          <Link href="/sales">
-            <Card variant="interactive">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
-                  <ShoppingCart className="w-5 h-5 text-amber-600" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium text-gray-900">Sales History</p>
-                  <p className="text-sm text-gray-500">View past sales</p>
-                </div>
-              </div>
-            </Card>
-          </Link>
-
-          <Link href="/analytics">
-            <Card variant="interactive">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center">
-                  <BarChart3 className="w-5 h-5 text-indigo-600" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium text-gray-900">Dashboard</p>
-                  <p className="text-sm text-gray-500">Charts & analytics</p>
-                </div>
-              </div>
-            </Card>
-          </Link>
-
-          <Link href="/settings">
-            <Card variant="interactive">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
-                  <Settings className="w-5 h-5 text-gray-600" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium text-gray-900">Settings</p>
-                  <p className="text-sm text-gray-500">Profile & accounts</p>
-                </div>
-              </div>
-            </Card>
-          </Link>
+            return (
+              <Link key={card.href} href={card.href}>
+                <Card
+                  variant="interactive"
+                  className={`${card.bgColor} border ${card.borderColor} h-full min-h-[140px] flex flex-col`}
+                >
+                  <div className={`w-12 h-12 rounded-xl ${card.iconBgColor} flex items-center justify-center mb-3`}>
+                    <Icon className={`w-6 h-6 ${card.iconColor}`} />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-gray-900 text-base">
+                      {card.title}
+                    </h3>
+                    <p className="text-sm text-gray-600 mt-0.5">
+                      {card.description}
+                    </p>
+                  </div>
+                  {count !== null && (
+                    <p className="text-sm font-medium text-gray-500 mt-2">
+                      {count} {card.countLabel}
+                    </p>
+                  )}
+                </Card>
+              </Link>
+            );
+          })}
         </div>
       </section>
     </div>
