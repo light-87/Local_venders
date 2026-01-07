@@ -8,7 +8,7 @@ export default async function AnalyticsPage() {
 
   return (
     <div>
-      <PageHeader title="Dashboard" showBack />
+      <PageHeader title="Analytics" showBack />
       <DashboardContent vendorName={session.name} />
     </div>
   );

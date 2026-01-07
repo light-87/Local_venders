@@ -67,8 +67,8 @@ const navigationCards = [
     countLabel: null,
   },
   {
-    title: 'Dashboard',
-    description: 'Charts & analytics',
+    title: 'Analytics',
+    description: 'Reports & insights',
     href: '/analytics',
     icon: BarChart3,
     bgColor: 'bg-indigo-50',
