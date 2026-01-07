@@ -195,7 +195,8 @@ export async function POST(request: Request) {
       const remindersToCreate = insertedSaleItems
         .filter((item) => item.maintenance_interval_months && item.maintenance_interval_months > 0)
         .map((item) => {
-          const nextDate = new Date();
+          // Calculate next maintenance date from sale date, not current date
+          const nextDate = new Date(saleDate);
           nextDate.setMonth(nextDate.getMonth() + item.maintenance_interval_months);
 
           return {
