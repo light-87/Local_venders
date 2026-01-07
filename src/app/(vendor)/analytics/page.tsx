@@ -1,6 +1,6 @@
 import { validateSession } from '@/lib/auth';
 import { PageHeader } from '@/components/layout';
-import { DashboardContent } from '../dashboard/dashboard-content';
+import { AnalyticsContent } from './analytics-content';
 
 export default async function AnalyticsPage() {
   const session = await validateSession();
@@ -9,7 +9,7 @@ export default async function AnalyticsPage() {
   return (
     <div>
       <PageHeader title="Analytics" showBack />
-      <DashboardContent vendorName={session.name} />
+      <AnalyticsContent />
     </div>
   );
 }
