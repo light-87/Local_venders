@@ -9,10 +9,10 @@ import {
   Wallet,
   Wrench,
   Package,
-  ChevronDown,
-  ChevronUp,
   AlertTriangle,
   Star,
+  BarChart3,
+  PieChart,
 } from 'lucide-react';
 import Link from 'next/link';
 import { MaintenanceChart } from './maintenance-chart';
@@ -76,7 +76,7 @@ interface AnalyticsData {
 type Period = '12months' | 'year' | 'all';
 
 const periods = [
-  { value: '12months', label: 'Last 12 Months' },
+  { value: '12months', label: '12 Months' },
   { value: 'year', label: 'This Year' },
   { value: 'all', label: 'All Time' },
 ] as const;
@@ -89,15 +89,15 @@ function PeriodSelector({
   onChange: (period: Period) => void;
 }) {
   return (
-    <div className="flex bg-gray-100 rounded-xl p-1">
+    <div className="flex bg-indigo-100 rounded-xl p-1">
       {periods.map((period) => (
         <button
           key={period.value}
           onClick={() => onChange(period.value)}
-          className={`flex-1 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+          className={`flex-1 px-3 py-2 text-sm font-medium rounded-lg transition-all ${
             value === period.value
-              ? 'bg-white text-gray-900 shadow-sm'
-              : 'text-gray-500 hover:text-gray-700'
+              ? 'bg-indigo-600 text-white shadow-md'
+              : 'text-indigo-600 hover:bg-indigo-200'
           }`}
         >
           {period.label}
@@ -112,75 +112,48 @@ function MonthlyBreakdownTable({
 }: {
   data: AnalyticsData['monthlyBreakdown'];
 }) {
-  const [expandedMonth, setExpandedMonth] = useState<string | null>(null);
-
   return (
-    <div className="overflow-hidden rounded-xl border border-gray-200">
-      <table className="w-full">
-        <thead className="bg-gray-50">
-          <tr>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-              Month
-            </th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-              Income
-            </th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-              Expenses
-            </th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-              Net
-            </th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-200">
-          {data.map((row) => {
-            const isExpanded = expandedMonth === row.month;
-            return (
-              <tr
-                key={row.month}
-                className="bg-white hover:bg-gray-50 cursor-pointer"
-                onClick={() => setExpandedMonth(isExpanded ? null : row.month)}
+    <div className="overflow-hidden rounded-xl border border-indigo-200 bg-white">
+      <div className="bg-gradient-to-r from-indigo-500 to-purple-500 px-4 py-3">
+        <div className="grid grid-cols-4 gap-2">
+          <span className="text-xs font-semibold text-white uppercase">Month</span>
+          <span className="text-xs font-semibold text-white uppercase text-right">Income</span>
+          <span className="text-xs font-semibold text-white uppercase text-right">Expenses</span>
+          <span className="text-xs font-semibold text-white uppercase text-right">Net</span>
+        </div>
+      </div>
+      <div className="divide-y divide-gray-100">
+        {data.map((row, index) => (
+          <div
+            key={row.month}
+            className={`px-4 py-3 ${index % 2 === 0 ? 'bg-white' : 'bg-indigo-50/30'}`}
+          >
+            <div className="grid grid-cols-4 gap-2 items-center">
+              <div>
+                <span className="font-medium text-gray-900 text-sm">{row.month}</span>
+                {row.salesCount > 0 && (
+                  <span className="block text-xs text-indigo-500">
+                    {row.salesCount} sales
+                  </span>
+                )}
+              </div>
+              <span className="text-emerald-600 font-semibold tabular-nums text-sm text-right">
+                {formatCurrency(row.income)}
+              </span>
+              <span className="text-rose-500 font-semibold tabular-nums text-sm text-right">
+                {formatCurrency(row.expenses)}
+              </span>
+              <span
+                className={`font-bold tabular-nums text-sm text-right ${
+                  row.net >= 0 ? 'text-emerald-600' : 'text-rose-500'
+                }`}
               >
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-2">
-                    {isExpanded ? (
-                      <ChevronUp className="w-4 h-4 text-gray-400" />
-                    ) : (
-                      <ChevronDown className="w-4 h-4 text-gray-400" />
-                    )}
-                    <span className="font-medium text-gray-900">{row.month}</span>
-                    {row.salesCount > 0 && (
-                      <span className="text-xs text-gray-500">
-                        ({row.salesCount} sales)
-                      </span>
-                    )}
-                  </div>
-                </td>
-                <td className="px-4 py-3 text-right">
-                  <span className="text-green-600 font-medium tabular-nums">
-                    {formatCurrency(row.income)}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-right">
-                  <span className="text-red-600 font-medium tabular-nums">
-                    {formatCurrency(row.expenses)}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-right">
-                  <span
-                    className={`font-semibold tabular-nums ${
-                      row.net >= 0 ? 'text-green-600' : 'text-red-600'
-                    }`}
-                  >
-                    {formatCurrency(row.net)}
-                  </span>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+                {formatCurrency(row.net)}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -213,7 +186,7 @@ export function AnalyticsContent() {
     return (
       <div className="p-4 space-y-4">
         {[1, 2, 3, 4, 5].map((i) => (
-          <div key={i} className="h-32 bg-gray-100 rounded-2xl animate-pulse" />
+          <div key={i} className="h-32 bg-gradient-to-r from-indigo-100 to-purple-100 rounded-2xl animate-pulse" />
         ))}
       </div>
     );
@@ -227,13 +200,6 @@ export function AnalyticsContent() {
     );
   }
 
-  const periodLabel =
-    period === '12months'
-      ? 'Last 12 Months'
-      : period === 'year'
-      ? 'This Year'
-      : 'All Time';
-
   return (
     <div className="p-4 space-y-6 pb-24">
       {/* Period Selector */}
@@ -241,110 +207,136 @@ export function AnalyticsContent() {
 
       {/* Key Metrics */}
       <section>
-        <h2 className="text-sm font-medium text-gray-500 mb-3">
-          {periodLabel} Summary
-        </h2>
         <div className="grid grid-cols-3 gap-3">
-          <Card className="text-center">
-            <div className="flex justify-center mb-2">
-              <TrendingUp className="w-5 h-5 text-green-600" />
+          {/* Total Income Card */}
+          <div className="bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-2xl p-4 text-white shadow-lg">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                <TrendingUp className="w-4 h-4" />
+              </div>
             </div>
-            <p className="text-xs text-gray-500">Total Income</p>
-            <p className="text-lg font-semibold text-green-600 tabular-nums">
+            <p className="text-emerald-100 text-xs font-medium">Total Income</p>
+            <p className="text-xl font-bold tabular-nums mt-1">
               {formatCurrency(data.summary.totalIncome)}
             </p>
-          </Card>
-          <Card className="text-center">
-            <div className="flex justify-center mb-2">
-              <TrendingDown className="w-5 h-5 text-red-600" />
+          </div>
+
+          {/* Total Expenses Card */}
+          <div className="bg-gradient-to-br from-rose-400 to-rose-600 rounded-2xl p-4 text-white shadow-lg">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                <TrendingDown className="w-4 h-4" />
+              </div>
             </div>
-            <p className="text-xs text-gray-500">Total Expenses</p>
-            <p className="text-lg font-semibold text-red-600 tabular-nums">
+            <p className="text-rose-100 text-xs font-medium">Total Expenses</p>
+            <p className="text-xl font-bold tabular-nums mt-1">
               {formatCurrency(data.summary.totalExpenses)}
             </p>
-          </Card>
-          <Card className="text-center">
-            <div className="flex justify-center mb-2">
-              <Wallet className="w-5 h-5 text-brand-500" />
+          </div>
+
+          {/* Net Profit Card */}
+          <div className={`bg-gradient-to-br ${
+            data.summary.netProfit >= 0
+              ? 'from-blue-400 to-indigo-600'
+              : 'from-orange-400 to-red-600'
+          } rounded-2xl p-4 text-white shadow-lg`}>
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                <Wallet className="w-4 h-4" />
+              </div>
             </div>
-            <p className="text-xs text-gray-500">Net Profit</p>
-            <p
-              className={`text-lg font-semibold tabular-nums ${
-                data.summary.netProfit >= 0 ? 'text-green-600' : 'text-red-600'
-              }`}
-            >
+            <p className="text-white/80 text-xs font-medium">Net Profit</p>
+            <p className="text-xl font-bold tabular-nums mt-1">
               {formatCurrency(data.summary.netProfit)}
             </p>
-          </Card>
+          </div>
         </div>
       </section>
 
       {/* Monthly Breakdown */}
       <section>
-        <h2 className="text-sm font-medium text-gray-500 mb-3">
-          Monthly Breakdown
-        </h2>
+        <div className="flex items-center gap-2 mb-3">
+          <div className="w-6 h-6 bg-indigo-100 rounded-lg flex items-center justify-center">
+            <BarChart3 className="w-3.5 h-3.5 text-indigo-600" />
+          </div>
+          <h2 className="text-sm font-semibold text-gray-800">Monthly Breakdown</h2>
+        </div>
         <MonthlyBreakdownTable data={data.monthlyBreakdown} />
       </section>
 
       {/* Maintenance Chart */}
       <section>
         <div className="flex items-center gap-2 mb-3">
-          <Wrench className="w-4 h-4 text-gray-500" />
-          <h2 className="text-sm font-medium text-gray-500">
-            Maintenance Services ({data.summary.totalMaintenanceCount} total)
+          <div className="w-6 h-6 bg-violet-100 rounded-lg flex items-center justify-center">
+            <Wrench className="w-3.5 h-3.5 text-violet-600" />
+          </div>
+          <h2 className="text-sm font-semibold text-gray-800">
+            Maintenance Services
           </h2>
+          <span className="ml-auto text-xs font-medium text-violet-600 bg-violet-100 px-2 py-1 rounded-full">
+            {data.summary.totalMaintenanceCount} total
+          </span>
         </div>
-        <Card>
+        <div className="bg-gradient-to-br from-violet-50 to-purple-50 rounded-2xl p-4 border border-violet-200">
           <MaintenanceChart data={data.maintenanceChart} />
-        </Card>
+        </div>
       </section>
 
       {/* Restock Recommendations */}
       {data.restockRecommendations.length > 0 && (
         <section>
           <div className="flex items-center gap-2 mb-3">
-            <Package className="w-4 h-4 text-amber-500" />
-            <h2 className="text-sm font-medium text-gray-500">
+            <div className="w-6 h-6 bg-amber-100 rounded-lg flex items-center justify-center">
+              <Package className="w-3.5 h-3.5 text-amber-600" />
+            </div>
+            <h2 className="text-sm font-semibold text-gray-800">
               Restock Recommendations
             </h2>
           </div>
-          <Card>
-            <div className="space-y-3">
-              {data.restockRecommendations.map((item) => (
+          <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl border border-amber-200 overflow-hidden">
+            <div className="divide-y divide-amber-200">
+              {data.restockRecommendations.map((item, index) => (
                 <Link
                   key={item.id}
                   href={`/inventory/${item.id}`}
-                  className="block py-3 border-b border-gray-100 last:border-0"
+                  className={`block p-4 hover:bg-amber-100/50 transition-colors ${
+                    index === 0 ? '' : ''
+                  }`}
                 >
-                  <div className="flex justify-between items-start mb-1">
+                  <div className="flex justify-between items-start mb-2">
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-gray-900">
+                      <span className="font-semibold text-gray-900">
                         {item.name}
                       </span>
                       {item.isBestSeller && (
-                        <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                        <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700 bg-amber-200 px-2 py-0.5 rounded-full">
+                          <Star className="w-3 h-3 fill-amber-500" />
+                          Best Seller
+                        </span>
                       )}
                       {item.isLowStock && (
-                        <AlertTriangle className="w-3.5 h-3.5 text-red-500" />
+                        <span className="inline-flex items-center gap-1 text-xs font-medium text-red-700 bg-red-100 px-2 py-0.5 rounded-full">
+                          <AlertTriangle className="w-3 h-3" />
+                          Low Stock
+                        </span>
                       )}
                     </div>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">
-                      Avg: {item.avgMonthlySales}/{item.unit}/month
+                  <div className="flex justify-between text-sm mb-2">
+                    <span className="text-gray-600">
+                      Avg: <span className="font-medium text-gray-800">{item.avgMonthlySales}</span>/{item.unit}/month
                     </span>
-                    <span className="text-gray-500">
-                      Stock: {item.currentStock} {item.unit}
+                    <span className="text-gray-600">
+                      Stock: <span className="font-medium text-gray-800">{item.currentStock}</span> {item.unit}
                     </span>
                   </div>
-                  <div className="mt-1 text-sm font-medium text-brand-600">
-                    Suggested order: {item.suggestedOrder} {item.unit}
+                  <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-sm font-semibold px-3 py-2 rounded-lg inline-block">
+                    Order {item.suggestedOrder} {item.unit}
                   </div>
                 </Link>
               ))}
             </div>
-          </Card>
+          </div>
         </section>
       )}
 
@@ -352,70 +344,86 @@ export function AnalyticsContent() {
       {data.profitMarginAnalysis.topProfitable.length > 0 && (
         <section>
           <div className="flex items-center gap-2 mb-3">
-            <TrendingUp className="w-4 h-4 text-green-500" />
-            <h2 className="text-sm font-medium text-gray-500">
+            <div className="w-6 h-6 bg-emerald-100 rounded-lg flex items-center justify-center">
+              <PieChart className="w-3.5 h-3.5 text-emerald-600" />
+            </div>
+            <h2 className="text-sm font-semibold text-gray-800">
               Profit Margin Analysis
             </h2>
           </div>
 
           {/* Top Profitable Items */}
-          <Card className="mb-3">
-            <h3 className="text-sm font-medium text-gray-700 mb-3">
+          <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl border border-emerald-200 p-4 mb-3">
+            <h3 className="text-sm font-semibold text-emerald-800 mb-3 flex items-center gap-2">
+              <TrendingUp className="w-4 h-4" />
               Most Profitable Items
             </h3>
             <div className="space-y-2">
-              {data.profitMarginAnalysis.topProfitable.slice(0, 5).map((item) => (
+              {data.profitMarginAnalysis.topProfitable.slice(0, 5).map((item, index) => (
                 <Link
                   key={item.id}
                   href={`/inventory/${item.id}`}
-                  className="flex justify-between items-center py-2 border-b border-gray-100 last:border-0"
+                  className="flex justify-between items-center p-3 bg-white rounded-xl hover:shadow-md transition-shadow border border-emerald-100"
                 >
-                  <div>
-                    <p className="font-medium text-gray-900">{item.name}</p>
-                    <p className="text-xs text-gray-500">
-                      {item.totalSold} sold &middot; {item.marginPercent}% margin
-                    </p>
+                  <div className="flex items-center gap-3">
+                    <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                      index === 0 ? 'bg-yellow-400 text-yellow-900' :
+                      index === 1 ? 'bg-gray-300 text-gray-700' :
+                      index === 2 ? 'bg-amber-600 text-white' :
+                      'bg-emerald-100 text-emerald-700'
+                    }`}>
+                      {index + 1}
+                    </span>
+                    <div>
+                      <p className="font-semibold text-gray-900">{item.name}</p>
+                      <p className="text-xs text-gray-500">
+                        {item.totalSold} sold &middot; {item.marginPercent}% margin
+                      </p>
+                    </div>
                   </div>
-                  <span className="text-green-600 font-semibold tabular-nums">
+                  <span className="text-emerald-600 font-bold tabular-nums bg-emerald-100 px-3 py-1 rounded-lg">
                     {formatCurrency(item.totalProfit)}
                   </span>
                 </Link>
               ))}
             </div>
-          </Card>
+          </div>
 
           {/* Best vs Worst Margins */}
           <div className="grid grid-cols-2 gap-3">
-            <Card>
-              <h3 className="text-xs font-medium text-green-600 mb-2">
+            {/* Best Margins */}
+            <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl border border-green-200 p-4">
+              <h3 className="text-xs font-bold text-green-700 mb-3 uppercase tracking-wide">
                 Best Margins
               </h3>
               <div className="space-y-2">
                 {data.profitMarginAnalysis.bestMargin.map((item) => (
-                  <div key={item.id} className="flex justify-between text-sm">
-                    <span className="text-gray-700 truncate pr-2">{item.name}</span>
-                    <span className="text-green-600 font-medium tabular-nums">
+                  <div key={item.id} className="flex justify-between items-center text-sm bg-white/60 rounded-lg px-3 py-2">
+                    <span className="text-gray-700 truncate pr-2 font-medium">{item.name}</span>
+                    <span className="text-green-600 font-bold tabular-nums">
                       {item.marginPercent}%
                     </span>
                   </div>
                 ))}
               </div>
-            </Card>
-            <Card>
-              <h3 className="text-xs font-medium text-red-600 mb-2">
+            </div>
+
+            {/* Worst Margins */}
+            <div className="bg-gradient-to-br from-red-50 to-rose-50 rounded-2xl border border-red-200 p-4">
+              <h3 className="text-xs font-bold text-red-700 mb-3 uppercase tracking-wide">
                 Lowest Margins
               </h3>
               <div className="space-y-2">
                 {data.profitMarginAnalysis.worstMargin.map((item) => (
-                  <div key={item.id} className="flex justify-between text-sm">
-                    <span className="text-gray-700 truncate pr-2">{item.name}</span>
-                    <span className="text-red-600 font-medium tabular-nums">
+                  <div key={item.id} className="flex justify-between items-center text-sm bg-white/60 rounded-lg px-3 py-2">
+                    <span className="text-gray-700 truncate pr-2 font-medium">{item.name}</span>
+                    <span className="text-red-600 font-bold tabular-nums">
                       {item.marginPercent}%
                     </span>
                   </div>
                 ))}
               </div>
-            </Card>
+            </div>
           </div>
         </section>
       )}
