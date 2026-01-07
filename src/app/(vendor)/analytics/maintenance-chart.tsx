@@ -48,7 +48,7 @@ export function MaintenanceChart({ data }: MaintenanceChartProps) {
               }
               return label;
             }}
-            labelStyle={{ color: '#1F2937' }}
+            labelStyle={{ color: '#1F2937', fontWeight: 600 }}
             contentStyle={{
               backgroundColor: 'white',
               border: '1px solid #E5E7EB',
@@ -59,7 +59,7 @@ export function MaintenanceChart({ data }: MaintenanceChartProps) {
           <Bar
             dataKey="count"
             name="Services"
-            fill="#8B5CF6"
+            fill="#111827"
             radius={[4, 4, 0, 0]}
             maxBarSize={40}
           />
