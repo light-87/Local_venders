@@ -93,7 +93,7 @@ export default async function BillPage({
             <div className="flex justify-between text-sm mt-2">
               <span className="text-gray-500">Date</span>
               <span className="font-medium text-gray-900">
-                {formatDateShort(sale.created_at)}
+                {formatDateShort(sale.sale_date || sale.created_at)}
               </span>
             </div>
             {customer && (
@@ -208,7 +208,7 @@ export default async function BillPage({
               price: item.subtotal,
             })),
             total: sale.total_amount,
-            date: formatDateShort(sale.created_at),
+            date: formatDateShort(sale.sale_date || sale.created_at),
           }}
         />
       </div>
