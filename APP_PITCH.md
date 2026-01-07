@@ -77,10 +77,26 @@ The system learns your patterns:
 - "RO membranes run out every 45 days - time to reorder"
 - "Diwali season coming - stock up on water purifiers"
 
-**Recommendation Engine:**
-- What to order
-- When to order
-- How much to order
+**Smart Restock Recommendations (in Analytics):**
+
+The Analytics page now shows intelligent restock suggestions:
+- Items ranked by average monthly sales
+- Current stock vs. recommended order quantity
+- "Top Seller" badges for high-demand items
+- "Low Stock" warnings for urgent items
+- Suggested order amounts based on your sales velocity
+
+Example:
+> **Carbon Filter** - Top Seller
+> Avg: 8/unit/month · Stock: 2 left
+> **Order 15 units**
+
+**Profit Margin Analysis:**
+
+Know which items make you the most money:
+- **Top Earners** - Items generating highest total profit
+- **Best Margins** - Items with highest markup percentage
+- **Low Margins** - Items that need price review
 
 *No more emergency trips to the wholesaler. No more "sorry sir, out of stock."*
 
@@ -111,11 +127,28 @@ The system learns your patterns:
 - Net profit/loss
 - Account-wise breakdown (Cash, Bank, UPI)
 
-**Dashboard Analytics:**
-- Today's sales
-- Weekly trends
-- Monthly comparisons
-- Profit margins
+**Powerful Analytics Dashboard:**
+
+The Analytics page gives you the complete financial picture:
+
+**Period Filtering:**
+- Last 12 Months / This Year / All Time
+- One tap to switch between views
+
+**Key Metrics at a Glance:**
+- Total Income - all your earnings
+- Total Expenses - everything you spent
+- Net Profit - the number that matters
+
+**Monthly Breakdown Table:**
+- Month-by-month income, expenses, and net
+- See exactly which months performed best
+- Track your growth over time
+
+**Maintenance Services Chart:**
+- Visual chart of completed services per month
+- See your service business trends
+- Track maintenance revenue patterns
 
 **No More:**
 - "Where did the money go?"
