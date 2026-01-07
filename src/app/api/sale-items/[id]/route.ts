@@ -45,9 +45,10 @@ export async function PATCH(
       return NextResponse.json({ error: 'Sale item not found' }, { status: 404 });
     }
 
-    // Check vendor ownership
-    const sale = saleItem.sale as { vendor_id: string };
-    if (sale.vendor_id !== session.id) {
+    // Check vendor ownership - Supabase returns joined relations as array
+    const saleData = Array.isArray(saleItem.sale) ? saleItem.sale[0] : saleItem.sale;
+    const sale = saleData as { vendor_id: string };
+    if (!sale || sale.vendor_id !== session.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
