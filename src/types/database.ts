@@ -93,6 +93,9 @@ export interface SaleItem {
   quantity: number;
   unit_price: number;
   subtotal: number;
+  warranty_months: number | null;
+  warranty_end_date: string | null;
+  maintenance_interval_months: number | null;
   created_at: string;
 }
 

@@ -1,12 +1,13 @@
 import { validateSession } from '@/lib/auth';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { formatCurrency, formatDate, formatDateShort } from '@/lib/utils/format';
+import { formatCurrency, formatDate } from '@/lib/utils/format';
 import { PageHeader } from '@/components/layout';
-import { Card, Badge } from '@/components/ui';
-import { User, Phone, ShoppingBag, Shield, Wrench, AlertCircle } from 'lucide-react';
+import { Card } from '@/components/ui';
+import { User, Phone, ShoppingBag } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { CustomerActions } from './customer-actions';
+import { WarrantyItemsSection } from './warranty-items-section';
 
 interface SaleItem {
   id: string;
@@ -14,39 +15,15 @@ interface SaleItem {
   quantity: number;
   unit_price: number;
   warranty_months: number | null;
+  warranty_end_date: string | null;
   maintenance_interval_months: number | null;
   created_at: string;
   sale: {
     id: string;
     bill_id: string;
     created_at: string;
+    sale_date: string;
   };
-}
-
-function getWarrantyStatus(purchaseDate: string, warrantyMonths: number | null): {
-  status: 'active' | 'expiring' | 'expired' | 'none';
-  label: string;
-  daysLeft?: number;
-} {
-  if (!warrantyMonths || warrantyMonths === 0) {
-    return { status: 'none', label: 'No Warranty' };
-  }
-
-  const purchase = new Date(purchaseDate);
-  const expiry = new Date(purchase);
-  expiry.setMonth(expiry.getMonth() + warrantyMonths);
-
-  const now = new Date();
-  const daysLeft = Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-
-  if (daysLeft < 0) {
-    return { status: 'expired', label: 'Expired' };
-  } else if (daysLeft <= 30) {
-    return { status: 'expiring', label: `${daysLeft} days left`, daysLeft };
-  } else {
-    const monthsLeft = Math.floor(daysLeft / 30);
-    return { status: 'active', label: `${monthsLeft} months left`, daysLeft };
-  }
 }
 
 async function getCustomer(vendorId: string, customerId: string) {
@@ -78,9 +55,10 @@ async function getCustomer(vendorId: string, customerId: string) {
       quantity,
       unit_price,
       warranty_months,
+      warranty_end_date,
       maintenance_interval_months,
       created_at,
-      sale:sales!inner(id, bill_id, created_at, customer_id)
+      sale:sales!inner(id, bill_id, created_at, sale_date, customer_id)
     `)
     .eq('sale.customer_id', customerId)
     .order('created_at', { ascending: false });
@@ -166,57 +144,7 @@ export default async function CustomerDetailPage({
         </Card>
 
         {/* Items with Warranty/Maintenance */}
-        {itemsWithWarranty.length > 0 && (
-          <section>
-            <h3 className="text-sm font-medium text-gray-500 mb-3">Items & Warranty</h3>
-            <div className="space-y-2">
-              {itemsWithWarranty.map((item) => {
-                const warranty = getWarrantyStatus(item.sale.created_at, item.warranty_months);
-                return (
-                  <Link key={item.id} href={`/bill/${item.sale.bill_id}`}>
-                    <Card variant="interactive" className="p-3">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-gray-900 truncate">{item.item_name}</p>
-                          <p className="text-sm text-gray-500">
-                            Purchased {formatDateShort(item.sale.created_at)}
-                          </p>
-                          <div className="flex flex-wrap gap-2 mt-2">
-                            {/* Warranty Badge */}
-                            {item.warranty_months && item.warranty_months > 0 && (
-                              <span
-                                className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full ${
-                                  warranty.status === 'active'
-                                    ? 'bg-green-50 text-green-700'
-                                    : warranty.status === 'expiring'
-                                    ? 'bg-amber-50 text-amber-700'
-                                    : 'bg-red-50 text-red-700'
-                                }`}
-                              >
-                                <Shield className="w-3 h-3" />
-                                {warranty.label}
-                              </span>
-                            )}
-                            {/* Maintenance Badge */}
-                            {item.maintenance_interval_months && item.maintenance_interval_months > 0 && (
-                              <span className="inline-flex items-center gap-1 text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">
-                                <Wrench className="w-3 h-3" />
-                                Every {item.maintenance_interval_months}mo
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        {warranty.status === 'expiring' && (
-                          <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0" />
-                        )}
-                      </div>
-                    </Card>
-                  </Link>
-                );
-              })}
-            </div>
-          </section>
-        )}
+        <WarrantyItemsSection items={itemsWithWarranty} />
 
         {/* Purchase History */}
         <section>
