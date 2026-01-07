@@ -51,7 +51,7 @@ function getWarrantyStatus(item: SaleItem): {
 
   const now = new Date();
   const daysLeft = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-  const expiryDateStr = expiryDate.toISOString().split('T')[0];
+  const expiryDateStr = expiryDate.toISOString().split('T')[0] ?? '';
 
   if (daysLeft < 0) {
     return { status: 'expired', label: 'Expired', daysLeft, expiryDate: expiryDateStr };

@@ -30,7 +30,7 @@ interface WarrantyEditModalProps {
 function calculateWarrantyEndDate(purchaseDate: string, warrantyMonths: number): string {
   const date = new Date(purchaseDate);
   date.setMonth(date.getMonth() + warrantyMonths);
-  return date.toISOString().split('T')[0];
+  return date.toISOString().split('T')[0] ?? '';
 }
 
 function getWarrantyStatus(endDate: string): { status: 'active' | 'expiring' | 'expired'; daysLeft: number } {
