@@ -15,14 +15,15 @@ export function LoginForm({ rememberedUsername }: LoginFormProps) {
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showUsernameInput, setShowUsernameInput] = useState(!rememberedUsername);
   const pinInputRef = useRef<HTMLInputElement>(null);
 
   // If username is remembered, focus on PIN input
   useEffect(() => {
-    if (rememberedUsername && pinInputRef.current) {
+    if (rememberedUsername && !showUsernameInput && pinInputRef.current) {
       pinInputRef.current.focus();
     }
-  }, [rememberedUsername]);
+  }, [rememberedUsername, showUsernameInput]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,6 +70,7 @@ export function LoginForm({ rememberedUsername }: LoginFormProps) {
     setUsername('');
     setPin('');
     setError('');
+    setShowUsernameInput(true);
     // Clear remembered username by making API call
     fetch('/api/auth/forget-username', { method: 'POST' });
   };
@@ -76,7 +78,7 @@ export function LoginForm({ rememberedUsername }: LoginFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {/* Username field - shown or collapsed based on remembered state */}
-      {rememberedUsername ? (
+      {!showUsernameInput && rememberedUsername ? (
         <div className="bg-white rounded-xl border border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">

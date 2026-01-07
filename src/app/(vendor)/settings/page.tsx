@@ -21,6 +21,8 @@ import {
   CheckCircle2,
   XCircle,
   Loader2,
+  FileText,
+  RotateCcw,
 } from 'lucide-react';
 import type { Account, Vendor } from '@/types';
 
@@ -55,6 +57,14 @@ export default function SettingsPage() {
   const [whatsappLoading, setWhatsappLoading] = useState(false);
   const [whatsappTesting, setWhatsappTesting] = useState(false);
   const [whatsappTestResult, setWhatsappTestResult] = useState<{ success: boolean; message: string } | null>(null);
+
+  // Template states
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [templateForm, setTemplateForm] = useState('');
+  const [defaultTemplate, setDefaultTemplate] = useState('');
+  const [hasCustomTemplate, setHasCustomTemplate] = useState(false);
+  const [templateLoading, setTemplateLoading] = useState(false);
+  const [templateResetting, setTemplateResetting] = useState(false);
 
   useEffect(() => {
     fetchSettings();
@@ -315,6 +325,71 @@ export default function SettingsPage() {
     }
   };
 
+  const fetchMessageTemplate = async () => {
+    try {
+      const res = await fetch('/api/settings/message-template');
+      const json = await res.json();
+      if (json.success) {
+        setDefaultTemplate(json.data.defaultTemplate);
+        setTemplateForm(json.data.customTemplate || json.data.defaultTemplate);
+        setHasCustomTemplate(json.data.hasCustomTemplate);
+      }
+    } catch {
+      error('Failed to load message template');
+    }
+  };
+
+  const openTemplateModal = async () => {
+    setShowTemplateModal(true);
+    await fetchMessageTemplate();
+  };
+
+  const handleSaveTemplate = async () => {
+    setTemplateLoading(true);
+    try {
+      const res = await fetch('/api/settings/message-template', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ templateText: templateForm }),
+      });
+
+      const json = await res.json();
+
+      if (res.ok) {
+        success('Message template saved');
+        setHasCustomTemplate(true);
+        setShowTemplateModal(false);
+      } else {
+        error(json.error || 'Failed to save template');
+      }
+    } catch {
+      error('Something went wrong');
+    } finally {
+      setTemplateLoading(false);
+    }
+  };
+
+  const handleResetTemplate = async () => {
+    setTemplateResetting(true);
+    try {
+      const res = await fetch('/api/settings/message-template', {
+        method: 'DELETE',
+      });
+
+      if (res.ok) {
+        success('Template reset to default');
+        setTemplateForm(defaultTemplate);
+        setHasCustomTemplate(false);
+      } else {
+        error('Failed to reset template');
+      }
+    } catch {
+      error('Something went wrong');
+    } finally {
+      setTemplateResetting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div>
@@ -449,6 +524,38 @@ export default function SettingsPage() {
                 <div>
                   <p className="font-medium text-gray-900">Sales History</p>
                   <p className="text-sm text-gray-500">View all your sales</p>
+                </div>
+              </div>
+              <ChevronRight className="w-5 h-5 text-gray-400" />
+            </div>
+          </Card>
+        </section>
+
+        {/* Message Template */}
+        <section>
+          <h2 className="text-sm font-medium text-gray-500 mb-3">Message Template</h2>
+          <Card
+            variant="interactive"
+            className="cursor-pointer"
+            onClick={openTemplateModal}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                  <FileText className="w-5 h-5 text-blue-600" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium text-gray-900">Maintenance Reminder</p>
+                    {hasCustomTemplate && (
+                      <Badge variant="success" size="sm">Customized</Badge>
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-500">
+                    {hasCustomTemplate
+                      ? 'Using your custom template'
+                      : 'Customize reminder message'}
+                  </p>
                 </div>
               </div>
               <ChevronRight className="w-5 h-5 text-gray-400" />
@@ -711,6 +818,62 @@ export default function SettingsPage() {
               loading={whatsappLoading}
             >
               Save
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Message Template Modal */}
+      <Modal
+        isOpen={showTemplateModal}
+        onClose={() => setShowTemplateModal(false)}
+        title="Edit Reminder Template"
+      >
+        <div className="space-y-4">
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-sm text-amber-800">
+            <p className="font-medium mb-2">Auto-fill placeholders:</p>
+            <div className="flex flex-wrap gap-2">
+              <span className="px-2 py-1 bg-amber-100 rounded text-xs font-mono">[Customer Name]</span>
+              <span className="px-2 py-1 bg-amber-100 rounded text-xs font-mono">[Item Name]</span>
+              <span className="px-2 py-1 bg-amber-100 rounded text-xs font-mono">[Date]</span>
+              <span className="px-2 py-1 bg-amber-100 rounded text-xs font-mono">[Time Slot]</span>
+              <span className="px-2 py-1 bg-amber-100 rounded text-xs font-mono">[Business Name]</span>
+            </div>
+            <p className="text-xs mt-2 text-amber-700">
+              These will be automatically replaced with actual values when sending
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Message Template
+            </label>
+            <textarea
+              value={templateForm}
+              onChange={(e) => setTemplateForm(e.target.value)}
+              rows={12}
+              className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none font-mono"
+              placeholder="Enter your message template..."
+            />
+          </div>
+
+          <div className="flex gap-2">
+            {hasCustomTemplate && (
+              <Button
+                variant="secondary"
+                onClick={handleResetTemplate}
+                loading={templateResetting}
+                icon={<RotateCcw className="w-4 h-4" />}
+              >
+                Reset
+              </Button>
+            )}
+            <Button
+              fullWidth
+              onClick={handleSaveTemplate}
+              loading={templateLoading}
+            >
+              Save Template
             </Button>
           </div>
         </div>
