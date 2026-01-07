@@ -4,23 +4,205 @@ import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui';
 import { formatCurrency } from '@/lib/utils/format';
 import {
-  ShoppingCart,
-  Receipt,
   Package,
   Users,
-  Settings,
-  TrendingUp,
+  ShoppingCart,
   BarChart3,
+  TrendingUp,
+  Bell,
+  ChevronRight,
+  AlertCircle,
+  CheckCircle2,
 } from 'lucide-react';
 import Link from 'next/link';
 
 interface HomeData {
   todaySales: number;
   todaySalesCount: number;
+  inventoryCount: number;
+  customersCount: number;
+  todayRemindersCount: number;
+  overdueRemindersCount: number;
 }
 
 interface SimpleHomeProps {
   vendorName: string;
+}
+
+const navigationCards = [
+  {
+    title: 'Inventory',
+    description: 'Manage your items',
+    href: '/inventory',
+    icon: Package,
+    bgColor: 'bg-emerald-50',
+    iconBgColor: 'bg-emerald-100',
+    iconColor: 'text-emerald-600',
+    borderColor: 'border-emerald-200',
+    countKey: 'inventoryCount' as const,
+    countLabel: 'items',
+  },
+  {
+    title: 'Customers',
+    description: 'View your customers',
+    href: '/customers',
+    icon: Users,
+    bgColor: 'bg-violet-50',
+    iconBgColor: 'bg-violet-100',
+    iconColor: 'text-violet-600',
+    borderColor: 'border-violet-200',
+    countKey: 'customersCount' as const,
+    countLabel: 'saved',
+  },
+  {
+    title: 'Sales History',
+    description: 'View past sales',
+    href: '/sales',
+    icon: ShoppingCart,
+    bgColor: 'bg-amber-50',
+    iconBgColor: 'bg-amber-100',
+    iconColor: 'text-amber-600',
+    borderColor: 'border-amber-200',
+    countKey: null,
+    countLabel: null,
+  },
+  {
+    title: 'Dashboard',
+    description: 'Charts & analytics',
+    href: '/analytics',
+    icon: BarChart3,
+    bgColor: 'bg-indigo-50',
+    iconBgColor: 'bg-indigo-100',
+    iconColor: 'text-indigo-600',
+    borderColor: 'border-indigo-200',
+    countKey: null,
+    countLabel: null,
+  },
+];
+
+function TodayCardSkeleton() {
+  return (
+    <div className="grid grid-cols-2 gap-3">
+      {/* Sales skeleton */}
+      <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4 min-h-[120px]">
+        <div className="animate-pulse">
+          <div className="h-4 w-16 bg-gray-200 rounded mb-3" />
+          <div className="h-8 w-24 bg-gray-200 rounded mb-2" />
+          <div className="h-3 w-20 bg-gray-200 rounded" />
+        </div>
+      </div>
+      {/* Reminders skeleton */}
+      <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4 min-h-[120px]">
+        <div className="animate-pulse">
+          <div className="h-4 w-20 bg-gray-200 rounded mb-3" />
+          <div className="h-8 w-16 bg-gray-200 rounded mb-2" />
+          <div className="h-3 w-24 bg-gray-200 rounded" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SalesCard({ amount, count }: { amount: number; count: number }) {
+  const hasSales = count > 0;
+
+  // Dynamic styling based on sales
+  const bgColor = hasSales ? 'bg-blue-50' : 'bg-gray-50';
+  const borderColor = hasSales ? 'border-blue-200' : 'border-gray-200';
+  const iconBg = hasSales ? 'bg-blue-100' : 'bg-gray-100';
+  const iconColor = hasSales ? 'text-blue-600' : 'text-gray-500';
+  const amountColor = hasSales ? 'text-blue-700' : 'text-gray-500';
+  const textColor = hasSales ? 'text-blue-600' : 'text-gray-500';
+
+  return (
+    <Card className={`${bgColor} border ${borderColor} min-h-[120px] flex flex-col justify-between`}>
+      <div className="flex items-center gap-2 mb-2">
+        <div className={`w-6 h-6 rounded-full ${iconBg} flex items-center justify-center`}>
+          <TrendingUp className={`w-3.5 h-3.5 ${iconColor}`} />
+        </div>
+        <span className="text-sm font-medium text-gray-600">Sales</span>
+      </div>
+      <div className="flex-1">
+        <p className={`text-xl font-bold ${amountColor} tabular-nums`}>
+          {formatCurrency(amount)}
+        </p>
+        <p className={`text-sm ${textColor} mt-0.5`}>
+          {hasSales
+            ? `${count} ${count === 1 ? 'sale' : 'sales'} today`
+            : 'No sales yet'}
+        </p>
+      </div>
+    </Card>
+  );
+}
+
+function RemindersCard({ todayCount, overdueCount }: { todayCount: number; overdueCount: number }) {
+  const hasToday = todayCount > 0;
+  const hasOverdue = overdueCount > 0;
+  const allCaughtUp = !hasToday && !hasOverdue;
+
+  // Determine styling based on state
+  let bgColor = 'bg-gray-50';
+  let borderColor = 'border-gray-200';
+  let iconBg = 'bg-gray-100';
+  let iconColor = 'text-gray-500';
+  let textColor = 'text-gray-600';
+  let StatusIcon = CheckCircle2;
+
+  if (hasOverdue) {
+    bgColor = 'bg-rose-50';
+    borderColor = 'border-rose-200';
+    iconBg = 'bg-rose-100';
+    iconColor = 'text-rose-600';
+    textColor = 'text-rose-700';
+    StatusIcon = AlertCircle;
+  } else if (hasToday) {
+    bgColor = 'bg-amber-50';
+    borderColor = 'border-amber-200';
+    iconBg = 'bg-amber-100';
+    iconColor = 'text-amber-600';
+    textColor = 'text-amber-700';
+    StatusIcon = Bell;
+  }
+
+  // Build status text
+  let statusText = '';
+  if (hasToday && hasOverdue) {
+    statusText = `${todayCount} today · ${overdueCount} overdue`;
+  } else if (hasToday) {
+    statusText = `${todayCount} for today`;
+  } else if (hasOverdue) {
+    statusText = `${overdueCount} overdue`;
+  } else {
+    statusText = 'All caught up!';
+  }
+
+  return (
+    <Link href="/reminders">
+      <Card
+        variant="interactive"
+        className={`${bgColor} border ${borderColor} h-full min-h-[120px] flex flex-col justify-between`}
+      >
+        <div className="flex items-center gap-2 mb-2">
+          <div className={`w-6 h-6 rounded-full ${iconBg} flex items-center justify-center`}>
+            <StatusIcon className={`w-3.5 h-3.5 ${iconColor}`} />
+          </div>
+          <span className="text-sm font-medium text-gray-600">Reminders</span>
+        </div>
+        <div className="flex-1">
+          <p className={`text-xl font-bold ${allCaughtUp ? 'text-gray-500' : textColor}`}>
+            {allCaughtUp ? '0' : (hasOverdue ? overdueCount : todayCount)}
+          </p>
+          <p className={`text-sm ${textColor} mt-0.5`}>
+            {statusText}
+          </p>
+        </div>
+        <div className="flex justify-end mt-2">
+          <ChevronRight className={`w-4 h-4 ${allCaughtUp ? 'text-gray-400' : iconColor}`} />
+        </div>
+      </Card>
+    </Link>
+  );
 }
 
 export function SimpleHome({ vendorName }: SimpleHomeProps) {
@@ -30,7 +212,6 @@ export function SimpleHome({ vendorName }: SimpleHomeProps) {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Simple query - just today's sales
         const res = await fetch('/api/home');
         const json = await res.json();
         if (json.success) {
@@ -48,142 +229,84 @@ export function SimpleHome({ vendorName }: SimpleHomeProps) {
 
   const firstName = vendorName.split(' ')[0];
 
+  // Time-based greeting
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    return 'Good evening';
+  };
+
+  // Format today's date
+  const formatDate = () => {
+    return new Date().toLocaleDateString('en-IN', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+    });
+  };
+
   return (
-    <div className="p-4 space-y-6">
+    <div className="p-4 space-y-5">
       {/* Welcome Section */}
-      <section className="text-center pt-4 pb-2">
+      <section className="pt-2 flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-gray-900">
-          Welcome, {firstName}!
+          {getGreeting()}, {firstName}!
         </h1>
-        <p className="text-gray-500 mt-1">What would you like to do?</p>
+        <p className="text-sm text-gray-500">{formatDate()}</p>
       </section>
 
-      {/* Today's Quick Stats */}
-      {!loading && data && (
-        <section>
-          <Card className="bg-gradient-to-r from-brand-500 to-brand-600 text-white">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-brand-100 text-sm">Today's Sales</p>
-                <p className="text-3xl font-bold tabular-nums">
-                  {formatCurrency(data.todaySales)}
-                </p>
-                <p className="text-brand-200 text-sm mt-1">
-                  {data.todaySalesCount} {data.todaySalesCount === 1 ? 'sale' : 'sales'}
-                </p>
-              </div>
-              <TrendingUp className="w-12 h-12 text-brand-200" />
-            </div>
-          </Card>
-        </section>
-      )}
-
-      {/* Primary Actions */}
+      {/* Today at a Glance - Combined Sales + Reminders */}
       <section>
-        <h2 className="text-sm font-medium text-gray-500 mb-3">Quick Actions</h2>
+        {loading ? (
+          <TodayCardSkeleton />
+        ) : data ? (
+          <div className="grid grid-cols-2 gap-3">
+            {/* Sales Card */}
+            <SalesCard amount={data.todaySales} count={data.todaySalesCount} />
+
+            {/* Reminders Card */}
+            <RemindersCard
+              todayCount={data.todayRemindersCount}
+              overdueCount={data.overdueRemindersCount}
+            />
+          </div>
+        ) : null}
+      </section>
+
+      {/* Main Navigation - 2x2 Grid */}
+      <section className="pt-1">
         <div className="grid grid-cols-2 gap-3">
-          <Link href="/sales/new">
-            <Card variant="interactive" className="text-center py-6 border-2 border-brand-200 bg-brand-50">
-              <ShoppingCart className="w-8 h-8 text-brand-500 mx-auto mb-2" />
-              <p className="font-medium text-brand-700">New Sale</p>
-            </Card>
-          </Link>
-          <Link href="/transactions/new">
-            <Card variant="interactive" className="text-center py-6">
-              <Receipt className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-              <p className="font-medium text-gray-700">Add Transaction</p>
-            </Card>
-          </Link>
-        </div>
-      </section>
+          {navigationCards.map((card) => {
+            const Icon = card.icon;
+            const count = card.countKey && data ? data[card.countKey] : null;
 
-      {/* Navigation Links */}
-      <section>
-        <h2 className="text-sm font-medium text-gray-500 mb-3">Go To</h2>
-        <div className="space-y-2">
-          <Link href="/transactions">
-            <Card variant="interactive">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                  <Receipt className="w-5 h-5 text-blue-600" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium text-gray-900">Transactions</p>
-                  <p className="text-sm text-gray-500">View income & expenses</p>
-                </div>
-              </div>
-            </Card>
-          </Link>
-
-          <Link href="/inventory">
-            <Card variant="interactive">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-                  <Package className="w-5 h-5 text-green-600" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium text-gray-900">Inventory</p>
-                  <p className="text-sm text-gray-500">Manage your items</p>
-                </div>
-              </div>
-            </Card>
-          </Link>
-
-          <Link href="/customers">
-            <Card variant="interactive">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
-                  <Users className="w-5 h-5 text-purple-600" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium text-gray-900">Customers</p>
-                  <p className="text-sm text-gray-500">View your customers</p>
-                </div>
-              </div>
-            </Card>
-          </Link>
-
-          <Link href="/sales">
-            <Card variant="interactive">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
-                  <ShoppingCart className="w-5 h-5 text-amber-600" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium text-gray-900">Sales History</p>
-                  <p className="text-sm text-gray-500">View past sales</p>
-                </div>
-              </div>
-            </Card>
-          </Link>
-
-          <Link href="/analytics">
-            <Card variant="interactive">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center">
-                  <BarChart3 className="w-5 h-5 text-indigo-600" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium text-gray-900">Dashboard</p>
-                  <p className="text-sm text-gray-500">Charts & analytics</p>
-                </div>
-              </div>
-            </Card>
-          </Link>
-
-          <Link href="/settings">
-            <Card variant="interactive">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
-                  <Settings className="w-5 h-5 text-gray-600" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium text-gray-900">Settings</p>
-                  <p className="text-sm text-gray-500">Profile & accounts</p>
-                </div>
-              </div>
-            </Card>
-          </Link>
+            return (
+              <Link key={card.href} href={card.href}>
+                <Card
+                  variant="interactive"
+                  className={`${card.bgColor} border ${card.borderColor} h-full min-h-[140px] flex flex-col`}
+                >
+                  <div className={`w-12 h-12 rounded-xl ${card.iconBgColor} flex items-center justify-center mb-3`}>
+                    <Icon className={`w-6 h-6 ${card.iconColor}`} />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-gray-900 text-base">
+                      {card.title}
+                    </h3>
+                    <p className="text-sm text-gray-600 mt-0.5">
+                      {card.description}
+                    </p>
+                  </div>
+                  {count !== null && (
+                    <p className="text-sm font-medium text-gray-500 mt-2">
+                      {count} {card.countLabel}
+                    </p>
+                  )}
+                </Card>
+              </Link>
+            );
+          })}
         </div>
       </section>
     </div>
