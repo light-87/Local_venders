@@ -39,7 +39,7 @@ export async function GET() {
 
       // Inventory count
       supabase
-        .from('inventory')
+        .from('inventory_items')
         .select('id', { count: 'exact', head: true })
         .eq('vendor_id', session.id),
 
