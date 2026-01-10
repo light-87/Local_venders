@@ -232,6 +232,11 @@ export async function PATCH(
       revalidatePath(`/customers/${existingSale.customer_id}`);
     }
 
+    // Revalidate bill page cache
+    if (existingSale.bill_id) {
+      revalidatePath(`/bill/${existingSale.bill_id}`);
+    }
+
     return NextResponse.json({ success: true, sale: updatedSale });
   } catch (error) {
     console.error('Sale update error:', error);
