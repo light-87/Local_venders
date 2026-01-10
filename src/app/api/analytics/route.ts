@@ -146,20 +146,23 @@ export async function GET(request: Request) {
 
     const recentSaleIds = recentSales?.map((s) => s.id) ?? [];
 
-    let saleItemsData: { inventory_item_id: string; quantity: number }[] = [];
+    let saleItemsData: { inventory_item_id: string; quantity: number; unit_price: number }[] = [];
     if (recentSaleIds.length > 0) {
       const { data } = await supabase
         .from('sale_items')
-        .select('inventory_item_id, quantity')
+        .select('inventory_item_id, quantity, unit_price')
         .in('sale_id', recentSaleIds);
       saleItemsData = data ?? [];
     }
 
-    // Aggregate sales by item
-    const itemSalesMap = new Map<string, number>();
+    // Aggregate sales by item (quantity and total revenue from actual sold prices)
+    const itemSalesMap = new Map<string, { quantity: number; totalRevenue: number }>();
     saleItemsData.forEach((item) => {
-      const current = itemSalesMap.get(item.inventory_item_id) || 0;
-      itemSalesMap.set(item.inventory_item_id, current + item.quantity);
+      const current = itemSalesMap.get(item.inventory_item_id) || { quantity: 0, totalRevenue: 0 };
+      itemSalesMap.set(item.inventory_item_id, {
+        quantity: current.quantity + item.quantity,
+        totalRevenue: current.totalRevenue + (item.unit_price * item.quantity),
+      });
     });
 
     // Get inventory items
@@ -172,7 +175,8 @@ export async function GET(request: Request) {
     // Generate restock recommendations
     const restockRecommendations = (inventoryItems ?? [])
       .map((item) => {
-        const totalSold = itemSalesMap.get(item.id) || 0;
+        const salesData = itemSalesMap.get(item.id) || { quantity: 0, totalRevenue: 0 };
+        const totalSold = salesData.quantity;
         const avgMonthlySales = totalSold / 3; // 3 months
         const monthsOfStockLeft = avgMonthlySales > 0 ? item.current_stock / avgMonthlySales : Infinity;
         const suggestedOrder = Math.max(0, Math.ceil(avgMonthlySales * 2 - item.current_stock)); // 2 months buffer
@@ -193,24 +197,32 @@ export async function GET(request: Request) {
       .sort((a, b) => (b.avgMonthlySales || 0) - (a.avgMonthlySales || 0))
       .slice(0, 10);
 
-    // Profit margin analysis
+    // Profit margin analysis - uses actual sold prices from sale_items
     const profitMarginAnalysis = (inventoryItems ?? [])
       .filter((item) => item.cost_price > 0 && item.unit_price > 0)
       .map((item) => {
-        const totalSold = itemSalesMap.get(item.id) || 0;
-        const margin = ((item.unit_price - item.cost_price) / item.unit_price) * 100;
-        const profitPerUnit = item.unit_price - item.cost_price;
-        const totalProfit = profitPerUnit * totalSold;
+        const salesData = itemSalesMap.get(item.id) || { quantity: 0, totalRevenue: 0 };
+        const totalSold = salesData.quantity;
+        const totalRevenue = salesData.totalRevenue;
+
+        // Calculate actual profit based on real sold prices
+        const totalCost = item.cost_price * totalSold;
+        const totalProfit = totalRevenue - totalCost;
+
+        // Calculate average selling price and margin based on actual sales
+        const avgSellingPrice = totalSold > 0 ? totalRevenue / totalSold : item.unit_price;
+        const profitPerUnit = totalSold > 0 ? totalProfit / totalSold : item.unit_price - item.cost_price;
+        const margin = avgSellingPrice > 0 ? ((avgSellingPrice - item.cost_price) / avgSellingPrice) * 100 : 0;
 
         return {
           id: item.id,
           name: item.name,
           costPrice: item.cost_price,
-          sellingPrice: item.unit_price,
+          sellingPrice: avgSellingPrice, // Now shows average actual selling price
           marginPercent: Math.round(margin * 10) / 10,
-          profitPerUnit,
+          profitPerUnit: Math.round(profitPerUnit * 100) / 100,
           totalSold,
-          totalProfit,
+          totalProfit: Math.round(totalProfit * 100) / 100,
         };
       })
       .sort((a, b) => b.totalProfit - a.totalProfit)
