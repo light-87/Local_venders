@@ -4,6 +4,9 @@ import { notFound } from 'next/navigation';
 import { BillActions } from './bill-actions';
 import { BillNavigation } from './bill-navigation';
 
+// Disable caching to always show fresh data
+export const dynamic = 'force-dynamic';
+
 async function getBill(billId: string) {
   const supabase = createAdminClient();
 
