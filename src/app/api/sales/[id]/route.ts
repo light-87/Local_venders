@@ -168,6 +168,30 @@ export async function PATCH(
             .eq('id', existingSale.customer_id);
         }
       }
+
+      // Update maintenance reminder dates if sale date changed
+      if (data.saleDate) {
+        const { data: saleItems } = await supabase
+          .from('sale_items')
+          .select('id, maintenance_interval_months')
+          .eq('sale_id', id)
+          .not('maintenance_interval_months', 'is', null);
+
+        if (saleItems && saleItems.length > 0) {
+          for (const item of saleItems) {
+            if (item.maintenance_interval_months && item.maintenance_interval_months > 0) {
+              const newScheduledDate = new Date(data.saleDate);
+              newScheduledDate.setMonth(newScheduledDate.getMonth() + item.maintenance_interval_months);
+
+              await supabase
+                .from('scheduled_messages')
+                .update({ scheduled_date: newScheduledDate.toISOString() })
+                .eq('related_sale_item_id', item.id)
+                .eq('status', 'pending');
+            }
+          }
+        }
+      }
     } else if (data.saleDate) {
       // Just update the date on related records
       await supabase
@@ -179,11 +203,38 @@ export async function PATCH(
         .from('income')
         .update({ income_date: data.saleDate })
         .eq('sale_id', id);
+
+      // Update maintenance reminder dates based on new sale date
+      const { data: saleItems } = await supabase
+        .from('sale_items')
+        .select('id, maintenance_interval_months')
+        .eq('sale_id', id)
+        .not('maintenance_interval_months', 'is', null);
+
+      if (saleItems && saleItems.length > 0) {
+        for (const item of saleItems) {
+          if (item.maintenance_interval_months && item.maintenance_interval_months > 0) {
+            const newScheduledDate = new Date(data.saleDate);
+            newScheduledDate.setMonth(newScheduledDate.getMonth() + item.maintenance_interval_months);
+
+            await supabase
+              .from('scheduled_messages')
+              .update({ scheduled_date: newScheduledDate.toISOString() })
+              .eq('related_sale_item_id', item.id)
+              .eq('status', 'pending');
+          }
+        }
+      }
     }
 
     // Revalidate customer page cache if this sale is linked to a customer
     if (existingSale.customer_id) {
       revalidatePath(`/customers/${existingSale.customer_id}`);
+    }
+
+    // Revalidate bill page cache
+    if (existingSale.bill_id) {
+      revalidatePath(`/bill/${existingSale.bill_id}`);
     }
 
     return NextResponse.json({ success: true, sale: updatedSale });
