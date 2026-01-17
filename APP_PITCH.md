@@ -167,6 +167,48 @@ The Analytics page gives you the complete financial picture:
 
 **Share instantly via WhatsApp. No printer needed.**
 
+### 7. UPI Payment Links - Get Paid Instantly
+
+**The Problem:**
+Customer receives bill but has to ask "What's your UPI ID?" then manually type amount. Friction = delayed payments.
+
+**The Solution:**
+One-tap payment links with pre-filled UPI details.
+
+**How It Works:**
+1. Set your UPI ID once in Settings
+2. Create a sale and send bill via WhatsApp
+3. Customer clicks the payment link
+4. Beautiful payment page opens with:
+   - Your business name and logo
+   - Bill summary with all items
+   - Three payment buttons: Google Pay, PhonePe, Any UPI App
+5. Customer taps their preferred app
+6. UPI app opens with amount and your UPI ID pre-filled
+7. One tap to pay. Done.
+
+**Payment Page Features:**
+- Clean, professional design (blue theme)
+- Branded buttons for Google Pay (Google colors) and PhonePe (purple)
+- Generic UPI option for Paytm, BHIM, bank apps
+- Works on any phone - no app install needed
+- Completely secure - amount comes from database, not URL
+
+**The WhatsApp Message Now Includes:**
+> "Thank you for your purchase!
+> Items: Carbon Filter x2 Rs.500
+> Total: Rs.500
+>
+> **Pay Online:** yoursite.com/pay/abc123"
+
+**Why This Matters:**
+- **Faster payments** - No friction, no UPI ID typing
+- **Professional image** - Branded payment page
+- **Customer convenience** - Their favorite app, one tap
+- **No payment gateway fees** - Direct UPI transfer to your account
+
+**Result: Get paid in seconds, not days.**
+
 ---
 
 ## The VendorFlow Difference
@@ -180,6 +222,7 @@ The Analytics page gives you the complete financial picture:
 | End of month - no idea of profit | Real-time dashboard with exact figures |
 | Paper bills lost | Digital bills, shareable links |
 | Customer history? "Who was this?" | Complete purchase history per customer |
+| QR scan + type amount, or "What's your UPI ID?" | One-tap payment links, pre-filled amount |
 
 ---
 
@@ -342,6 +385,7 @@ The app should pay for itself in the first week through:
 4. **WhatsApp** - Professional customer communication
 5. **Money** - Complete financial clarity
 6. **Bills** - Digital, shareable, professional
+7. **Payments** - One-tap UPI links, get paid instantly
 
 **One app. Complete business control. 100% revenue capture.**
 
