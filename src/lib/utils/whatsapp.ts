@@ -136,7 +136,7 @@ export function generatePaymentReminderMessage(params: {
 }
 
 /**
- * Generate bill notification message (without link)
+ * Generate bill notification message with optional payment link
  */
 export function generateBillMessage(params: {
   customerName: string;
@@ -144,8 +144,9 @@ export function generateBillMessage(params: {
   items: string; // Pre-formatted items string like "Rice 5kg Rs.250 | Oil 1L Rs.180"
   total: number;
   date: string;
+  paymentLink?: string; // Optional payment link (only included if vendor has UPI ID)
 }): string {
-  const { customerName, businessName, items, total, date } = params;
+  const { customerName, businessName, items, total, date, paymentLink } = params;
 
   let message = `Hi *${customerName}*,\n\n`;
   message += `Thank you for shopping at *${businessName}*!\n\n`;
@@ -155,6 +156,13 @@ export function generateBillMessage(params: {
   message += `*Total:* Rs.${total.toLocaleString('en-IN')}\n`;
   message += `*Date:* ${date}\n\n`;
   message += `------------------------\n`;
+
+  // Add payment link if available
+  if (paymentLink) {
+    message += `\n*Pay Online:* ${paymentLink}\n\n`;
+    message += `------------------------\n`;
+  }
+
   message += `_Thank you for your business!_`;
 
   return message;

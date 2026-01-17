@@ -21,9 +21,10 @@ interface BillData {
 interface BillActionsProps {
   billId: string;
   billData?: BillData;
+  vendorHasUpiId?: boolean;
 }
 
-export function BillActions({ billId, billData }: BillActionsProps) {
+export function BillActions({ billId, billData, vendorHasUpiId }: BillActionsProps) {
   const [copied, setCopied] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState(false);
@@ -31,6 +32,11 @@ export function BillActions({ billId, billData }: BillActionsProps) {
   const billUrl = typeof window !== 'undefined'
     ? `${window.location.origin}/bill/${billId}`
     : `/bill/${billId}`;
+
+  // Payment link - only generated if vendor has UPI ID set up
+  const paymentUrl = vendorHasUpiId && typeof window !== 'undefined'
+    ? `${window.location.origin}/pay/${billId}`
+    : undefined;
 
   const handleCopy = async () => {
     try {
@@ -60,12 +66,16 @@ export function BillActions({ billId, billData }: BillActionsProps) {
         items: formattedItems,
         total: billData.total,
         date: billData.date,
+        paymentLink: paymentUrl, // Include payment link if vendor has UPI ID
       });
       const whatsappUrl = createWhatsAppLink(billData.customerPhone, message);
       window.open(whatsappUrl, '_blank');
     } else {
       // Fallback to simple link share (opens WhatsApp without recipient)
-      const message = `Here is your bill: ${billUrl}`;
+      let message = `Here is your bill: ${billUrl}`;
+      if (paymentUrl) {
+        message += `\n\nPay Online: ${paymentUrl}`;
+      }
       const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
       window.open(whatsappUrl, '_blank');
     }

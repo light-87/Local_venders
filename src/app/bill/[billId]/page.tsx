@@ -10,12 +10,12 @@ export const dynamic = 'force-dynamic';
 async function getBill(billId: string) {
   const supabase = createAdminClient();
 
-  // Get sale by bill_id
+  // Get sale by bill_id with vendor's UPI ID for payment links
   const { data: sale } = await supabase
     .from('sales')
     .select(`
       *,
-      vendor:vendors(id, name, business_name, phone, business_logo),
+      vendor:vendors(id, name, business_name, phone, business_logo, upi_id),
       customer:customers(id, name, phone),
       account:accounts(id, name, type)
     `)
@@ -55,6 +55,7 @@ export default async function BillPage({
     name: string;
     phone: string | null;
     business_logo: string | null;
+    upi_id: string | null;
   };
   const customer = sale.customer as { name: string; phone: string | null } | null;
 
@@ -201,6 +202,7 @@ export default async function BillPage({
         {/* Actions */}
         <BillActions
           billId={billId}
+          vendorHasUpiId={!!vendor.upi_id}
           billData={{
             customerName: customer?.name || 'Customer',
             customerPhone: customer?.phone || null,

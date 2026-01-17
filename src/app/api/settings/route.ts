@@ -14,10 +14,10 @@ export async function GET() {
     // Get vendor details - try with WhatsApp fields first, fall back if columns don't exist
     let vendor = null;
 
-    // First try with WhatsApp columns
+    // First try with WhatsApp and UPI columns
     const { data: vendorWithWhatsApp, error: whatsappError } = await supabase
       .from('vendors')
-      .select('id, username, name, business_name, phone, whatsapp_phone_number_id, whatsapp_access_token')
+      .select('id, username, name, business_name, phone, whatsapp_phone_number_id, whatsapp_access_token, upi_id')
       .eq('id', session.id)
       .single();
 
@@ -33,6 +33,7 @@ export async function GET() {
         ...basicVendor,
         whatsapp_phone_number_id: null,
         whatsapp_access_token: null,
+        upi_id: null,
       } : null;
     } else {
       vendor = vendorWithWhatsApp;
@@ -70,17 +71,20 @@ export async function PATCH(request: Request) {
     }
 
     const body = await request.json();
-    const { name, businessName, phone } = body;
+    const { name, businessName, phone, upiId } = body;
 
     const supabase = createAdminClient();
 
+    // Build update object dynamically to handle optional fields
+    const updateData: Record<string, unknown> = {};
+    if (name !== undefined) updateData.name = name;
+    if (businessName !== undefined) updateData.business_name = businessName;
+    if (phone !== undefined) updateData.phone = phone;
+    if (upiId !== undefined) updateData.upi_id = upiId || null;
+
     const { data: vendor, error } = await supabase
       .from('vendors')
-      .update({
-        name,
-        business_name: businessName,
-        phone,
-      })
+      .update(updateData)
       .eq('id', session.id)
       .select()
       .single();
