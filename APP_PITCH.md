@@ -222,7 +222,7 @@ One-tap payment links with pre-filled UPI details.
 | End of month - no idea of profit | Real-time dashboard with exact figures |
 | Paper bills lost | Digital bills, shareable links |
 | Customer history? "Who was this?" | Complete purchase history per customer |
-| "What's your UPI ID?" - type amount manually | One-tap payment links, pre-filled amount |
+| QR scan + type amount, or "What's your UPI ID?" | One-tap payment links, pre-filled amount |
 
 ---
 
