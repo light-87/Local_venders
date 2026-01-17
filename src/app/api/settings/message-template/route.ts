@@ -1,53 +1,78 @@
 import { NextResponse } from 'next/server';
 import { validateSession } from '@/lib/auth';
 import { createAdminClient } from '@/lib/supabase/admin';
+import {
+  MAINTENANCE_TEMPLATES,
+  LANGUAGE_OPTIONS,
+  type TemplateLanguage,
+} from '@/lib/constants/maintenance-templates';
 
-// Default maintenance reminder template (not exported - route files can only export HTTP methods)
-const DEFAULT_MAINTENANCE_TEMPLATE = `Hi [Customer Name],
+// Validate that a language code is valid
+function isValidLanguage(lang: string): lang is TemplateLanguage {
+  return LANGUAGE_OPTIONS.some((opt) => opt.code === lang);
+}
 
-MAINTENANCE ALERT
-
-Date: [Date]
-[Time Slot]
-
-Your [Item Name] needs servicing to keep your drinking water safe.
-
-Skipping maintenance can lead to:
-- Impure water
-- Bacterial growth
-- Filter damage
-
-Let's keep your family healthy!
-
-Reply 1 to Confirm
-Reply 2 to Reschedule
-
-[Business Name]`;
-
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const session = await validateSession();
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const { searchParams } = new URL(request.url);
+    const requestedLanguage = searchParams.get('language');
+
     const supabase = createAdminClient();
 
-    // Try to get existing custom template
+    // Get vendor's preferred language
+    const { data: vendor } = await supabase
+      .from('vendors')
+      .select('preferred_template_language')
+      .eq('id', session.id)
+      .single();
+
+    const preferredLanguage: TemplateLanguage =
+      vendor?.preferred_template_language &&
+      isValidLanguage(vendor.preferred_template_language)
+        ? vendor.preferred_template_language
+        : 'en';
+
+    // Use requested language or fall back to preferred
+    const currentLanguage: TemplateLanguage =
+      requestedLanguage && isValidLanguage(requestedLanguage)
+        ? requestedLanguage
+        : preferredLanguage;
+
+    // Get custom template for the current language
     const { data: template } = await supabase
       .from('message_templates')
       .select('*')
       .eq('vendor_id', session.id)
       .eq('message_type', 'maintenance_reminder')
+      .eq('language', currentLanguage)
       .eq('is_active', true)
       .single();
+
+    // Get list of languages that have custom templates
+    const { data: customizedTemplates } = await supabase
+      .from('message_templates')
+      .select('language')
+      .eq('vendor_id', session.id)
+      .eq('message_type', 'maintenance_reminder')
+      .eq('is_active', true);
+
+    const customizedLanguages = customizedTemplates?.map((t) => t.language) || [];
 
     return NextResponse.json({
       success: true,
       data: {
-        defaultTemplate: DEFAULT_MAINTENANCE_TEMPLATE,
+        defaultTemplate: MAINTENANCE_TEMPLATES[currentLanguage],
         customTemplate: template?.template_text || null,
         hasCustomTemplate: !!template,
+        currentLanguage,
+        preferredLanguage,
+        customizedLanguages,
+        availableLanguages: LANGUAGE_OPTIONS,
       },
     });
   } catch (error) {
@@ -67,7 +92,7 @@ export async function PATCH(request: Request) {
     }
 
     const body = await request.json();
-    const { templateText } = body;
+    const { templateText, language } = body;
 
     if (!templateText || typeof templateText !== 'string') {
       return NextResponse.json(
@@ -75,6 +100,10 @@ export async function PATCH(request: Request) {
         { status: 400 }
       );
     }
+
+    // Validate language
+    const targetLanguage: TemplateLanguage =
+      language && isValidLanguage(language) ? language : 'en';
 
     // Validate that required placeholders are present
     const requiredPlaceholders = ['[Customer Name]', '[Item Name]', '[Date]', '[Business Name]'];
@@ -93,12 +122,19 @@ export async function PATCH(request: Request) {
 
     const supabase = createAdminClient();
 
-    // Check if template already exists
+    // Update vendor's preferred language
+    await supabase
+      .from('vendors')
+      .update({ preferred_template_language: targetLanguage })
+      .eq('id', session.id);
+
+    // Check if template already exists for this language
     const { data: existingTemplate } = await supabase
       .from('message_templates')
       .select('id')
       .eq('vendor_id', session.id)
       .eq('message_type', 'maintenance_reminder')
+      .eq('language', targetLanguage)
       .single();
 
     if (existingTemplate) {
@@ -119,12 +155,13 @@ export async function PATCH(request: Request) {
         );
       }
     } else {
-      // Create new template
+      // Create new template for this language
       const { error } = await supabase.from('message_templates').insert({
         vendor_id: session.id,
-        name: 'Maintenance Reminder',
+        name: `Maintenance Reminder (${targetLanguage.toUpperCase()})`,
         message_type: 'maintenance_reminder',
         template_text: templateText,
+        language: targetLanguage,
         is_active: true,
       });
 
@@ -147,21 +184,29 @@ export async function PATCH(request: Request) {
   }
 }
 
-export async function DELETE() {
+export async function DELETE(request: Request) {
   try {
     const session = await validateSession();
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const { searchParams } = new URL(request.url);
+    const language = searchParams.get('language');
+
+    // Validate language - if not provided or invalid, default to 'en'
+    const targetLanguage: TemplateLanguage =
+      language && isValidLanguage(language) ? language : 'en';
+
     const supabase = createAdminClient();
 
-    // Delete (or deactivate) the custom template
+    // Delete the custom template for this specific language only
     const { error } = await supabase
       .from('message_templates')
       .delete()
       .eq('vendor_id', session.id)
-      .eq('message_type', 'maintenance_reminder');
+      .eq('message_type', 'maintenance_reminder')
+      .eq('language', targetLanguage);
 
     if (error) {
       console.error('Delete template error:', error);

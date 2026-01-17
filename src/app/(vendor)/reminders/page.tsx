@@ -58,7 +58,7 @@ export default function RemindersPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabType>('today');
   const [businessName, setBusinessName] = useState('');
-  const [customTemplate, setCustomTemplate] = useState<string | null>(null);
+  const [messageTemplate, setMessageTemplate] = useState<string | null>(null);
   const [deleteModal, setDeleteModal] = useState<{ open: boolean; reminder: Reminder | null }>({
     open: false,
     reminder: null,
@@ -82,7 +82,7 @@ export default function RemindersPage() {
   useEffect(() => {
     fetchReminders();
     fetchBusinessName();
-    fetchCustomTemplate();
+    fetchMessageTemplate();
   }, []);
 
   // Search customers when typing
@@ -135,15 +135,16 @@ export default function RemindersPage() {
     }
   };
 
-  const fetchCustomTemplate = async () => {
+  const fetchMessageTemplate = async () => {
     try {
       const res = await fetch('/api/settings/message-template');
       const json = await res.json();
-      if (json.success && json.data?.customTemplate) {
-        setCustomTemplate(json.data.customTemplate);
+      if (json.success) {
+        // Use custom template if available, otherwise use the default for the preferred language
+        setMessageTemplate(json.data.customTemplate || json.data.defaultTemplate);
       }
     } catch (err) {
-      console.error('Failed to fetch custom template:', err);
+      console.error('Failed to fetch message template:', err);
     }
   };
 
@@ -190,7 +191,7 @@ export default function RemindersPage() {
         scheduledDate: format(new Date(reminder.scheduled_date), 'MMMM d, yyyy'),
         timeSlot: reminder.time_slot || undefined,
         businessName,
-        customTemplate,
+        customTemplate: messageTemplate,
       });
     }
 
