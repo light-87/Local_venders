@@ -502,9 +502,77 @@ _Business Name_
 
 **Sections**:
 1. **Profile** - View/edit vendor name, business name, phone
-2. **Security** - Change PIN
-3. **Accounts** - Manage payment accounts (Cash, Bank, UPI)
-4. **Logout**
+2. **Payment Links** - UPI ID for payment links (NEW)
+3. **Security** - Change PIN
+4. **Accounts** - Manage payment accounts (Cash, Bank, UPI)
+5. **Logout**
+
+### 7.8 UPI Payment Links (NEW)
+
+**Purpose**: Allow customers to pay directly from bill links using their preferred UPI app.
+
+**Setup**:
+- Vendor enters UPI ID once in Settings → Payment Links
+- UPI ID stored in `vendors.upi_id` column
+
+**Routes**:
+- `/pay/[billId]` - Public payment page (no auth required)
+
+**Payment Page Features**:
+- Clean, professional design (blue theme)
+- Shows: Business name, logo, bill number, date, items, total
+- Three branded payment buttons:
+  - **Google Pay** - Google colors gradient
+  - **PhonePe** - Purple theme
+  - **Any UPI App** - Green theme (generic `upi://` deep link)
+
+**Deep Link Generation**:
+```typescript
+const baseParams = `pa=${upiId}&pn=${businessName}&am=${amount}&cu=INR&tn=${billNumber}`;
+
+// Google Pay
+`gpay://upi/pay?${baseParams}`
+
+// PhonePe
+`phonepe://pay?${baseParams}`
+
+// Generic UPI (works with Paytm, BHIM, bank apps)
+`upi://pay?${baseParams}`
+```
+
+**WhatsApp Integration**:
+When vendor has UPI ID set, WhatsApp bill message includes payment link:
+```
+Hi *CustomerName*,
+
+Thank you for shopping at *Business Name*!
+
+*BILL SUMMARY*
+------------------------
+
+*Items:*
+Item 1 x2 Rs.500
+
+*Total:* Rs.500
+*Date:* 17 Jan 2025
+
+------------------------
+
+*Pay Online:* yoursite.com/pay/abc123
+
+------------------------
+_Thank you for your business!_
+```
+
+**Security**:
+- Amount fetched from database (not URL params - prevents tampering)
+- Bill ID is random hex (hard to guess)
+- VPA comes from vendor settings (not manipulable)
+
+**Database Changes**:
+```sql
+ALTER TABLE vendors ADD COLUMN upi_id VARCHAR(100);
+```
 
 ---
 
