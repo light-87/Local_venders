@@ -5,7 +5,7 @@ import { SESSION_COOKIE_NAME } from '@/lib/constants';
 // Routes that require authentication
 const protectedRoutes = ['/dashboard', '/inventory', '/sales', '/customers', '/expenses', '/messages', '/settings', '/transactions', '/analytics'];
 const adminRoutes = ['/admin'];
-const publicRoutes = ['/login', '/bill'];
+const publicRoutes = ['/login', '/bill', '/pay'];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -28,7 +28,7 @@ export async function middleware(request: NextRequest) {
   // Check if current route is protected
   const isProtectedRoute = protectedRoutes.some((route) => pathname.startsWith(route));
   const isAdminRoute = adminRoutes.some((route) => pathname.startsWith(route));
-  const isPublicRoute = publicRoutes.some((route) => pathname.startsWith(route));
+  const isPublicRoute = publicRoutes.some((route) => pathname.startsWith(route)) || pathname === '/';
 
   // Redirect to login if accessing protected route without session
   if ((isProtectedRoute || isAdminRoute) && !isLoggedIn) {
@@ -42,12 +42,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
-  // Redirect root to login or dashboard
+  // Handle root route
   if (pathname === '/') {
-    if (isLoggedIn) {
-      return NextResponse.redirect(new URL('/dashboard', request.url));
-    }
-    return NextResponse.redirect(new URL('/login', request.url));
+    // If logged in, we can either stay on landing or redirect to dashboard
+    // Usually, users expect to see the app if logged in, but let's allow landing access
+    // or redirect to dashboard if they specifically go to root while logged in.
+    // For now, let's keep it simple: if logged in and on root, stay on root (landing)
+    // or redirect to dashboard if that's preferred. The user said "front page".
+    // Let's redirect to dashboard ONLY if they try to access login while logged in (handled above).
+    // Accessing root while logged in will now show the landing page.
+    return NextResponse.next();
   }
 
   return NextResponse.next();
