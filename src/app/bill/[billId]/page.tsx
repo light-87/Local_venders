@@ -67,8 +67,8 @@ export default async function BillPage({
       <div className="max-w-md mx-auto p-4">
         {/* Bill Card */}
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-          {/* Header */}
-          <div className="bg-brand-500 text-white px-6 py-8 text-center">
+          {/* Header - Blue theme */}
+          <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-8 text-center">
             {vendor.business_logo ? (
               <img
                 src={vendor.business_logo}
@@ -84,7 +84,7 @@ export default async function BillPage({
             )}
             <h1 className="text-xl font-semibold">{vendor.business_name}</h1>
             {vendor.phone && (
-              <p className="text-brand-100 text-sm mt-1">{vendor.phone}</p>
+              <p className="text-blue-100 text-sm mt-1">{vendor.phone}</p>
             )}
           </div>
 
@@ -168,7 +168,7 @@ export default async function BillPage({
 
             <div className="flex justify-between mt-4 pt-4 border-t border-gray-200">
               <span className="text-lg font-semibold text-gray-900">Total</span>
-              <span className="text-xl font-bold text-brand-600 tabular-nums">
+              <span className="text-xl font-bold text-blue-600 tabular-nums">
                 {formatCurrency(sale.total_amount)}
               </span>
             </div>

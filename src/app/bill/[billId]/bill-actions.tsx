@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui';
-import { Share2, Copy, Check, Download, MessageCircle, Printer } from 'lucide-react';
+import { Download, MessageCircle, Printer } from 'lucide-react';
 import {
   createWhatsAppLink,
   generateBillMessage,
@@ -25,7 +25,6 @@ interface BillActionsProps {
 }
 
 export function BillActions({ billId, billData, vendorHasUpiId }: BillActionsProps) {
-  const [copied, setCopied] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState(false);
 
@@ -37,24 +36,6 @@ export function BillActions({ billId, billData, vendorHasUpiId }: BillActionsPro
   const paymentUrl = vendorHasUpiId && typeof window !== 'undefined'
     ? `${window.location.origin}/pay/${billId}`
     : undefined;
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(billUrl);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // Fallback for older browsers
-      const textArea = document.createElement('textarea');
-      textArea.value = billUrl;
-      document.body.appendChild(textArea);
-      textArea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textArea);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
 
   const handleWhatsAppShare = () => {
     // If we have bill data and customer phone, send formatted message directly
@@ -78,24 +59,6 @@ export function BillActions({ billId, billData, vendorHasUpiId }: BillActionsPro
       }
       const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
       window.open(whatsappUrl, '_blank');
-    }
-  };
-
-  const handleShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: 'Bill',
-          text: 'Here is your bill',
-          url: billUrl,
-        });
-      } catch {
-        // User cancelled or error - try WhatsApp fallback
-        handleWhatsAppShare();
-      }
-    } else {
-      // Fallback to WhatsApp
-      handleWhatsAppShare();
     }
   };
 
@@ -140,41 +103,21 @@ export function BillActions({ billId, billData, vendorHasUpiId }: BillActionsPro
         </p>
       )}
 
-      {/* Copy and Share */}
-      <div className="flex gap-3">
-        <Button
-          variant="secondary"
-          fullWidth
-          onClick={handleCopy}
-          icon={copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
-        >
-          {copied ? 'Copied!' : 'Copy Link'}
-        </Button>
-        <Button
-          variant="secondary"
-          fullWidth
-          onClick={handleShare}
-          icon={<Share2 className="w-5 h-5" />}
-        >
-          Share
-        </Button>
-      </div>
-
-      {/* WhatsApp Share */}
+      {/* WhatsApp - Primary Action */}
       <Button
-        variant="secondary"
+        variant="primary"
         fullWidth
         onClick={handleWhatsAppShare}
         icon={<MessageCircle className="w-5 h-5" />}
-        className="bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
+        className="!bg-green-600 hover:!bg-green-700 !border-green-600 py-3.5"
       >
         Send via WhatsApp
       </Button>
 
-      {/* Download and Print */}
+      {/* Download PDF and Print - Secondary Actions */}
       <div className="flex gap-3">
         <Button
-          variant="primary"
+          variant="secondary"
           fullWidth
           onClick={handleDownloadPdf}
           loading={downloading}
