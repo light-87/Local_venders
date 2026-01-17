@@ -38,7 +38,7 @@ export async function GET(
     const customer = sale.customer as { name: string } | null;
 
     // Generate QR code for bill URL
-    const billUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://vendor-app.vercel.app'}/bill/${billId}`;
+    const billUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://kuberbook.shop'}/bill/${billId}`;
     let qrCodeDataUrl: string | undefined;
 
     try {

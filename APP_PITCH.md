@@ -1,4 +1,4 @@
-# VendorFlow - Never Lose a Customer to Missed Maintenance Again
+# Kuberbook - Never Lose a Customer to Missed Maintenance Again
 
 ## The Problem: Rs. 50,000+ Lost Every Year
 
@@ -20,11 +20,11 @@ But it gets worse:
 
 ---
 
-## The Solution: VendorFlow
+## The Solution: Kuberbook
 
 ### Your Complete Business Command Center
 
-VendorFlow is the **first app built specifically for local service vendors** - water purifier technicians, appliance dealers, AC service providers, and more.
+Kuberbook is the **first app built specifically for local service vendors** - water purifier technicians, appliance dealers, AC service providers, and more.
 
 **One app. Zero missed opportunities. 100% maintenance revenue captured.**
 
@@ -169,9 +169,9 @@ The Analytics page gives you the complete financial picture:
 
 ---
 
-## The VendorFlow Difference
+## The Kuberbook Difference
 
-| Traditional Way | VendorFlow Way |
+| Traditional Way | Kuberbook Way |
 |----------------|----------------|
 | Paper diary, forgot to check | Automatic reminders on phone |
 | Customer calls "warranty?" - you search papers | One tap - instant warranty status |
@@ -233,7 +233,7 @@ The Analytics page gives you the complete financial picture:
 
 ### The Recommendation Engine (After 3-4 Months):
 
-Once you have transaction history, VendorFlow becomes your business advisor:
+Once you have transaction history, Kuberbook becomes your business advisor:
 
 **Inventory Recommendations:**
 - "Low stock alert: Only 2 filters left. You sold 8 last month."
@@ -287,7 +287,7 @@ Once you have transaction history, VendorFlow becomes your business advisor:
 - No direct competitor for this segment
 - Big POS systems are too complex/expensive
 - Generic apps don't understand service business
-- VendorFlow is built BY vendors, FOR vendors
+- Kuberbook is built BY vendors, FOR vendors
 
 ---
 
@@ -322,10 +322,10 @@ The app should pay for itself in the first week through:
 ## Call to Action
 
 ### For Vendors:
-"Stop losing money to forgotten reminders. Start capturing 100% of your maintenance revenue. Try VendorFlow today."
+"Stop losing money to forgotten reminders. Start capturing 100% of your maintenance revenue. Try Kuberbook today."
 
 ### For Investors:
-"The local vendor market is massive, underserved, and ready for disruption. VendorFlow is the tool they've been waiting for."
+"The local vendor market is massive, underserved, and ready for disruption. Kuberbook is the tool they've been waiting for."
 
 ### For Partners:
 "Join us in digitizing India's local service economy. One vendor at a time."
@@ -334,7 +334,7 @@ The app should pay for itself in the first week through:
 
 ## Summary
 
-**VendorFlow transforms how local vendors operate:**
+**Kuberbook transforms how local vendors operate:**
 
 1. **Reminders** - Never miss a service call
 2. **Warranty** - Instant tracking per item
@@ -352,5 +352,5 @@ The app should pay for itself in the first week through:
 
 ---
 
-**VendorFlow**
+**Kuberbook**
 *Your Business. Your Control. Your Growth.*
