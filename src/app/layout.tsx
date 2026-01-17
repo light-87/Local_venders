@@ -2,13 +2,13 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Vendor Manager',
+  title: 'Kuberbook',
   description: 'Manage your business inventory, sales, and customers',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'Vendor Manager',
+    title: 'Kuberbook',
   },
 };
 

@@ -96,8 +96,8 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 ### Initialize Project
 
 ```bash
-bunx create-next-app@latest vendor-app --typescript --tailwind --eslint --app --src-dir --import-alias "@/*"
-cd vendor-app
+bunx create-next-app@latest kuberbook --typescript --tailwind --eslint --app --src-dir --import-alias "@/*"
+cd kuberbook
 ```
 
 ### Commands
@@ -262,7 +262,7 @@ Custom authentication system (no Supabase Auth):
 ## 6. Project Structure
 
 ```
-vendor-app/
+kuberbook/
 ├── src/
 │   ├── app/
 │   │   ├── (auth)/login/
@@ -650,8 +650,8 @@ Standard CRUD APIs for:
 
 ```json
 {
-  "name": "Vendor Manager",
-  "short_name": "Vendor",
+  "name": "Kuberbook",
+  "short_name": "Kuberbook",
   "description": "Manage your business inventory, sales, and customers",
   "start_url": "/dashboard",
   "display": "standalone",

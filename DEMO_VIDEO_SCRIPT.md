@@ -1,4 +1,4 @@
-# VendorFlow Demo Video Script
+# Kuberbook Demo Video Script
 ## Duration: 5-5.5 Minutes
 
 ---
@@ -12,7 +12,7 @@
 
 One forgotten reminder means one lost customer.
 
-Today, I'll show you VendorFlow - the app that makes sure you never miss a service call, never lose track of warranties, and capture 100% of your maintenance revenue.
+Today, I'll show you Kuberbook - the app that makes sure you never miss a service call, never lose track of warranties, and capture 100% of your maintenance revenue.
 
 Let's dive in."
 
@@ -35,7 +35,7 @@ Let's dive in."
 **NARRATOR:**
 "Right at the top, you see today's sales - Rs. 12,500 from 3 sales. Below that, quick action buttons to create a new sale or add a transaction.
 
-And here's what makes VendorFlow special - everything you need is just one tap away: Inventory, Sales, Customers, Expenses, Reminders, and Settings."
+And here's what makes Kuberbook special - everything you need is just one tap away: Inventory, Sales, Customers, Expenses, Reminders, and Settings."
 
 ---
 
@@ -174,7 +174,7 @@ The dashboard shows these alerts too. You know exactly what to order, before you
 ### [SCREEN: Show low stock on dashboard]
 
 **NARRATOR:**
-"And here's the exciting part - after 3-4 months of using VendorFlow, the system learns your patterns. It starts recommending:
+"And here's the exciting part - after 3-4 months of using Kuberbook, the system learns your patterns. It starts recommending:
 - 'You sold 15 filters last month, reorder now'
 - 'RO membranes typically run out every 45 days'
 - 'Seasonal trend: AC filter sales increase in April'
@@ -233,7 +233,7 @@ Add an expense - rent, transport, supplies - and it's tracked. Click any transac
 ### [SCREEN: Scroll to Restock Recommendations]
 
 **NARRATOR:**
-"Here's where it gets smart. After a few months of sales data, VendorFlow analyzes your patterns and shows Restock Recommendations."
+"Here's where it gets smart. After a few months of sales data, Kuberbook analyzes your patterns and shows Restock Recommendations."
 
 ### [ACTION: Point to recommendation items]
 
@@ -271,7 +271,7 @@ All messages are health-focused, professional, and designed to get responses. Yo
 ### [SCREEN: Dashboard overview]
 
 **NARRATOR:**
-"Let's recap what VendorFlow gives you:
+"Let's recap what Kuberbook gives you:
 
 One - Automatic maintenance reminders. Never miss a service call.
 Two - Per-item warranty tracking. Instant answers for customers.
@@ -283,12 +283,12 @@ Seven - Powerful Analytics with restock recommendations and profit analysis.
 
 This is how you capture 100% of your maintenance revenue. This is how you make data-driven business decisions.
 
-This is VendorFlow."
+This is Kuberbook."
 
 ### [SCREEN: App logo with tagline]
 
 **NARRATOR:**
-"VendorFlow. Your Business. Your Control. Your Growth.
+"Kuberbook. Your Business. Your Control. Your Growth.
 
 Download now and start capturing every rupee you're currently losing."
 
@@ -301,7 +301,7 @@ Download now and start capturing every rupee you're currently losing."
 **TEXT ON SCREEN:**
 - "Start Your Free Trial"
 - "Questions? WhatsApp us at [number]"
-- "www.vendorflow.app"
+- "www.kuberbook.shop"
 
 ---
 
@@ -363,7 +363,7 @@ For social media / ads:
 "You sold an RO 6 months ago. Forgot the service call. Customer called someone else. That's Rs. 3,500 lost. Multiply by 50 customers..."
 
 **[10-30 sec]**
-"VendorFlow remembers every customer, every warranty, every service date. Automatic reminders. One tap WhatsApp. Professional bills. Complete tracking."
+"Kuberbook remembers every customer, every warranty, every service date. Automatic reminders. One tap WhatsApp. Professional bills. Complete tracking."
 
 **[30-50 sec]**
 Quick cuts showing:
@@ -374,7 +374,7 @@ Quick cuts showing:
 - Dashboard with earnings
 
 **[50-60 sec]**
-"Stop losing money. Start using VendorFlow. Download now."
+"Stop losing money. Start using Kuberbook. Download now."
 
 ---
 

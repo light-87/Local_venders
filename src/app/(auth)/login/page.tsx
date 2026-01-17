@@ -31,7 +31,7 @@ export default async function LoginPage() {
             />
           </svg>
         </div>
-        <h1 className="text-2xl font-semibold text-gray-900">Vendor Manager</h1>
+        <h1 className="text-2xl font-semibold text-gray-900">Kuberbook</h1>
         <p className="text-gray-500 mt-1">Sign in to manage your business</p>
       </div>
 

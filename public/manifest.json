@@ -1,6 +1,6 @@
 {
-  "name": "Vendor Manager",
-  "short_name": "Vendor",
+  "name": "Kuberbook",
+  "short_name": "Kuberbook",
   "description": "Manage your business inventory, sales, and customers",
   "start_url": "/dashboard",
   "display": "standalone",
