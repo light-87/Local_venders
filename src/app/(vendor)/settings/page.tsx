@@ -25,12 +25,13 @@ import {
   RotateCcw,
   X,
   Check,
+  CreditCard,
 } from 'lucide-react';
 import type { Account, Vendor } from '@/types';
 import type { TemplateLanguage, LanguageOption } from '@/lib/constants/maintenance-templates';
 
 interface SettingsData {
-  vendor: Pick<Vendor, 'id' | 'username' | 'name' | 'business_name' | 'phone' | 'whatsapp_phone_number_id' | 'whatsapp_access_token'>;
+  vendor: Pick<Vendor, 'id' | 'username' | 'name' | 'business_name' | 'phone' | 'whatsapp_phone_number_id' | 'whatsapp_access_token' | 'upi_id'>;
   accounts: Account[];
 }
 
@@ -64,6 +65,11 @@ export default function SettingsPage() {
   const [whatsappTesting, setWhatsappTesting] = useState(false);
   const [whatsappTestResult, setWhatsappTestResult] = useState<{ success: boolean; message: string } | null>(null);
 
+  // UPI ID states
+  const [upiId, setUpiId] = useState('');
+  const [upiIdSaving, setUpiIdSaving] = useState(false);
+  const [upiIdEditing, setUpiIdEditing] = useState(false);
+
   // Template states
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [templateForm, setTemplateForm] = useState('');
@@ -85,6 +91,10 @@ export default function SettingsPage() {
       const json = await res.json();
       if (json.success) {
         setData(json.data);
+        // Initialize UPI ID from fetched data
+        if (json.data.vendor?.upi_id) {
+          setUpiId(json.data.vendor.upi_id);
+        }
       }
     } catch {
       error('Failed to load settings');
@@ -383,6 +393,30 @@ export default function SettingsPage() {
     }
   };
 
+  const handleSaveUpiId = async () => {
+    setUpiIdSaving(true);
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ upiId: upiId.trim() }),
+      });
+
+      if (res.ok) {
+        success('UPI ID saved');
+        setUpiIdEditing(false);
+        fetchSettings();
+      } else {
+        const json = await res.json();
+        error(json.error || 'Failed to save UPI ID');
+      }
+    } catch {
+      error('Something went wrong');
+    } finally {
+      setUpiIdSaving(false);
+    }
+  };
+
   const fetchMessageTemplate = async (language?: TemplateLanguage) => {
     try {
       const url = language
@@ -513,6 +547,80 @@ export default function SettingsPage() {
                   </div>
                 ) : (
                   <p className="text-sm text-gray-400 mt-1">No phone number</p>
+                )}
+              </div>
+            </div>
+          </Card>
+        </section>
+
+        {/* UPI ID Section */}
+        <section>
+          <h2 className="text-sm font-medium text-gray-500 mb-3">Payment Links</h2>
+          <Card>
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <CreditCard className="w-5 h-5 text-green-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-gray-900 mb-1">UPI ID for Bills</p>
+                {upiIdEditing ? (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={upiId}
+                      onChange={(e) => setUpiId(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleSaveUpiId();
+                        if (e.key === 'Escape') {
+                          setUpiIdEditing(false);
+                          setUpiId(data?.vendor?.upi_id || '');
+                        }
+                      }}
+                      placeholder="yourname@upi"
+                      className="flex-1 px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+                      autoFocus
+                    />
+                    <button
+                      onClick={handleSaveUpiId}
+                      disabled={upiIdSaving}
+                      className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg disabled:opacity-50"
+                    >
+                      {upiIdSaving ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Check className="w-4 h-4" />
+                      )}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setUpiIdEditing(false);
+                        setUpiId(data?.vendor?.upi_id || '');
+                      }}
+                      className="p-1.5 text-gray-400 hover:bg-gray-100 rounded-lg"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between">
+                    <div>
+                      {data?.vendor?.upi_id ? (
+                        <p className="text-sm text-gray-600 font-mono">{data.vendor.upi_id}</p>
+                      ) : (
+                        <p className="text-sm text-gray-400">Not configured</p>
+                      )}
+                      <p className="text-xs text-gray-400 mt-1">
+                        Customers can pay directly from bill link
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setUpiIdEditing(true)}
+                      className="text-sm text-brand-500 flex items-center gap-1"
+                    >
+                      <Pencil className="w-4 h-4" />
+                      {data?.vendor?.upi_id ? 'Edit' : 'Add'}
+                    </button>
+                  </div>
                 )}
               </div>
             </div>

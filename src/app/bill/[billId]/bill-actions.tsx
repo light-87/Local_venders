@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui';
-import { Share2, Copy, Check, Download, MessageCircle, Printer } from 'lucide-react';
+import { Download, MessageCircle, Printer } from 'lucide-react';
 import {
   createWhatsAppLink,
   generateBillMessage,
@@ -21,10 +21,10 @@ interface BillData {
 interface BillActionsProps {
   billId: string;
   billData?: BillData;
+  vendorHasUpiId?: boolean;
 }
 
-export function BillActions({ billId, billData }: BillActionsProps) {
-  const [copied, setCopied] = useState(false);
+export function BillActions({ billId, billData, vendorHasUpiId }: BillActionsProps) {
   const [downloading, setDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState(false);
 
@@ -32,23 +32,10 @@ export function BillActions({ billId, billData }: BillActionsProps) {
     ? `${window.location.origin}/bill/${billId}`
     : `/bill/${billId}`;
 
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(billUrl);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // Fallback for older browsers
-      const textArea = document.createElement('textarea');
-      textArea.value = billUrl;
-      document.body.appendChild(textArea);
-      textArea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textArea);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
+  // Payment link - only generated if vendor has UPI ID set up
+  const paymentUrl = vendorHasUpiId && typeof window !== 'undefined'
+    ? `${window.location.origin}/pay/${billId}`
+    : undefined;
 
   const handleWhatsAppShare = () => {
     // If we have bill data and customer phone, send formatted message directly
@@ -60,32 +47,18 @@ export function BillActions({ billId, billData }: BillActionsProps) {
         items: formattedItems,
         total: billData.total,
         date: billData.date,
+        paymentLink: paymentUrl, // Include payment link if vendor has UPI ID
       });
       const whatsappUrl = createWhatsAppLink(billData.customerPhone, message);
       window.open(whatsappUrl, '_blank');
     } else {
       // Fallback to simple link share (opens WhatsApp without recipient)
-      const message = `Here is your bill: ${billUrl}`;
+      let message = `Here is your bill: ${billUrl}`;
+      if (paymentUrl) {
+        message += `\n\nPay Online: ${paymentUrl}`;
+      }
       const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
       window.open(whatsappUrl, '_blank');
-    }
-  };
-
-  const handleShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: 'Bill',
-          text: 'Here is your bill',
-          url: billUrl,
-        });
-      } catch {
-        // User cancelled or error - try WhatsApp fallback
-        handleWhatsAppShare();
-      }
-    } else {
-      // Fallback to WhatsApp
-      handleWhatsAppShare();
     }
   };
 
@@ -130,41 +103,21 @@ export function BillActions({ billId, billData }: BillActionsProps) {
         </p>
       )}
 
-      {/* Copy and Share */}
-      <div className="flex gap-3">
-        <Button
-          variant="secondary"
-          fullWidth
-          onClick={handleCopy}
-          icon={copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
-        >
-          {copied ? 'Copied!' : 'Copy Link'}
-        </Button>
-        <Button
-          variant="secondary"
-          fullWidth
-          onClick={handleShare}
-          icon={<Share2 className="w-5 h-5" />}
-        >
-          Share
-        </Button>
-      </div>
-
-      {/* WhatsApp Share */}
+      {/* WhatsApp - Primary Action */}
       <Button
-        variant="secondary"
+        variant="primary"
         fullWidth
         onClick={handleWhatsAppShare}
         icon={<MessageCircle className="w-5 h-5" />}
-        className="bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
+        className="!bg-green-600 hover:!bg-green-700 !border-green-600 py-3.5"
       >
         Send via WhatsApp
       </Button>
 
-      {/* Download and Print */}
+      {/* Download PDF and Print - Secondary Actions */}
       <div className="flex gap-3">
         <Button
-          variant="primary"
+          variant="secondary"
           fullWidth
           onClick={handleDownloadPdf}
           loading={downloading}

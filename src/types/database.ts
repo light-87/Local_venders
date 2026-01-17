@@ -10,6 +10,7 @@ export interface Vendor {
   is_active: boolean;
   whatsapp_phone_number_id: string | null;
   whatsapp_access_token: string | null;
+  upi_id: string | null;
   created_at: string;
   updated_at: string;
 }
