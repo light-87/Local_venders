@@ -23,6 +23,8 @@ import {
   Loader2,
   FileText,
   RotateCcw,
+  X,
+  Check,
 } from 'lucide-react';
 import type { Account, Vendor } from '@/types';
 import type { TemplateLanguage, LanguageOption } from '@/lib/constants/maintenance-templates';
@@ -41,18 +43,21 @@ export default function SettingsPage() {
   // Modal states
   const [showPinModal, setShowPinModal] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const [showAccountModal, setShowAccountModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
-  const [editingAccount, setEditingAccount] = useState<Account | null>(null);
+
+  // Inline account editing states
+  const [editingAccountId, setEditingAccountId] = useState<string | null>(null);
+  const [editingAccountName, setEditingAccountName] = useState('');
+  const [newAccountName, setNewAccountName] = useState('');
+  const [accountSaving, setAccountSaving] = useState<string | null>(null);
+  const [deletingAccountId, setDeletingAccountId] = useState<string | null>(null);
 
   // Form states
   const [pinForm, setPinForm] = useState({ current: '', new: '', confirm: '' });
-  const [accountForm, setAccountForm] = useState({ name: '' });
   const [profileForm, setProfileForm] = useState({ name: '', businessName: '', phone: '' });
   const [whatsappForm, setWhatsappForm] = useState({ phoneNumberId: '', accessToken: '' });
   const [pinLoading, setPinLoading] = useState(false);
-  const [accountLoading, setAccountLoading] = useState(false);
   const [profileLoading, setProfileLoading] = useState(false);
   const [logoutLoading, setLogoutLoading] = useState(false);
   const [whatsappLoading, setWhatsappLoading] = useState(false);
@@ -124,43 +129,90 @@ export default function SettingsPage() {
     }
   };
 
-  const handleSaveAccount = async () => {
-    if (!accountForm.name) {
+  // Inline account functions
+  const handleAddAccount = async () => {
+    if (!newAccountName.trim()) {
       error('Please enter an account name');
       return;
     }
 
-    setAccountLoading(true);
+    setAccountSaving('new');
     try {
-      const url = editingAccount
-        ? `/api/accounts/${editingAccount.id}`
-        : '/api/accounts';
-      const method = editingAccount ? 'PATCH' : 'POST';
-
-      const res = await fetch(url, {
-        method,
+      const res = await fetch('/api/accounts', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(accountForm),
+        body: JSON.stringify({ name: newAccountName.trim() }),
       });
 
       if (res.ok) {
-        success(editingAccount ? 'Account updated' : 'Account created');
-        setShowAccountModal(false);
-        setEditingAccount(null);
-        setAccountForm({ name: '' });
+        success('Account added');
+        setNewAccountName('');
         fetchSettings();
       } else {
         const json = await res.json();
-        error(json.error || 'Failed to save account');
+        error(json.error || 'Failed to add account');
       }
     } catch {
       error('Something went wrong');
     } finally {
-      setAccountLoading(false);
+      setAccountSaving(null);
+    }
+  };
+
+  const handleUpdateAccount = async (accountId: string) => {
+    if (!editingAccountName.trim()) {
+      error('Account name cannot be empty');
+      return;
+    }
+
+    setAccountSaving(accountId);
+    try {
+      const res = await fetch(`/api/accounts/${accountId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: editingAccountName.trim() }),
+      });
+
+      if (res.ok) {
+        success('Account updated');
+        setEditingAccountId(null);
+        setEditingAccountName('');
+        fetchSettings();
+      } else {
+        const json = await res.json();
+        error(json.error || 'Failed to update account');
+      }
+    } catch {
+      error('Something went wrong');
+    } finally {
+      setAccountSaving(null);
+    }
+  };
+
+  const handleDeleteAccount = async (accountId: string) => {
+    setAccountSaving(accountId);
+    try {
+      const res = await fetch(`/api/accounts/${accountId}`, {
+        method: 'DELETE',
+      });
+
+      if (res.ok) {
+        success('Account deleted');
+        setDeletingAccountId(null);
+        fetchSettings();
+      } else {
+        const json = await res.json();
+        error(json.error || 'Failed to delete account');
+      }
+    } catch {
+      error('Something went wrong');
+    } finally {
+      setAccountSaving(null);
     }
   };
 
   const handleSetDefault = async (accountId: string) => {
+    setAccountSaving(accountId);
     try {
       const res = await fetch(`/api/accounts/${accountId}/set-default`, {
         method: 'POST',
@@ -168,10 +220,24 @@ export default function SettingsPage() {
       if (res.ok) {
         success('Default account updated');
         fetchSettings();
+      } else {
+        error('Failed to update default account');
       }
     } catch {
       error('Failed to update default account');
+    } finally {
+      setAccountSaving(null);
     }
+  };
+
+  const startEditingAccount = (account: Account) => {
+    setEditingAccountId(account.id);
+    setEditingAccountName(account.name);
+  };
+
+  const cancelEditingAccount = () => {
+    setEditingAccountId(null);
+    setEditingAccountName('');
   };
 
   const handleLogout = async () => {
@@ -232,18 +298,6 @@ export default function SettingsPage() {
       });
     }
     setShowProfileModal(true);
-  };
-
-  const openEditAccount = (account: Account) => {
-    setEditingAccount(account);
-    setAccountForm({ name: account.name });
-    setShowAccountModal(true);
-  };
-
-  const openAddAccount = () => {
-    setEditingAccount(null);
-    setAccountForm({ name: '' });
-    setShowAccountModal(true);
   };
 
   const openWhatsAppModal = () => {
@@ -490,43 +544,128 @@ export default function SettingsPage() {
 
         {/* Accounts Section */}
         <section>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-medium text-gray-500">Accounts</h2>
-            <button
-              onClick={openAddAccount}
-              className="text-sm text-brand-500 flex items-center gap-1"
-            >
-              <Plus className="w-4 h-4" />
-              Add
-            </button>
-          </div>
-          <div className="space-y-2">
-            {data?.accounts.map((account) => (
-              <Card
-                key={account.id}
-                variant="interactive"
-                className="cursor-pointer"
-                onClick={() => openEditAccount(account)}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-                      <Wallet className="w-5 h-5 text-gray-600" />
-                    </div>
-                    <div>
+          <h2 className="text-sm font-medium text-gray-500 mb-3">Accounts</h2>
+          <Card>
+            <div className="divide-y divide-gray-100">
+              {data?.accounts.map((account) => (
+                <div key={account.id} className="py-3 first:pt-0 last:pb-0">
+                  {/* Delete confirmation row */}
+                  {deletingAccountId === account.id ? (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Delete this account?</span>
                       <div className="flex items-center gap-2">
-                        <p className="font-medium text-gray-900">{account.name}</p>
-                        {account.is_default && (
-                          <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
+                        <button
+                          onClick={() => handleDeleteAccount(account.id)}
+                          disabled={accountSaving === account.id}
+                          className="px-3 py-1 text-sm text-white bg-red-500 rounded-lg hover:bg-red-600 disabled:opacity-50"
+                        >
+                          {accountSaving === account.id ? 'Deleting...' : 'Yes'}
+                        </button>
+                        <button
+                          onClick={() => setDeletingAccountId(null)}
+                          className="px-3 py-1 text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200"
+                        >
+                          No
+                        </button>
+                      </div>
+                    </div>
+                  ) : editingAccountId === account.id ? (
+                    /* Editing row */
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={editingAccountName}
+                        onChange={(e) => setEditingAccountName(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleUpdateAccount(account.id);
+                          if (e.key === 'Escape') cancelEditingAccount();
+                        }}
+                        className="flex-1 px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+                        autoFocus
+                      />
+                      <button
+                        onClick={() => handleUpdateAccount(account.id)}
+                        disabled={accountSaving === account.id}
+                        className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg disabled:opacity-50"
+                      >
+                        {accountSaving === account.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Check className="w-4 h-4" />
+                        )}
+                      </button>
+                      <button
+                        onClick={cancelEditingAccount}
+                        className="p-1.5 text-gray-400 hover:bg-gray-100 rounded-lg"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    /* Normal display row */
+                    <div className="flex items-center justify-between">
+                      <button
+                        onClick={() => startEditingAccount(account)}
+                        className="flex-1 text-left text-sm font-medium text-gray-900 hover:text-brand-600"
+                      >
+                        {account.name}
+                      </button>
+                      <div className="flex items-center gap-2">
+                        {account.is_default ? (
+                          <span className="px-2 py-0.5 text-xs font-medium text-green-700 bg-green-100 rounded-full">
+                            Default
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => handleSetDefault(account.id)}
+                            disabled={accountSaving === account.id}
+                            className="px-2 py-0.5 text-xs text-gray-500 hover:text-brand-600 hover:bg-gray-100 rounded-full disabled:opacity-50"
+                          >
+                            {accountSaving === account.id ? 'Setting...' : 'Set default'}
+                          </button>
+                        )}
+                        {!account.is_default && (
+                          <button
+                            onClick={() => setDeletingAccountId(account.id)}
+                            className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
                         )}
                       </div>
                     </div>
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-gray-400" />
+                  )}
                 </div>
-              </Card>
-            ))}
-          </div>
+              ))}
+
+              {/* Add new account row */}
+              <div className="pt-3">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    placeholder="Add new account..."
+                    value={newAccountName}
+                    onChange={(e) => setNewAccountName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleAddAccount();
+                    }}
+                    className="flex-1 px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  />
+                  <button
+                    onClick={handleAddAccount}
+                    disabled={accountSaving === 'new' || !newAccountName.trim()}
+                    className="p-1.5 text-brand-600 hover:bg-brand-50 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {accountSaving === 'new' ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Plus className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </Card>
         </section>
 
         {/* Sales History Link */}
@@ -686,41 +825,6 @@ export default function SettingsPage() {
           <Button fullWidth loading={pinLoading} onClick={handleChangePin}>
             Change PIN
           </Button>
-        </div>
-      </Modal>
-
-      {/* Account Modal */}
-      <Modal
-        isOpen={showAccountModal}
-        onClose={() => {
-          setShowAccountModal(false);
-          setEditingAccount(null);
-        }}
-        title={editingAccount ? 'Edit Account' : 'Add Account'}
-      >
-        <div className="space-y-4">
-          <Input
-            label="Account Name"
-            placeholder="e.g., Cash, UPI Axis, Shop Account"
-            value={accountForm.name}
-            onChange={(e) => setAccountForm((p) => ({ ...p, name: e.target.value }))}
-            helperText="Examples: Cash, UPI Axis, Mangesh Personal, Google Pay"
-          />
-          <Button fullWidth loading={accountLoading} onClick={handleSaveAccount}>
-            {editingAccount ? 'Update' : 'Add Account'}
-          </Button>
-          {editingAccount && !editingAccount.is_default && (
-            <Button
-              variant="secondary"
-              fullWidth
-              onClick={() => {
-                handleSetDefault(editingAccount.id);
-                setShowAccountModal(false);
-              }}
-            >
-              Set as Default
-            </Button>
-          )}
         </div>
       </Modal>
 
