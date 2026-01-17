@@ -25,6 +25,7 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import type { Account, Vendor } from '@/types';
+import type { TemplateLanguage, LanguageOption } from '@/lib/constants/maintenance-templates';
 
 interface SettingsData {
   vendor: Pick<Vendor, 'id' | 'username' | 'name' | 'business_name' | 'phone' | 'whatsapp_phone_number_id' | 'whatsapp_access_token'>;
@@ -65,6 +66,9 @@ export default function SettingsPage() {
   const [hasCustomTemplate, setHasCustomTemplate] = useState(false);
   const [templateLoading, setTemplateLoading] = useState(false);
   const [templateResetting, setTemplateResetting] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState<TemplateLanguage>('en');
+  const [customizedLanguages, setCustomizedLanguages] = useState<string[]>([]);
+  const [availableLanguages, setAvailableLanguages] = useState<LanguageOption[]>([]);
 
   useEffect(() => {
     fetchSettings();
@@ -325,14 +329,20 @@ export default function SettingsPage() {
     }
   };
 
-  const fetchMessageTemplate = async () => {
+  const fetchMessageTemplate = async (language?: TemplateLanguage) => {
     try {
-      const res = await fetch('/api/settings/message-template');
+      const url = language
+        ? `/api/settings/message-template?language=${language}`
+        : '/api/settings/message-template';
+      const res = await fetch(url);
       const json = await res.json();
       if (json.success) {
         setDefaultTemplate(json.data.defaultTemplate);
         setTemplateForm(json.data.customTemplate || json.data.defaultTemplate);
         setHasCustomTemplate(json.data.hasCustomTemplate);
+        setSelectedLanguage(json.data.currentLanguage);
+        setCustomizedLanguages(json.data.customizedLanguages || []);
+        setAvailableLanguages(json.data.availableLanguages || []);
       }
     } catch {
       error('Failed to load message template');
@@ -350,7 +360,7 @@ export default function SettingsPage() {
       const res = await fetch('/api/settings/message-template', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ templateText: templateForm }),
+        body: JSON.stringify({ templateText: templateForm, language: selectedLanguage }),
       });
 
       const json = await res.json();
@@ -358,6 +368,10 @@ export default function SettingsPage() {
       if (res.ok) {
         success('Message template saved');
         setHasCustomTemplate(true);
+        // Update customized languages list
+        if (!customizedLanguages.includes(selectedLanguage)) {
+          setCustomizedLanguages([...customizedLanguages, selectedLanguage]);
+        }
         setShowTemplateModal(false);
       } else {
         error(json.error || 'Failed to save template');
@@ -372,7 +386,7 @@ export default function SettingsPage() {
   const handleResetTemplate = async () => {
     setTemplateResetting(true);
     try {
-      const res = await fetch('/api/settings/message-template', {
+      const res = await fetch(`/api/settings/message-template?language=${selectedLanguage}`, {
         method: 'DELETE',
       });
 
@@ -380,6 +394,8 @@ export default function SettingsPage() {
         success('Template reset to default');
         setTemplateForm(defaultTemplate);
         setHasCustomTemplate(false);
+        // Remove from customized languages list
+        setCustomizedLanguages(customizedLanguages.filter((lang) => lang !== selectedLanguage));
       } else {
         error('Failed to reset template');
       }
@@ -388,6 +404,11 @@ export default function SettingsPage() {
     } finally {
       setTemplateResetting(false);
     }
+  };
+
+  const handleLanguageChange = async (language: TemplateLanguage) => {
+    if (language === selectedLanguage) return;
+    await fetchMessageTemplate(language);
   };
 
   if (loading) {
@@ -830,6 +851,43 @@ export default function SettingsPage() {
         title="Edit Reminder Template"
       >
         <div className="space-y-4">
+          {/* Language Selector */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Select Language
+            </label>
+            <div className="flex gap-2">
+              {availableLanguages.map((lang) => (
+                <button
+                  key={lang.code}
+                  onClick={() => handleLanguageChange(lang.code)}
+                  className={`flex-1 px-3 py-2 text-sm font-medium rounded-xl border transition-colors relative ${
+                    selectedLanguage === lang.code
+                      ? 'bg-brand-500 text-white border-brand-500'
+                      : 'bg-white text-gray-700 border-gray-200 hover:border-brand-300'
+                  }`}
+                >
+                  <span>{lang.nativeLabel}</span>
+                  {customizedLanguages.includes(lang.code) && (
+                    <span
+                      className={`absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full ${
+                        selectedLanguage === lang.code ? 'bg-white' : 'bg-green-500'
+                      }`}
+                      title="Customized"
+                    />
+                  )}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-gray-500 mt-1.5">
+              {hasCustomTemplate ? (
+                <span className="text-green-600">Using custom template for {availableLanguages.find(l => l.code === selectedLanguage)?.label}</span>
+              ) : (
+                <span>Using default template for {availableLanguages.find(l => l.code === selectedLanguage)?.label}</span>
+              )}
+            </p>
+          </div>
+
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-sm text-amber-800">
             <p className="font-medium mb-2">Auto-fill placeholders:</p>
             <div className="flex flex-wrap gap-2">
