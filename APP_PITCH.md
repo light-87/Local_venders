@@ -343,6 +343,16 @@ The app should pay for itself in the first week through:
 - One saved hour of admin work
 - One retained customer
 
+### Pricing Plans
+
+| Plan | Benefits | Price |
+|------|----------|-------|
+| **Annual Business Plan** | All features, 1 year of updates & support | ₹10,000 <br> <small>(Was ₹20,000)</small> |
+| **Lifetime Business Plan** | All features, Lifetime updates & support, No renewals | ₹50,000 <br> <small>(Was ₹1,00,000)</small> |
+
+> [!TIP]
+> **The Lifetime Plan Value:** For the price of 5 annual renewals, you secure your business command center forever. No more monthly or yearly overhead. It's a permanent asset for your business.
+
 ---
 
 ## The Vision

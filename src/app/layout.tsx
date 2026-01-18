@@ -1,9 +1,20 @@
 import type { Metadata, Viewport } from 'next';
+import { Inter, EB_Garamond } from 'next/font/google';
 import './globals.css';
 
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+});
+
+const ebGaramond = EB_Garamond({
+  subsets: ['latin'],
+  variable: '--font-eb-garamond',
+});
+
 export const metadata: Metadata = {
-  title: 'Kuberbook',
-  description: 'Manage your business inventory, sales, and customers',
+  title: 'Kuberbook | Your Business. Documented.',
+  description: 'The first digital ledger built for local service vendors. Capture 100% of your maintenance revenue.',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
@@ -15,9 +26,9 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
-  themeColor: '#D97757',
+  maximumScale: 5,
+  userScalable: true,
+  themeColor: '#FDFCF0',
 };
 
 export default function RootLayout({
@@ -26,8 +37,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className="font-sans antialiased">{children}</body>
+    <html lang="en" className={`${inter.variable} ${ebGaramond.variable}`}>
+      <body className="font-sans antialiased bg-ledger-paper text-ledger-charcoal min-h-screen">
+        {children}
+      </body>
     </html>
   );
 }

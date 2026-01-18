@@ -26,9 +26,15 @@ const config: Config = {
           secondary: '#F5F4F2',
           white: '#FFFFFF',
         },
+        ledger: {
+          paper: '#FDFCF0',
+          charcoal: '#1A1A1A',
+          border: '#E8E6D1',
+        },
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['var(--font-inter)', 'Inter', 'system-ui', 'sans-serif'],
+        serif: ['var(--font-eb-garamond)', 'EB Garamond', 'serif'],
       },
       borderRadius: {
         xl: '12px',
@@ -39,6 +45,7 @@ const config: Config = {
         sm: '0 1px 2px rgba(0, 0, 0, 0.04)',
         md: '0 4px 6px rgba(0, 0, 0, 0.05)',
         lg: '0 10px 15px rgba(0, 0, 0, 0.08)',
+        'ledger': '0 15px 35px rgba(0, 0, 0, 0.1), 0 5px 15px rgba(0, 0, 0, 0.05)',
       },
     },
   },
