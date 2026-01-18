@@ -1,9 +1,49 @@
 'use client';
 
+import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Check, Sparkles } from 'lucide-react';
+import { Check, Sparkles, ArrowRight } from 'lucide-react';
 
 export function Pricing() {
+    const plans = [
+        {
+            name: "ANNUAL BUSINESS PLAN",
+            price: "₹10,000",
+            originalPrice: "₹20,000",
+            period: "/ per year",
+            description: "Everything included to run your service business at 100% efficiency. No limits, no extra fees.",
+            badge: "50% OFF",
+            features: [
+                "Unlimited Maintenance Reminders",
+                "Full Inventory Management",
+                "Complete Financial Dashboard",
+                "Unlimited Digital Bills & Receipts",
+                "Customer History & Insights",
+                "Priority Support & Updates"
+            ],
+            cta: "Start Your 1-Month Free Trial",
+            highlight: false
+        },
+        {
+            name: "LIFETIME BUSINESS PLAN",
+            price: "₹50,000",
+            originalPrice: "₹1,00,000",
+            period: "one-time payment",
+            description: "Secure your business command center forever. No more renewals, no more monthly overhead. A permanent asset.",
+            badge: "LIFETIME VALUE",
+            features: [
+                "ALL Annual Plan Features",
+                "Lifetime Updates & Support",
+                "Zero Renewal Fees Ever",
+                "Priority Access to New Modules",
+                "Personalized Onboarding",
+                "Direct Whatsapp Support Line"
+            ],
+            cta: "Get Lifetime Access Now",
+            highlight: true
+        }
+    ];
+
     return (
         <section id="pricing" className="py-24 bg-white relative">
             <div className="container px-6 mx-auto">
@@ -14,78 +54,83 @@ export function Pricing() {
                         viewport={{ once: true }}
                         className="text-4xl md:text-5xl font-serif font-bold text-ledger-charcoal mb-6"
                     >
-                        One Price. <br />No Hidden Chapters.
+                        One Choice. <br />Permanent Growth.
                     </motion.h2>
                     <p className="text-lg text-ledger-charcoal/60">
-                        Investing in your business growth shouldn't be complicated.
-                        Get everything Kuberbook has to offer for one simple annual fee.
+                        Investing in your business growth should be a one-time decision, not a recurring headache.
+                        Choose the plan that fits your vision.
                     </p>
                 </div>
 
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    whileInView={{ opacity: 1, scale: 1 }}
-                    viewport={{ once: true }}
-                    className="max-w-xl mx-auto border-2 border-ledger-charcoal rounded-[2.5rem] p-4 bg-ledger-charcoal shadow-2xl"
-                >
-                    <div className="bg-white rounded-[2rem] p-10 relative overflow-hidden">
-                        {/* Stamp highlight */}
+                <div className="grid lg:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                    {plans.map((plan, idx) => (
                         <motion.div
-                            initial={{ opacity: 0, scale: 3, rotate: -20 }}
-                            whileInView={{ opacity: 1, scale: 1, rotate: -12 }}
+                            key={idx}
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
-                            transition={{ delay: 0.5, type: "spring", damping: 12 }}
-                            className="absolute top-8 right-8 px-4 py-2 border-4 border-brand-500 rounded-xl text-brand-500 font-black text-2xl uppercase tracking-tighter -rotate-12 bg-white/80 backdrop-blur-sm z-10"
+                            transition={{ delay: idx * 0.1 }}
+                            className={`border-2 border-ledger-charcoal rounded-[2rem] p-3 ${plan.highlight ? 'bg-brand-500 shadow-2xl z-10' : 'bg-ledger-charcoal shadow-xl'}`}
                         >
-                            50% OFF
+                            <div className="bg-white rounded-[1.75rem] p-6 sm:p-8 relative h-full flex flex-col overflow-hidden">
+                                {/* Stamp highlight - Optimized for mobile */}
+                                <motion.div
+                                    initial={{ opacity: 0, scale: 3, rotate: -20 }}
+                                    whileInView={{ opacity: 1, scale: 1, rotate: -12 }}
+                                    viewport={{ once: true }}
+                                    transition={{ delay: 0.5 + (idx * 0.1), type: "spring", damping: 12 }}
+                                    className={`absolute top-4 right-4 sm:top-6 sm:right-6 px-3 py-1 border-[3px] ${plan.highlight ? 'border-ledger-charcoal text-ledger-charcoal' : 'border-brand-500 text-brand-500'} rounded-lg font-black text-xs sm:text-base uppercase tracking-tighter -rotate-12 bg-white/90 backdrop-blur-sm z-20`}
+                                >
+                                    {plan.badge}
+                                </motion.div>
+
+                                <div className={`flex items-center gap-2 ${plan.highlight ? 'text-ledger-charcoal' : 'text-brand-500'} font-bold mb-3`}>
+                                    <Sparkles size={16} />
+                                    <span className="text-xs sm:text-sm">{plan.name}</span>
+                                </div>
+
+                                <div className="flex flex-wrap items-baseline gap-2 mb-1">
+                                    <span className="text-3xl sm:text-4xl font-serif font-bold text-ledger-charcoal">{plan.price}</span>
+                                    <span className="text-base sm:text-lg text-ledger-charcoal/30 line-through">{plan.originalPrice}</span>
+                                </div>
+                                <div className="text-ledger-charcoal/50 text-xs sm:text-sm font-medium mb-6">
+                                    {plan.period}
+                                </div>
+
+                                <p className="text-sm sm:text-base text-ledger-charcoal/70 mb-6 border-b border-ledger-border pb-6 flex-grow leading-relaxed">
+                                    {plan.description}
+                                </p>
+
+                                <ul className="space-y-2 sm:space-y-3 mb-8">
+                                    {plan.features.map((item, i) => (
+                                        <li key={i} className="flex items-start gap-3 text-ledger-charcoal font-medium text-xs sm:text-sm">
+                                            <div className="w-4 h-4 rounded-full bg-brand-500/10 flex items-center justify-center text-brand-500 shrink-0 mt-0.5">
+                                                <Check size={12} strokeWidth={3} />
+                                            </div>
+                                            <span>{item}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+
+                                <Link
+                                    href="/get-started"
+                                    className={`w-full py-4 rounded-xl font-bold text-lg transition-all shadow-lg flex items-center justify-center gap-2 group ${plan.highlight
+                                        ? 'bg-brand-500 text-white hover:bg-brand-600'
+                                        : 'bg-ledger-charcoal text-white hover:bg-brand-900'
+                                        }`}
+                                >
+                                    {plan.cta} <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                                </Link>
+
+                                {!plan.highlight && (
+                                    <p className="text-center text-[10px] sm:text-xs text-ledger-charcoal/40 mt-3">
+                                        No credit card required to start
+                                    </p>
+                                )}
+                            </div>
                         </motion.div>
-
-                        <div className="flex items-center gap-2 text-brand-500 font-bold mb-4">
-                            <Sparkles size={18} />
-                            <span>ANNUAL BUSINESS PLAN</span>
-                        </div>
-
-                        <div className="flex items-baseline gap-4 mb-8">
-                            <span className="text-5xl font-serif font-bold text-ledger-charcoal">₹10,000</span>
-                            <span className="text-xl text-ledger-charcoal/30 line-through">₹20,000</span>
-                            <span className="text-ledger-charcoal/50 font-medium">/ per year</span>
-                        </div>
-
-                        <p className="text-ledger-charcoal/70 mb-8 border-b border-ledger-border pb-8">
-                            Everything included to run your service business at 100% efficiency.
-                            No limits, no extra fees.
-                        </p>
-
-                        <ul className="space-y-4 mb-10">
-                            {[
-                                "Unlimited Maintenance Reminders",
-                                "Full Inventory Management",
-                                "Complete Financial Dashboard",
-                                "Unlimited Digital Bills & Receipts",
-                                "Customer History & Insights",
-                                "Priority Support & Updates"
-                            ].map((item, i) => (
-                                <li key={i} className="flex items-center gap-3 text-ledger-charcoal font-medium">
-                                    <div className="w-5 h-5 rounded-full bg-brand-500/10 flex items-center justify-center text-brand-500">
-                                        <Check size={14} strokeWidth={3} />
-                                    </div>
-                                    {item}
-                                </li>
-                            ))}
-                        </ul>
-
-                        <motion.button
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            className="w-full py-5 bg-ledger-charcoal text-white rounded-2xl font-bold text-xl hover:bg-brand-900 transition-colors shadow-lg"
-                        >
-                            Start Your 1-Month Free Trial
-                        </motion.button>
-                        <p className="text-center text-sm text-ledger-charcoal/40 mt-4">
-                            No credit card required to start
-                        </p>
-                    </div>
-                </motion.div>
+                    ))}
+                </div>
             </div>
 
             {/* Background patterns */}

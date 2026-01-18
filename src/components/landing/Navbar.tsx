@@ -9,6 +9,7 @@ export function Navbar() {
     const loginButtonRef = useRef<HTMLAnchorElement>(null);
 
     const navLinks = [
+        { name: 'MVP', href: '#mvp-showcase' },
         { name: 'Features', href: '#features' },
         { name: 'Pricing', href: '#pricing' },
         { name: 'About', href: '#about' },
@@ -49,17 +50,25 @@ export function Navbar() {
                     ))}
                 </div>
 
-                <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                >
+                <div className="flex items-center gap-3">
                     <Link
                         href="/login"
-                        className="px-6 py-2 text-sm font-semibold text-white transition-all rounded-full bg-ledger-charcoal hover:bg-brand-900 shadow-md"
+                        className="hidden sm:block px-4 py-2 text-sm font-semibold text-ledger-charcoal/60 hover:text-ledger-charcoal transition-all"
                     >
                         Vendor Login
                     </Link>
-                </motion.div>
+                    <motion.div
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                    >
+                        <Link
+                            href="/get-started"
+                            className="px-6 py-2 text-sm font-semibold text-white transition-all rounded-full bg-ledger-charcoal hover:bg-brand-900 shadow-md"
+                        >
+                            Book a Demo
+                        </Link>
+                    </motion.div>
+                </div>
             </motion.div>
         </nav>
     );

@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { useEffect, useRef } from 'react';
 import gsap from 'gsap';
@@ -14,6 +15,7 @@ export function Hero() {
 
     useEffect(() => {
         const ctx = gsap.context(() => {
+
             // Opening book animation
             gsap.fromTo(
                 bookRef.current,
@@ -46,7 +48,7 @@ export function Hero() {
     return (
         <section
             ref={containerRef}
-            className="relative min-h-[110vh] flex flex-col items-center justify-center pt-32 overflow-hidden bg-ledger-paper"
+            className="relative min-h-[85vh] flex flex-col items-center justify-center pt-32 pb-20 overflow-hidden bg-ledger-paper"
         >
             {/* Decorative background elements */}
             <div className="absolute top-0 left-0 w-full h-full opacity-5 pointer-events-none">
@@ -103,49 +105,36 @@ export function Hero() {
                     transition={{ duration: 0.8, delay: 0.6 }}
                     className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20"
                 >
-                    <button className="px-8 py-4 text-lg font-bold text-white transition-all rounded-full bg-ledger-charcoal hover:bg-brand-900 shadow-xl hover:shadow-brand-500/20 active:scale-95">
+                    <Link
+                        href="/get-started"
+                        className="px-8 py-4 text-lg font-bold text-white transition-all rounded-full bg-ledger-charcoal hover:bg-brand-900 shadow-xl hover:shadow-brand-500/20 active:scale-95"
+                    >
                         Start 1-Month Free Trial
-                    </button>
-                    <button className="px-8 py-4 text-lg font-bold text-ledger-charcoal transition-all rounded-full border-2 border-ledger-charcoal/10 hover:bg-ledger-charcoal/5 active:scale-95">
-                        Watch Pitch Video
-                    </button>
+                    </Link>
                 </motion.div>
 
-                {/* 3D Ledger Visual Placeholder */}
+                {/* Video / Visual Box */}
                 <div
                     ref={bookRef}
-                    className="relative w-full max-w-4xl mx-auto aspect-[16/9] bg-white rounded-lg shadow-2xl border border-ledger-border perspective-2000"
+                    className="relative w-full max-w-5xl mx-auto mt-20 aspect-[16/9] bg-white rounded-2xl shadow-[0_32px_72px_-16px_rgba(0,0,0,0.25)] border border-ledger-border perspective-2000 overflow-hidden"
                     style={{ transformStyle: 'preserve-3d' }}
                 >
-                    <div className="absolute inset-0 flex items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-white to-ledger-paper">
-                        {/* Simple representation of dashboard */}
-                        <div className="w-[85%] h-[80%] border border-ledger-border rounded shadow-sm bg-white p-6 text-left">
-                            <div className="flex justify-between items-center mb-8">
-                                <div className="h-6 w-32 bg-ledger-paper rounded" />
-                                <div className="h-8 w-8 rounded-full bg-brand-500" />
+                    <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-white to-ledger-paper">
+                        <div className="flex flex-col items-center gap-4 p-8 text-center">
+                            <div className="w-20 h-20 rounded-full bg-brand-500 flex items-center justify-center text-white shadow-lg animate-pulse">
+                                <svg className="w-10 h-10 translate-x-1" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M8 5v14l11-7z" />
+                                </svg>
                             </div>
-                            <div className="grid grid-cols-3 gap-6 mb-8">
-                                {[1, 2, 3].map(i => (
-                                    <div key={i} className="h-24 bg-ledger-paper rounded-lg p-4">
-                                        <div className="h-3 w-16 bg-ledger-charcoal/10 rounded mb-2" />
-                                        <div className="h-6 w-20 bg-ledger-charcoal/20 rounded" />
-                                    </div>
-                                ))}
-                            </div>
-                            <div className="space-y-4">
-                                {[1, 2, 3].map(i => (
-                                    <div key={i} className="h-12 bg-ledger-paper rounded flex items-center px-4 gap-4">
-                                        <div className="h-6 w-6 rounded bg-brand-500/20" />
-                                        <div className="h-3 w-full bg-ledger-charcoal/10 rounded" />
-                                    </div>
-                                ))}
-                            </div>
+                            <h3 className="text-2xl font-serif font-bold text-ledger-charcoal">Pitch Video Preview</h3>
+                            <p className="text-ledger-charcoal/40 max-w-md">The complete video walkthrough is being finalized. Stay tuned for the definitive business command center tour.</p>
                         </div>
 
                         {/* The "Paper" Texture Overlay */}
                         <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')]" />
                     </div>
                 </div>
+
             </div>
         </section>
     );

@@ -1,5 +1,4 @@
-'use client';
-
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Calendar, MessageSquare, IndianRupee, BellRing, ArrowRight } from 'lucide-react';
 
@@ -43,55 +42,54 @@ export function MaintenanceShowcase() {
                                 </div>
                             </div>
 
-                            <motion.button
-                                whileHover={{ gap: '1.25rem' }}
-                                className="flex items-center gap-3 text-lg font-bold text-brand-500"
+                            <Link
+                                href="/get-started"
+                                className="inline-flex items-center gap-3 text-lg font-bold text-brand-500 group"
                             >
-                                See how it recovers lost sales <ArrowRight size={20} />
-                            </motion.button>
+                                See how it recovers lost sales <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                            </Link>
                         </motion.div>
                     </div>
 
-                    <div className="flex-1 relative w-full">
-                        <div className="relative z-10 bg-white rounded-3xl border border-ledger-border shadow-2xl p-8 max-w-lg mx-auto overflow-hidden">
-                            <div className="absolute top-0 right-0 p-4 opacity-5">
-                                <BellRing size={120} />
-                            </div>
+                    <div className="flex-1 relative w-full py-8 sm:py-12">
+                        <div className="flex flex-col md:flex-row items-center justify-center gap-12 md:gap-12 lg:gap-16">
+                            {/* Main App Screen - Reminders */}
+                            <motion.div
+                                initial={{ y: 20, opacity: 0 }}
+                                whileInView={{ y: 0, opacity: 1 }}
+                                viewport={{ once: true }}
+                                transition={{ duration: 0.8 }}
+                                className="relative z-10 bg-white rounded-2xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] border border-ledger-border overflow-hidden ring-4 ring-white/50 w-full max-w-[280px] sm:max-w-[300px]"
+                            >
+                                <img
+                                    src="/screenshots/edited/12.jpeg"
+                                    alt="Service Reminders Dashboard"
+                                    className="w-full h-auto block"
+                                />
+                            </motion.div>
 
-                            <h3 className="font-serif text-2xl font-bold mb-6 text-ledger-charcoal border-b border-ledger-border pb-4">Service Schedule</h3>
-
-                            <div className="space-y-4">
-                                {[
-                                    { name: "Ramesh Kumar", type: "Water Purifier", date: "Today", overdue: true },
-                                    { name: "Suresh Singh", type: "AC Maintenance", date: "Tomorrow", overdue: false },
-                                    { name: "Anita Devi", type: "Chimney Cleaning", date: "18 Jan", overdue: false },
-                                ].map((item, i) => (
-                                    <motion.div
-                                        key={i}
-                                        initial={{ opacity: 0, y: 20 }}
-                                        whileInView={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: i * 0.2 }}
-                                        className="flex items-center justify-between p-4 rounded-xl border border-ledger-border bg-ledger-paper/20 hover:bg-ledger-paper transition-colors"
-                                    >
-                                        <div>
-                                            <p className="font-bold text-ledger-charcoal">{item.name}</p>
-                                            <p className="text-xs text-ledger-charcoal/50">{item.type}</p>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className={`text-xs font-bold ${item.overdue ? 'text-red-500' : 'text-brand-500'}`}>{item.date}</p>
-                                            <button className="mt-1 px-3 py-1 bg-ledger-charcoal text-white text-[10px] rounded-lg font-bold uppercase tracking-wider">Remind</button>
-                                        </div>
-                                    </motion.div>
-                                ))}
-                            </div>
-
-                            <div className="mt-8 p-4 bg-brand-500/10 rounded-2xl border border-brand-500/20 text-center">
-                                <p className="text-sm font-medium text-brand-700">₹8,500 Estimated Revenue for this week</p>
-                            </div>
+                            {/* WhatsApp Message - Beside the app on larger screens, below on mobile */}
+                            <motion.div
+                                initial={{ y: 20, opacity: 0 }}
+                                whileInView={{ y: 0, opacity: 1 }}
+                                viewport={{ once: true }}
+                                transition={{ duration: 0.8, delay: 0.2 }}
+                                className="relative z-20 w-full max-w-[280px] bg-white rounded-2xl shadow-2xl border border-ledger-border overflow-hidden ring-4 ring-white md:-ml-8 lg:-ml-12"
+                            >
+                                <div className="bg-[#075e54] p-3 text-white text-[10px] font-bold flex items-center gap-2">
+                                    <div className="w-5 h-5 rounded-full bg-white/20" />
+                                    <span>WhatsApp Reminder Details</span>
+                                </div>
+                                <img
+                                    src="/screenshots/edited/9.png"
+                                    alt="Health-Focused Maintenance Alert"
+                                    className="w-full h-auto block"
+                                />
+                            </motion.div>
                         </div>
 
                         {/* Background flourish */}
-                        <div className="absolute -top-10 -left-10 w-40 h-40 bg-brand-100 rounded-full blur-[80px] opacity-30 -z-10" />
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-brand-100 rounded-full blur-[120px] opacity-20 -z-10" />
                     </div>
                 </div>
             </div>

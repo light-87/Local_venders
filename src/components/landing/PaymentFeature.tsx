@@ -1,5 +1,4 @@
-'use client';
-
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Smartphone, CheckCircle2, ArrowRight } from 'lucide-react';
 
@@ -46,80 +45,50 @@ export function PaymentFeature() {
                                 ))}
                             </ul>
 
-                            <motion.button
-                                whileHover={{ gap: '1.25rem' }}
-                                className="flex items-center gap-3 text-lg font-bold text-brand-500"
+                            <Link
+                                href="/get-started"
+                                className="inline-flex items-center gap-3 text-lg font-bold text-brand-500 group"
                             >
-                                Learn how it works <ArrowRight size={20} />
-                            </motion.button>
+                                Learn how it works <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                            </Link>
                         </motion.div>
                     </div>
 
-                    <div className="flex-1 relative">
-                        <div className="relative z-10 w-full max-w-[400px] mx-auto">
-                            {/* Phone Mockup */}
+                    <div className="flex-1 relative w-full py-8 sm:py-12">
+                        <div className="flex flex-col md:flex-row items-center justify-center gap-12 md:gap-12 lg:gap-16">
+                            {/* Main Screenshot - Payment Request */}
                             <motion.div
-                                initial={{ rotateY: 20, rotateX: 10, y: 50, opacity: 0 }}
-                                whileInView={{ rotateY: 0, rotateX: 0, y: 0, opacity: 1 }}
+                                initial={{ y: 20, opacity: 0 }}
+                                whileInView={{ y: 0, opacity: 1 }}
                                 viewport={{ once: true }}
                                 transition={{ duration: 1, ease: "easeOut" }}
-                                className="bg-ledger-charcoal p-4 rounded-[3rem] shadow-2xl border-[8px] border-ledger-charcoal relative overflow-hidden aspect-[9/19]"
+                                className="relative z-10 bg-white rounded-2xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] border border-ledger-border overflow-hidden ring-4 ring-white/50 w-full max-w-[280px] sm:max-w-[300px]"
                             >
-                                <div className="bg-white h-full rounded-[2rem] overflow-hidden flex flex-col">
-                                    {/* Mock Payment Screen */}
-                                    <div className="bg-blue-600 p-6 text-white text-center">
-                                        <div className="w-12 h-12 rounded-full bg-white/20 mx-auto mb-3" />
-                                        <div className="h-4 w-24 bg-white/20 rounded mx-auto mb-1" />
-                                        <div className="h-2 w-16 bg-white/10 rounded mx-auto" />
-                                    </div>
-                                    <div className="p-6 flex-1 space-y-4">
-                                        <div className="flex justify-between border-b pb-4">
-                                            <div className="space-y-1">
-                                                <div className="h-2 w-12 bg-gray-100 rounded" />
-                                                <div className="h-3 w-20 bg-gray-200 rounded" />
-                                            </div>
-                                            <div className="space-y-1 text-right">
-                                                <div className="h-2 w-12 bg-gray-100 rounded ml-auto" />
-                                                <div className="h-3 w-16 bg-gray-200 rounded ml-auto" />
-                                            </div>
-                                        </div>
-                                        <div className="space-y-3">
-                                            <div className="h-2 w-8 bg-gray-100 rounded" />
-                                            <div className="flex justify-between items-center">
-                                                <div className="h-3 w-32 bg-gray-200 rounded" />
-                                                <div className="h-3 w-12 bg-gray-300 rounded" />
-                                            </div>
-                                            <div className="flex justify-between items-center">
-                                                <div className="h-3 w-24 bg-gray-200 rounded" />
-                                                <div className="h-3 w-12 bg-gray-300 rounded" />
-                                            </div>
-                                        </div>
-                                        <div className="mt-8 pt-4 border-t space-y-3">
-                                            <div className="h-10 w-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg" />
-                                            <div className="h-10 w-full bg-purple-600 rounded-lg" />
-                                        </div>
-                                    </div>
-                                </div>
+                                <img
+                                    src="/screenshots/edited/2.png"
+                                    alt="UPI Payment Request"
+                                    className="w-full h-auto block"
+                                />
                             </motion.div>
 
-                            {/* Decorative "Paper Receipt" floating behind */}
+                            {/* Background Screenshot - Digital Invoice */}
                             <motion.div
-                                animate={{
-                                    y: [0, -15, 0],
-                                    rotate: [-3, 0, -3]
-                                }}
-                                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                                className="absolute -top-10 -left-20 w-48 h-64 bg-white shadow-lg border border-ledger-border p-4 opacity-40 -z-10 rotate-[-12deg]"
+                                initial={{ y: 20, opacity: 0 }}
+                                whileInView={{ y: 0, opacity: 1 }}
+                                viewport={{ once: true }}
+                                transition={{ duration: 1.2, delay: 0.2, ease: "easeOut" }}
+                                className="relative z-20 w-full max-w-[280px] bg-white rounded-2xl shadow-2xl border border-ledger-border overflow-hidden ring-4 ring-white md:-ml-8 lg:-ml-12"
                             >
-                                <div className="space-y-2">
-                                    <div className="h-2 w-full bg-gray-100 rounded" />
-                                    <div className="h-2 w-3/4 bg-gray-100 rounded" />
-                                    <div className="h-2 w-1/2 bg-gray-100 rounded" />
-                                    <div className="h-2 w-full bg-gray-100 rounded pt-8" />
-                                    <div className="h-2 w-3/4 bg-gray-100 rounded" />
-                                </div>
+                                <img
+                                    src="/screenshots/edited/1.png"
+                                    alt="Digital Invoice"
+                                    className="w-full h-auto block"
+                                />
                             </motion.div>
                         </div>
+
+                        {/* Decorative element */}
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-brand-100 rounded-full blur-[120px] opacity-20 -z-10" />
                     </div>
                 </div>
             </div>
