@@ -124,6 +124,7 @@ export async function POST(request: Request) {
 
     for (let i = 0; i < data.items.length; i++) {
       const item = data.items[i];
+      if (!item) continue;
       // Get inventory item details
       const { data: invItem } = await supabase
         .from('inventory_items')
