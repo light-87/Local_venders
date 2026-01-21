@@ -37,7 +37,7 @@ export interface DashboardData {
 
 // Cart types for sales
 export interface CartItem {
-  inventoryItemId: string;
+  inventoryItemId: string | null; // null for small/misc items
   name: string;
   quantity: number;
   unitPrice: number;
@@ -45,7 +45,9 @@ export interface CartItem {
   availableStock: number;
   warrantyValue?: number;
   warrantyUnit?: 'months' | 'years';
-  maintenanceIntervalMonths?: number;
+  maintenanceValue?: number;
+  maintenanceUnit?: 'months' | 'years';
+  isSmallItem?: boolean; // For miscellaneous/small items
 }
 
 // Bill types (for public viewing)

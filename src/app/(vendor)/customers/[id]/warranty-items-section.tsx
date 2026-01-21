@@ -108,7 +108,7 @@ export function WarrantyItemsSection({ items }: WarrantyItemsSectionProps) {
   return (
     <>
       <section>
-        <h3 className="text-sm font-medium text-gray-500 mb-3">Items & Warranty</h3>
+        <h3 className="text-sm font-medium text-gray-500 mb-3">Purchased Items</h3>
         <div className="space-y-2">
           {items.map((item) => {
             const warranty = getWarrantyStatus(item);
