@@ -151,7 +151,10 @@ export async function POST(request: Request) {
         subtotal: itemSubtotal,
         warranty_months: item.warrantyMonths || 0,
         maintenance_interval_months: item.maintenanceIntervalMonths || null,
-        service_reminders: item.serviceReminders || [],
+        service_reminders: (item.serviceReminders || []).map(r => ({
+          label: r.label,
+          interval_months: r.intervalMonths,
+        })),
       });
     }
 
