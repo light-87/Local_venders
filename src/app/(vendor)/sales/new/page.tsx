@@ -559,13 +559,14 @@ export default function NewSalePage() {
             </h2>
             <Card>
               <div className="space-y-3">
-                {cart.map((item) => {
-                  const isExpanded = expandedItems.has(item.inventoryItemId);
+                {cart.filter(item => !item.isSmallItem).map((item) => {
+                  const itemId = item.inventoryItemId!;
+                  const isExpanded = expandedItems.has(itemId);
                   const hasWarrantyOrMaintenance = item.warrantyValue || item.maintenanceValue;
 
                   return (
                     <div
-                      key={item.inventoryItemId}
+                      key={itemId}
                       className="py-2 border-b border-gray-100 last:border-0"
                     >
                       {/* Main item row */}
@@ -595,7 +596,7 @@ export default function NewSalePage() {
                         </div>
                         <div className="flex items-center gap-2">
                           <button
-                            onClick={() => updateQuantity(item.inventoryItemId, item.quantity - 1)}
+                            onClick={() => updateQuantity(itemId, item.quantity - 1)}
                             className="p-2 rounded-full bg-gray-100"
                           >
                             <Minus className="w-4 h-4" />
@@ -609,19 +610,19 @@ export default function NewSalePage() {
                             onChange={(e) => {
                               const val = parseInt(e.target.value, 10);
                               if (!isNaN(val) && val >= 1) {
-                                updateQuantity(item.inventoryItemId, Math.min(val, item.availableStock));
+                                updateQuantity(itemId, Math.min(val, item.availableStock));
                               }
                             }}
                             className="w-14 h-8 text-center font-medium bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                           />
                           <button
-                            onClick={() => updateQuantity(item.inventoryItemId, item.quantity + 1)}
+                            onClick={() => updateQuantity(itemId, item.quantity + 1)}
                             className="p-2 rounded-full bg-gray-100"
                           >
                             <Plus className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => removeFromCart(item.inventoryItemId)}
+                            onClick={() => removeFromCart(itemId)}
                             className="p-2 rounded-full text-red-500"
                           >
                             <X className="w-4 h-4" />
@@ -631,7 +632,7 @@ export default function NewSalePage() {
 
                       {/* Expand/Collapse button */}
                       <button
-                        onClick={() => toggleExpanded(item.inventoryItemId)}
+                        onClick={() => toggleExpanded(itemId)}
                         className="mt-2 w-full flex items-center justify-center gap-1 text-xs text-gray-500 hover:text-gray-700 py-1"
                       >
                         {isExpanded ? (
@@ -665,7 +666,7 @@ export default function NewSalePage() {
                                 value={item.warrantyValue || ''}
                                 onChange={(e) => {
                                   const val = parseInt(e.target.value, 10) || 0;
-                                  updateWarranty(item.inventoryItemId, val, item.warrantyUnit || 'months');
+                                  updateWarranty(itemId, val, item.warrantyUnit || 'months');
                                 }}
                                 className="flex-1 h-9 px-3 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
                               />
@@ -673,7 +674,7 @@ export default function NewSalePage() {
                                 value={item.warrantyUnit || 'months'}
                                 onChange={(e) => {
                                   updateWarranty(
-                                    item.inventoryItemId,
+                                    itemId,
                                     item.warrantyValue || 0,
                                     e.target.value as 'months' | 'years'
                                   );
@@ -701,7 +702,7 @@ export default function NewSalePage() {
                                 value={item.maintenanceValue || ''}
                                 onChange={(e) => {
                                   const val = parseInt(e.target.value, 10) || 0;
-                                  updateMaintenance(item.inventoryItemId!, val, item.maintenanceUnit || 'months');
+                                  updateMaintenance(itemId, val, item.maintenanceUnit || 'months');
                                 }}
                                 className="flex-1 h-9 px-3 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
                               />
@@ -709,7 +710,7 @@ export default function NewSalePage() {
                                 value={item.maintenanceUnit || 'months'}
                                 onChange={(e) => {
                                   updateMaintenance(
-                                    item.inventoryItemId!,
+                                    itemId,
                                     item.maintenanceValue || 0,
                                     e.target.value as 'months' | 'years'
                                   );
