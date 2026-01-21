@@ -28,8 +28,11 @@ import {
   Calendar,
   Package,
   StickyNote,
+  MapPin,
+  Info,
+  Bell,
 } from 'lucide-react';
-import type { InventoryItem, Account, Customer, CartItem, InventoryCategory } from '@/types';
+import type { InventoryItem, Account, Customer, CartItem, InventoryCategory, CartServiceReminder } from '@/types';
 import { InventoryForm } from '@/app/(vendor)/inventory/inventory-form';
 
 export default function NewSalePage() {
@@ -50,11 +53,15 @@ export default function NewSalePage() {
   const [showAddItemModal, setShowAddItemModal] = useState(false);
   const [categories, setCategories] = useState<InventoryCategory[]>([]);
 
+  // Sale type state (regular or record-only for existing customers)
+  const [isRecordOnly, setIsRecordOnly] = useState(false);
+
   // Cart states
   const [cart, setCart] = useState<CartItem[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [newCustomerName, setNewCustomerName] = useState('');
   const [newCustomerPhone, setNewCustomerPhone] = useState('');
+  const [newCustomerAddress, setNewCustomerAddress] = useState('');
   const [selectedAccountId, setSelectedAccountId] = useState('');
   const [discountAmount, setDiscountAmount] = useState(0);
   const [discountPercent, setDiscountPercent] = useState(0);
@@ -217,7 +224,7 @@ export default function NewSalePage() {
     );
   };
 
-  // Update maintenance for a cart item
+  // Update maintenance for a cart item (legacy single reminder)
   const updateMaintenance = (itemId: string, value: number, unit: 'months' | 'years') => {
     setCart((prev) =>
       prev.map((item) =>
@@ -226,6 +233,65 @@ export default function NewSalePage() {
           : item
       )
     );
+  };
+
+  // Add a service reminder to a cart item
+  const addServiceReminder = (itemId: string) => {
+    setCart((prev) =>
+      prev.map((item) =>
+        item.inventoryItemId === itemId
+          ? {
+              ...item,
+              serviceReminders: [
+                ...(item.serviceReminders || []),
+                { label: '', intervalValue: 0, intervalUnit: 'months' as const },
+              ],
+            }
+          : item
+      )
+    );
+  };
+
+  // Update a service reminder for a cart item
+  const updateServiceReminder = (
+    itemId: string,
+    reminderIndex: number,
+    field: 'label' | 'intervalValue' | 'intervalUnit',
+    value: string | number
+  ) => {
+    setCart((prev) =>
+      prev.map((item) => {
+        if (item.inventoryItemId !== itemId) return item;
+        const reminders = [...(item.serviceReminders || [])];
+        if (reminders[reminderIndex]) {
+          reminders[reminderIndex] = { ...reminders[reminderIndex], [field]: value };
+        }
+        return { ...item, serviceReminders: reminders };
+      })
+    );
+  };
+
+  // Remove a service reminder from a cart item
+  const removeServiceReminder = (itemId: string, reminderIndex: number) => {
+    setCart((prev) =>
+      prev.map((item) => {
+        if (item.inventoryItemId !== itemId) return item;
+        const reminders = [...(item.serviceReminders || [])];
+        reminders.splice(reminderIndex, 1);
+        return { ...item, serviceReminders: reminders };
+      })
+    );
+  };
+
+  // Helper to convert service reminders to API format (array of { label, intervalMonths })
+  const getServiceRemindersForAPI = (item: CartItem) => {
+    if (!item.serviceReminders || item.serviceReminders.length === 0) return [];
+    return item.serviceReminders
+      .filter((r) => r.label && r.intervalValue > 0)
+      .map((r) => ({
+        label: r.label,
+        intervalMonths: r.intervalUnit === 'years' ? r.intervalValue * 12 : r.intervalValue,
+      }));
   };
 
   // Helper to convert maintenance to months
@@ -247,6 +313,7 @@ export default function NewSalePage() {
     setCustomerSearch('');
     setNewCustomerName('');
     setNewCustomerPhone('');
+    setNewCustomerAddress('');
   };
 
   // Add small item to cart
@@ -318,13 +385,16 @@ export default function NewSalePage() {
           customerId: selectedCustomer?.id,
           customerName: !selectedCustomer && newCustomerName ? newCustomerName : undefined,
           customerPhone: !selectedCustomer && newCustomerPhone ? newCustomerPhone : undefined,
+          customerAddress: !selectedCustomer && newCustomerAddress ? newCustomerAddress : undefined,
           accountId: selectedAccountId,
+          saleType: isRecordOnly ? 'service_record' : 'regular',
           items: cart.filter(item => !item.isSmallItem).map((item) => ({
             inventoryItemId: item.inventoryItemId,
             quantity: item.quantity,
             unitPrice: item.unitPrice,
             warrantyMonths: getWarrantyMonths(item),
             maintenanceIntervalMonths: getMaintenanceMonths(item),
+            serviceReminders: getServiceRemindersForAPI(item),
           })),
           // Small item data
           smallItemName: smallItem?.name,
@@ -370,6 +440,48 @@ export default function NewSalePage() {
       <PageHeader title="New Sale" showBack backHref="/dashboard" />
 
       <div className="p-4 space-y-6">
+        {/* Record Only Toggle */}
+        <section>
+          <button
+            onClick={() => setIsRecordOnly(!isRecordOnly)}
+            className={`w-full p-4 rounded-xl border-2 transition-all ${
+              isRecordOnly
+                ? 'bg-amber-50 border-amber-400'
+                : 'bg-gray-50 border-gray-200'
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                  isRecordOnly ? 'bg-amber-100' : 'bg-gray-200'
+                }`}>
+                  <Info className={`w-5 h-5 ${isRecordOnly ? 'text-amber-600' : 'text-gray-500'}`} />
+                </div>
+                <div className="text-left">
+                  <p className={`font-medium ${isRecordOnly ? 'text-amber-900' : 'text-gray-700'}`}>
+                    Record Only Mode
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    For existing customers (no inventory/income changes)
+                  </p>
+                </div>
+              </div>
+              <div className={`w-12 h-6 rounded-full transition-colors ${
+                isRecordOnly ? 'bg-amber-500' : 'bg-gray-300'
+              }`}>
+                <div className={`w-5 h-5 mt-0.5 rounded-full bg-white shadow transition-transform ${
+                  isRecordOnly ? 'translate-x-6' : 'translate-x-0.5'
+                }`} />
+              </div>
+            </div>
+          </button>
+          {isRecordOnly && (
+            <p className="mt-2 px-2 text-xs text-amber-700">
+              This will NOT deduct inventory stock or add to income/sales amount. Use this for recording items purchased elsewhere.
+            </p>
+          )}
+        </section>
+
         {/* Customer Section */}
         <section>
           <div className="flex items-center justify-between mb-2">
@@ -380,6 +492,7 @@ export default function NewSalePage() {
                   setSelectedCustomer(null);
                   setNewCustomerName('');
                   setNewCustomerPhone('');
+                  setNewCustomerAddress('');
                 }}
                 className="text-sm text-brand-500"
               >
@@ -413,12 +526,19 @@ export default function NewSalePage() {
                     <p className="text-sm text-gray-500">
                       {newCustomerPhone ? newCustomerPhone : 'New customer'}
                     </p>
+                    {newCustomerAddress && (
+                      <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
+                        <MapPin className="w-3 h-3" />
+                        {newCustomerAddress.length > 30 ? newCustomerAddress.substring(0, 30) + '...' : newCustomerAddress}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <button
                   onClick={() => {
                     setNewCustomerName('');
                     setNewCustomerPhone('');
+                    setNewCustomerAddress('');
                   }}
                   className="p-2 text-gray-400"
                 >
@@ -462,7 +582,8 @@ export default function NewSalePage() {
           <div className="mt-3 grid grid-cols-2 gap-2">
             {filteredInventory.slice(0, 20).map((item) => {
               const inCart = cart.find((c) => c.inventoryItemId === item.id);
-              const isOutOfStock = item.current_stock <= 0;
+              // In record-only mode, allow all items regardless of stock
+              const isOutOfStock = !isRecordOnly && item.current_stock <= 0;
 
               return (
                 <button
@@ -481,7 +602,7 @@ export default function NewSalePage() {
                   </p>
                   <div className="flex items-center justify-between mt-1">
                     <span className="text-xs text-gray-400">
-                      {formatQuantity(item.current_stock, item.unit)}
+                      {isRecordOnly ? 'Record only' : formatQuantity(item.current_stock, item.unit)}
                     </span>
                     {inCart && (
                       <Badge variant="success" size="sm">
@@ -562,7 +683,7 @@ export default function NewSalePage() {
                 {cart.filter(item => !item.isSmallItem).map((item) => {
                   const itemId = item.inventoryItemId!;
                   const isExpanded = expandedItems.has(itemId);
-                  const hasWarrantyOrMaintenance = item.warrantyValue || item.maintenanceValue;
+                  const hasWarrantyOrReminders = item.warrantyValue || (item.serviceReminders && item.serviceReminders.length > 0);
 
                   return (
                     <div
@@ -576,21 +697,21 @@ export default function NewSalePage() {
                           <p className="text-sm text-gray-500">
                             {formatCurrency(item.unitPrice)} × {item.quantity}
                           </p>
-                          {/* Show warranty/maintenance badges if set */}
-                          {hasWarrantyOrMaintenance && (
-                            <div className="flex gap-2 mt-1">
+                          {/* Show warranty/service badges if set */}
+                          {hasWarrantyOrReminders && (
+                            <div className="flex flex-wrap gap-1 mt-1">
                               {item.warrantyValue && (
                                 <span className="inline-flex items-center gap-1 text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
                                   <Shield className="w-3 h-3" />
                                   {item.warrantyValue} {item.warrantyUnit}
                                 </span>
                               )}
-                              {item.maintenanceValue && (
-                                <span className="inline-flex items-center gap-1 text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
-                                  <Wrench className="w-3 h-3" />
-                                  Every {item.maintenanceValue} {item.maintenanceUnit}
+                              {item.serviceReminders?.filter(r => r.label && r.intervalValue > 0).map((reminder, idx) => (
+                                <span key={idx} className="inline-flex items-center gap-1 text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+                                  <Bell className="w-3 h-3" />
+                                  {reminder.label}: {reminder.intervalValue} {reminder.intervalUnit}
                                 </span>
-                              )}
+                              ))}
                             </div>
                           )}
                         </div>
@@ -687,47 +808,75 @@ export default function NewSalePage() {
                             </div>
                           </div>
 
-                          {/* Maintenance Interval */}
+                          {/* Service Reminders (Multiple) */}
                           <div>
-                            <label className="flex items-center gap-1.5 text-xs font-medium text-gray-600 mb-1.5">
-                              <Wrench className="w-3.5 h-3.5" />
-                              Service Reminder
-                            </label>
-                            <div className="flex gap-2">
-                              <input
-                                type="number"
-                                inputMode="numeric"
-                                min={0}
-                                placeholder="0"
-                                value={item.maintenanceValue || ''}
-                                onChange={(e) => {
-                                  const val = parseInt(e.target.value, 10) || 0;
-                                  updateMaintenance(itemId, val, item.maintenanceUnit || 'months');
-                                }}
-                                className="flex-1 h-9 px-3 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
-                              />
-                              <select
-                                value={item.maintenanceUnit || 'months'}
-                                onChange={(e) => {
-                                  updateMaintenance(
-                                    itemId,
-                                    item.maintenanceValue || 0,
-                                    e.target.value as 'months' | 'years'
-                                  );
-                                }}
-                                className="h-9 px-3 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+                            <div className="flex items-center justify-between mb-1.5">
+                              <label className="flex items-center gap-1.5 text-xs font-medium text-gray-600">
+                                <Bell className="w-3.5 h-3.5" />
+                                Service Reminders
+                              </label>
+                              <button
+                                type="button"
+                                onClick={() => addServiceReminder(itemId)}
+                                className="flex items-center gap-1 text-xs text-brand-600 hover:text-brand-700"
                               >
-                                <option value="months">Months</option>
-                                <option value="years">Years</option>
-                              </select>
+                                <Plus className="w-3 h-3" />
+                                Add Reminder
+                              </button>
                             </div>
-                            {item.maintenanceValue && (selectedCustomer || newCustomerName) && (
-                              <p className="mt-1.5 text-xs text-green-600">
-                                ✓ Reminder will be auto-scheduled
+
+                            {/* List of service reminders */}
+                            {item.serviceReminders && item.serviceReminders.length > 0 ? (
+                              <div className="space-y-2">
+                                {item.serviceReminders.map((reminder, idx) => (
+                                  <div key={idx} className="flex gap-2 items-center">
+                                    <input
+                                      type="text"
+                                      placeholder="Label (e.g., Membrane)"
+                                      value={reminder.label}
+                                      onChange={(e) => updateServiceReminder(itemId, idx, 'label', e.target.value)}
+                                      className="flex-1 h-9 px-3 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+                                    />
+                                    <input
+                                      type="number"
+                                      inputMode="numeric"
+                                      min={1}
+                                      placeholder="0"
+                                      value={reminder.intervalValue || ''}
+                                      onChange={(e) => updateServiceReminder(itemId, idx, 'intervalValue', parseInt(e.target.value, 10) || 0)}
+                                      className="w-16 h-9 px-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+                                    />
+                                    <select
+                                      value={reminder.intervalUnit}
+                                      onChange={(e) => updateServiceReminder(itemId, idx, 'intervalUnit', e.target.value)}
+                                      className="h-9 px-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+                                    >
+                                      <option value="months">Mo</option>
+                                      <option value="years">Yr</option>
+                                    </select>
+                                    <button
+                                      type="button"
+                                      onClick={() => removeServiceReminder(itemId, idx)}
+                                      className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg"
+                                    >
+                                      <X className="w-4 h-4" />
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-xs text-gray-400 italic">
+                                No service reminders added. Click "Add Reminder" to add one.
                               </p>
                             )}
-                            {item.maintenanceValue && !selectedCustomer && !newCustomerName && (
-                              <p className="mt-1.5 text-xs text-amber-600">
+
+                            {item.serviceReminders && item.serviceReminders.some(r => r.label && r.intervalValue > 0) && (selectedCustomer || newCustomerName) && (
+                              <p className="mt-2 text-xs text-green-600">
+                                ✓ Reminders will be auto-scheduled
+                              </p>
+                            )}
+                            {item.serviceReminders && item.serviceReminders.some(r => r.label && r.intervalValue > 0) && !selectedCustomer && !newCustomerName && (
+                              <p className="mt-2 text-xs text-amber-600">
                                 ⚠ Add customer to enable reminders
                               </p>
                             )}
@@ -912,14 +1061,23 @@ export default function NewSalePage() {
                   </p>
                 </div>
               </button>
-              {/* Phone input for new customer */}
-              <div className="mt-3">
+              {/* Phone and Address input for new customer */}
+              <div className="mt-3 space-y-2">
                 <Input
                   placeholder="Phone number (optional)"
                   value={newCustomerPhone}
                   onChange={(e) => setNewCustomerPhone(e.target.value)}
                   type="tel"
                 />
+                <div>
+                  <textarea
+                    placeholder="Address (optional)"
+                    value={newCustomerAddress}
+                    onChange={(e) => setNewCustomerAddress(e.target.value)}
+                    rows={2}
+                    className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
+                  />
+                </div>
               </div>
             </div>
           )}
@@ -939,6 +1097,7 @@ export default function NewSalePage() {
               setCustomerSearch('');
               setNewCustomerName('');
               setNewCustomerPhone('');
+              setNewCustomerAddress('');
             }}
           >
             Skip (Walk-in Customer)

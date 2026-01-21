@@ -3,7 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { formatCurrency, formatDate } from '@/lib/utils/format';
 import { PageHeader } from '@/components/layout';
 import { Card } from '@/components/ui';
-import { User, Phone, ShoppingBag } from 'lucide-react';
+import { User, Phone, ShoppingBag, MapPin } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { CustomerActions } from './customer-actions';
@@ -114,6 +114,12 @@ export default async function CustomerDetailPage({
                 </a>
               ) : (
                 <p className="text-sm text-gray-400 mt-1">No phone number</p>
+              )}
+              {customer.address && (
+                <p className="flex items-start gap-1 text-gray-600 mt-1 text-sm">
+                  <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                  <span>{customer.address}</span>
+                </p>
               )}
             </div>
           </div>

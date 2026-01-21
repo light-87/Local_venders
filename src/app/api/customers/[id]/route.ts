@@ -6,6 +6,7 @@ import { z } from 'zod';
 const updateCustomerSchema = z.object({
   name: z.string().min(1, 'Name is required').optional(),
   phone: z.string().nullable().optional(),
+  address: z.string().nullable().optional(),
   notes: z.string().nullable().optional(),
 });
 
@@ -90,6 +91,7 @@ export async function PATCH(
     const updateData: Record<string, unknown> = {};
     if (result.data.name !== undefined) updateData.name = result.data.name;
     if (result.data.phone !== undefined) updateData.phone = result.data.phone;
+    if (result.data.address !== undefined) updateData.address = result.data.address;
     if (result.data.notes !== undefined) updateData.notes = result.data.notes;
 
     const { data: customer, error } = await supabase

@@ -18,6 +18,7 @@ export function CustomerEditModal({ customer, isOpen, onClose }: CustomerEditMod
   const [form, setForm] = useState({
     name: customer.name,
     phone: customer.phone || '',
+    address: customer.address || '',
     notes: customer.notes || '',
   });
 
@@ -36,6 +37,7 @@ export function CustomerEditModal({ customer, isOpen, onClose }: CustomerEditMod
         body: JSON.stringify({
           name: form.name.trim(),
           phone: form.phone.trim() || null,
+          address: form.address.trim() || null,
           notes: form.notes.trim() || null,
         }),
       });
@@ -71,6 +73,13 @@ export function CustomerEditModal({ customer, isOpen, onClose }: CustomerEditMod
           placeholder="Enter phone number (optional)"
           value={form.phone}
           onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))}
+        />
+        <Textarea
+          label="Address"
+          placeholder="Enter customer address (optional)"
+          value={form.address}
+          onChange={(e) => setForm((p) => ({ ...p, address: e.target.value }))}
+          rows={2}
         />
         <Textarea
           label="Notes"

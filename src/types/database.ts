@@ -30,6 +30,7 @@ export interface Customer {
   vendor_id: string;
   name: string;
   phone: string | null;
+  address: string | null;
   total_purchases: number;
   total_spent: number;
   last_purchase_date: string | null;
@@ -77,6 +78,7 @@ export interface Sale {
   tax_amount: number;
   total_amount: number;
   payment_status: 'paid' | 'pending' | 'partial';
+  sale_type: 'regular' | 'service_record';
   notes: string | null;
   sale_date: string;
   created_at: string;
@@ -84,6 +86,11 @@ export interface Sale {
   customer?: Customer;
   account?: Account;
   items?: SaleItem[];
+}
+
+export interface ServiceReminder {
+  label: string;
+  interval_months: number;
 }
 
 export interface SaleItem {
@@ -97,6 +104,7 @@ export interface SaleItem {
   warranty_months: number | null;
   warranty_end_date: string | null;
   maintenance_interval_months: number | null;
+  service_reminders: ServiceReminder[];
   created_at: string;
 }
 
