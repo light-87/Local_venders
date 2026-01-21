@@ -129,7 +129,9 @@ export function WarrantyEditModal({
 
   const updateServiceReminder = (index: number, field: 'label' | 'intervalMonths', value: string) => {
     const updated = [...serviceReminders];
-    updated[index] = { ...updated[index], [field]: value };
+    const current = updated[index];
+    if (!current) return;
+    updated[index] = { ...current, [field]: value };
     setServiceReminders(updated);
   };
 
