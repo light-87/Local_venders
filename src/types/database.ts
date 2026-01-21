@@ -105,6 +105,7 @@ export interface SaleItem {
   warranty_end_date: string | null;
   maintenance_interval_months: number | null;
   service_reminders: ServiceReminder[];
+  installation_date: string | null;
   created_at: string;
 }
 

@@ -5,7 +5,12 @@ import { Modal } from './modal';
 import { Button } from './button';
 import { Input } from './input';
 import { formatDateShort } from '@/lib/utils/format';
-import { Shield, Calendar, Wrench } from 'lucide-react';
+import { Shield, Calendar, Wrench, Plus, X } from 'lucide-react';
+
+interface ServiceReminder {
+  label: string;
+  interval_months: number;
+}
 
 interface WarrantyItem {
   id: string;
@@ -13,6 +18,8 @@ interface WarrantyItem {
   warranty_months: number | null;
   warranty_end_date: string | null;
   maintenance_interval_months: number | null;
+  service_reminders: ServiceReminder[];
+  installation_date: string | null;
   purchaseDate: string;
 }
 
@@ -24,6 +31,8 @@ interface WarrantyEditModalProps {
     warrantyMonths?: number;
     warrantyEndDate?: string | null;
     maintenanceIntervalMonths?: number | null;
+    installationDate?: string | null;
+    serviceReminders?: Array<{ label: string; interval_months: number }>;
   }) => Promise<void>;
 }
 
@@ -57,45 +66,89 @@ export function WarrantyEditModal({
   const [warrantyMonths, setWarrantyMonths] = useState(0);
   const [warrantyEndDate, setWarrantyEndDate] = useState('');
   const [useCustomDate, setUseCustomDate] = useState(false);
-  const [maintenanceInterval, setMaintenanceInterval] = useState<string>('');
+  const [installationDate, setInstallationDate] = useState('');
+  const [serviceReminders, setServiceReminders] = useState<Array<{ label: string; intervalMonths: string }>>([]);
 
   // Reset form when item changes
   useEffect(() => {
     if (item) {
       setWarrantyMonths(item.warranty_months || 0);
-      setMaintenanceInterval(item.maintenance_interval_months?.toString() || '');
+
+      // Set installation date
+      setInstallationDate(item.installation_date || item.purchaseDate);
 
       // If there's a custom warranty_end_date, use it
       if (item.warranty_end_date) {
         setWarrantyEndDate(item.warranty_end_date);
         setUseCustomDate(true);
       } else if (item.warranty_months && item.warranty_months > 0) {
-        // Calculate the end date from purchase date + months
-        setWarrantyEndDate(calculateWarrantyEndDate(item.purchaseDate, item.warranty_months));
+        const baseDate = item.installation_date || item.purchaseDate;
+        setWarrantyEndDate(calculateWarrantyEndDate(baseDate, item.warranty_months));
         setUseCustomDate(false);
       } else {
         setWarrantyEndDate('');
         setUseCustomDate(false);
+      }
+
+      // Load service reminders
+      if (item.service_reminders && item.service_reminders.length > 0) {
+        setServiceReminders(
+          item.service_reminders.map((r) => ({
+            label: r.label,
+            intervalMonths: r.interval_months.toString(),
+          }))
+        );
+      } else if (item.maintenance_interval_months && item.maintenance_interval_months > 0) {
+        // Convert legacy single interval to new format
+        setServiceReminders([
+          { label: 'Service', intervalMonths: item.maintenance_interval_months.toString() },
+        ]);
+      } else {
+        setServiceReminders([]);
       }
     }
   }, [item]);
 
   if (!item) return null;
 
+  const baseDate = installationDate || item.purchaseDate;
   const calculatedEndDate = warrantyMonths > 0
-    ? calculateWarrantyEndDate(item.purchaseDate, warrantyMonths)
+    ? calculateWarrantyEndDate(baseDate, warrantyMonths)
     : '';
 
   const effectiveEndDate = useCustomDate ? warrantyEndDate : calculatedEndDate;
   const warrantyStatus = effectiveEndDate ? getWarrantyStatus(effectiveEndDate) : null;
 
+  const addServiceReminder = () => {
+    setServiceReminders([...serviceReminders, { label: '', intervalMonths: '' }]);
+  };
+
+  const removeServiceReminder = (index: number) => {
+    setServiceReminders(serviceReminders.filter((_, i) => i !== index));
+  };
+
+  const updateServiceReminder = (index: number, field: 'label' | 'intervalMonths', value: string) => {
+    const updated = [...serviceReminders];
+    updated[index] = { ...updated[index], [field]: value };
+    setServiceReminders(updated);
+  };
+
   const handleSave = async () => {
     setLoading(true);
     try {
+      // Convert service reminders to API format
+      const validReminders = serviceReminders
+        .filter((r) => r.label.trim() && r.intervalMonths && parseInt(r.intervalMonths, 10) > 0)
+        .map((r) => ({
+          label: r.label.trim(),
+          interval_months: parseInt(r.intervalMonths, 10),
+        }));
+
       await onUpdate(item.id, {
         warrantyMonths,
         warrantyEndDate: useCustomDate ? warrantyEndDate : null,
-        maintenanceIntervalMonths: maintenanceInterval ? parseInt(maintenanceInterval, 10) : null,
+        installationDate: installationDate || null,
+        serviceReminders: validReminders,
       });
       onClose();
     } finally {
@@ -108,14 +161,33 @@ export function WarrantyEditModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Edit Warranty">
+    <Modal isOpen={isOpen} onClose={handleClose} title="Edit Item Details">
       <div className="space-y-5">
         {/* Item Name */}
         <div>
           <p className="text-sm text-gray-500">Item</p>
           <p className="text-lg font-medium text-gray-900">{item.item_name}</p>
-          <p className="text-sm text-gray-500">
-            Purchased {formatDateShort(item.purchaseDate)}
+        </div>
+
+        {/* Installation/Purchase Date */}
+        <div>
+          <label className="flex items-center gap-1.5 text-sm font-medium text-gray-600 mb-2">
+            <Calendar className="w-4 h-4" />
+            Installation / Purchase Date
+          </label>
+          <Input
+            type="date"
+            value={installationDate}
+            onChange={(e) => {
+              setInstallationDate(e.target.value);
+              // Recalculate warranty end date if not using custom
+              if (!useCustomDate && warrantyMonths > 0) {
+                setWarrantyEndDate(calculateWarrantyEndDate(e.target.value, warrantyMonths));
+              }
+            }}
+          />
+          <p className="text-xs text-gray-400 mt-1">
+            Service reminder dates are calculated from this date
           </p>
         </div>
 
@@ -136,18 +208,14 @@ export function WarrantyEditModal({
                 const val = parseInt(e.target.value, 10) || 0;
                 setWarrantyMonths(val);
                 if (!useCustomDate && val > 0) {
-                  setWarrantyEndDate(calculateWarrantyEndDate(item.purchaseDate, val));
+                  setWarrantyEndDate(calculateWarrantyEndDate(baseDate, val));
                 }
               }}
               className="flex-1 h-11 px-4 text-base bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500"
             />
-            <select
-              value="months"
-              disabled
-              className="h-11 px-4 text-base bg-gray-50 border border-gray-200 rounded-xl"
-            >
-              <option value="months">Months</option>
-            </select>
+            <span className="flex items-center h-11 px-4 text-base bg-gray-50 border border-gray-200 rounded-xl text-gray-600">
+              Months
+            </span>
           </div>
           {warrantyMonths > 0 && !useCustomDate && (
             <p className="mt-2 text-sm text-gray-500">
@@ -229,24 +297,58 @@ export function WarrantyEditModal({
           </div>
         )}
 
-        {/* Maintenance Interval */}
+        {/* Service Reminders */}
         <div>
           <label className="flex items-center gap-1.5 text-sm font-medium text-gray-600 mb-2">
             <Wrench className="w-4 h-4" />
-            Service Reminder Interval
+            Service Reminders
           </label>
-          <select
-            value={maintenanceInterval}
-            onChange={(e) => setMaintenanceInterval(e.target.value)}
-            className="w-full h-11 px-4 text-base bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500"
+          <p className="text-xs text-gray-400 mb-3">
+            Set up reminders for maintenance services (e.g., filter replacement)
+          </p>
+
+          {serviceReminders.length > 0 && (
+            <div className="space-y-2 mb-3">
+              {serviceReminders.map((reminder, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    placeholder="Service name (e.g., Membrane)"
+                    value={reminder.label}
+                    onChange={(e) => updateServiceReminder(index, 'label', e.target.value)}
+                    className="flex-1 h-10 px-3 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  />
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min={1}
+                    placeholder="Months"
+                    value={reminder.intervalMonths}
+                    onChange={(e) => updateServiceReminder(index, 'intervalMonths', e.target.value)}
+                    className="w-20 h-10 px-3 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 text-center"
+                  />
+                  <span className="text-sm text-gray-500">mo</span>
+                  <button
+                    type="button"
+                    onClick={() => removeServiceReminder(index)}
+                    className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            icon={<Plus className="w-4 h-4" />}
+            onClick={addServiceReminder}
           >
-            <option value="">No reminder</option>
-            <option value="1">Every 1 month</option>
-            <option value="2">Every 2 months</option>
-            <option value="3">Every 3 months</option>
-            <option value="6">Every 6 months</option>
-            <option value="12">Every 12 months</option>
-          </select>
+            Add Reminder
+          </Button>
         </div>
 
         {/* Action Buttons */}

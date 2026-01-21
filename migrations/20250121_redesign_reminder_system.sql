@@ -36,7 +36,14 @@ ALTER TABLE sale_items
 ADD COLUMN IF NOT EXISTS service_reminders JSONB DEFAULT '[]'::jsonb;
 
 -- ============================================
--- 4. Update discount_description column if not exists
+-- 4. Add installation_date column to sale_items table
+-- This allows per-item installation date (can be different from sale_date)
+-- ============================================
+ALTER TABLE sale_items
+ADD COLUMN IF NOT EXISTS installation_date DATE;
+
+-- ============================================
+-- 5. Update discount_description column if not exists
 -- (Adding this as it might be missing in some setups)
 -- ============================================
 DO $$

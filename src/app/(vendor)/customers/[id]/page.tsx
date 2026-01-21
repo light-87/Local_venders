@@ -8,6 +8,12 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { CustomerActions } from './customer-actions';
 import { WarrantyItemsSection } from './warranty-items-section';
+import { CustomerRemindersSection } from './customer-reminders-section';
+
+interface ServiceReminder {
+  label: string;
+  interval_months: number;
+}
 
 interface SaleItem {
   id: string;
@@ -17,6 +23,8 @@ interface SaleItem {
   warranty_months: number | null;
   warranty_end_date: string | null;
   maintenance_interval_months: number | null;
+  service_reminders?: ServiceReminder[];
+  installation_date?: string | null;
   created_at: string;
   sale: {
     id: string;
@@ -57,6 +65,8 @@ async function getCustomer(vendorId: string, customerId: string) {
       warranty_months,
       warranty_end_date,
       maintenance_interval_months,
+      service_reminders,
+      installation_date,
       created_at,
       sale:sales!inner(id, bill_id, created_at, sale_date, customer_id)
     `)
@@ -146,6 +156,9 @@ export default async function CustomerDetailPage({
 
         {/* Purchased Items */}
         <WarrantyItemsSection items={purchasedItems} />
+
+        {/* Service Reminders */}
+        <CustomerRemindersSection customerId={customer.id} />
 
         {/* Purchase History */}
         <section>
