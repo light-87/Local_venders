@@ -940,17 +940,22 @@ export default function NewSalePage() {
                 />
               </div>
 
-              {/* Sale Date */}
+              {/* Sale Date / Installation Date */}
               <div className="mt-4 pt-4 border-t border-gray-100">
                 <label className="flex items-center gap-1.5 text-sm font-medium text-gray-600 mb-2">
                   <Calendar className="w-4 h-4" />
-                  Sale Date
+                  {isRecordOnly ? 'Original Purchase/Installation Date' : 'Sale Date'}
                 </label>
                 <Input
                   type="date"
                   value={saleDate}
                   onChange={(e) => setSaleDate(e.target.value)}
                 />
+                {isRecordOnly && (
+                  <p className="mt-1.5 text-xs text-amber-600">
+                    Set the date when the customer originally purchased/installed this item. Service reminders will be calculated from this date.
+                  </p>
+                )}
               </div>
 
               {/* Totals */}
