@@ -66,14 +66,19 @@ export const createSaleSchema = z.object({
   customerName: z.string().optional(),
   customerPhone: z.string().optional(),
   accountId: z.string().uuid(),
-  items: z.array(saleItemSchema).min(1, 'At least one item is required'),
+  items: z.array(saleItemSchema), // Can be empty if only small items
+  smallItemName: z.string().optional(), // For miscellaneous/small items
+  smallItemAmount: z.number().min(0).optional(), // Amount for small items
   discountAmount: z.number().min(0).optional(),
   discountPercent: z.number().min(0).max(100).optional(),
   discountDescription: z.string().optional(),
   taxAmount: z.number().min(0).optional(),
   notes: z.string().optional(),
   saleDate: z.string().optional(),
-});
+}).refine(
+  (data) => data.items.length > 0 || (data.smallItemAmount && data.smallItemAmount > 0),
+  { message: 'At least one item or small item is required' }
+);
 
 // Schema for updating a sale (only editable fields)
 export const updateSaleSchema = z.object({

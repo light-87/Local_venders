@@ -13,9 +13,11 @@ import { Trash2 } from 'lucide-react';
 interface InventoryFormProps {
   item?: InventoryItem;
   categories: InventoryCategory[];
+  onSuccess?: () => void; // Callback when item is successfully created/updated
+  isModal?: boolean; // When used in a modal, don't navigate away
 }
 
-export function InventoryForm({ item, categories }: InventoryFormProps) {
+export function InventoryForm({ item, categories, onSuccess, isModal }: InventoryFormProps) {
   const router = useRouter();
   const { success, error } = useToast();
   const [loading, setLoading] = useState(false);
@@ -61,8 +63,12 @@ export function InventoryForm({ item, categories }: InventoryFormProps) {
 
       if (res.ok) {
         success(item ? 'Item updated' : 'Item created');
-        router.push('/inventory');
-        router.refresh();
+        if (isModal && onSuccess) {
+          onSuccess();
+        } else {
+          router.push('/inventory');
+          router.refresh();
+        }
       } else {
         const json = await res.json();
         error(json.error || 'Failed to save item');
@@ -207,7 +213,7 @@ export function InventoryForm({ item, categories }: InventoryFormProps) {
       />
 
       <div className="flex gap-3 pt-4">
-        {item && (
+        {item && !isModal && (
           <Button
             type="button"
             variant="danger"

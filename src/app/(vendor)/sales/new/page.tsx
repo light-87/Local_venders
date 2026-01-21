@@ -26,8 +26,11 @@ import {
   Shield,
   Wrench,
   Calendar,
+  Package,
+  StickyNote,
 } from 'lucide-react';
-import type { InventoryItem, Account, Customer, CartItem } from '@/types';
+import type { InventoryItem, Account, Customer, CartItem, InventoryCategory } from '@/types';
+import { InventoryForm } from '@/app/(vendor)/inventory/inventory-form';
 
 export default function NewSalePage() {
   const router = useRouter();
@@ -44,6 +47,8 @@ export default function NewSalePage() {
   const [search, setSearch] = useState('');
   const [customerSearch, setCustomerSearch] = useState('');
   const [showCustomerModal, setShowCustomerModal] = useState(false);
+  const [showAddItemModal, setShowAddItemModal] = useState(false);
+  const [categories, setCategories] = useState<InventoryCategory[]>([]);
 
   // Cart states
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -56,18 +61,25 @@ export default function NewSalePage() {
   const [discountDescription, setDiscountDescription] = useState('');
   const [saleDate, setSaleDate] = useState(getISTDateString());
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+  const [notes, setNotes] = useState('');
+
+  // Small items state
+  const [smallItemDescription, setSmallItemDescription] = useState('');
+  const [smallItemAmount, setSmallItemAmount] = useState<number | ''>('');
 
   // Load initial data
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [invRes, accRes] = await Promise.all([
+        const [invRes, accRes, catRes] = await Promise.all([
           fetch('/api/inventory'),
           fetch('/api/accounts'),
+          fetch('/api/inventory/categories'),
         ]);
 
         const invData = await invRes.json();
         const accData = await accRes.json();
+        const catData = await catRes.json();
 
         if (invData.success) setInventory(invData.items);
         if (accData.success) {
@@ -76,6 +88,7 @@ export default function NewSalePage() {
           const defaultAcc = accData.accounts.find((a: Account) => a.is_default);
           if (defaultAcc) setSelectedAccountId(defaultAcc.id);
         }
+        if (catData.success) setCategories(catData.categories);
       } catch {
         error('Failed to load data');
       } finally {
@@ -85,6 +98,22 @@ export default function NewSalePage() {
 
     fetchData();
   }, [error]);
+
+  // Refresh inventory after adding new item
+  const refreshInventory = async () => {
+    try {
+      const [invRes, catRes] = await Promise.all([
+        fetch('/api/inventory'),
+        fetch('/api/inventory/categories'),
+      ]);
+      const invData = await invRes.json();
+      const catData = await catRes.json();
+      if (invData.success) setInventory(invData.items);
+      if (catData.success) setCategories(catData.categories);
+    } catch {
+      // Silently fail, the data will be stale but still usable
+    }
+  };
 
   // Search customers
   useEffect(() => {
@@ -188,15 +217,21 @@ export default function NewSalePage() {
     );
   };
 
-  // Update maintenance interval for a cart item
-  const updateMaintenanceInterval = (itemId: string, months: number) => {
+  // Update maintenance for a cart item
+  const updateMaintenance = (itemId: string, value: number, unit: 'months' | 'years') => {
     setCart((prev) =>
       prev.map((item) =>
         item.inventoryItemId === itemId
-          ? { ...item, maintenanceIntervalMonths: months }
+          ? { ...item, maintenanceValue: value, maintenanceUnit: unit }
           : item
       )
     );
+  };
+
+  // Helper to convert maintenance to months
+  const getMaintenanceMonths = (item: CartItem): number => {
+    if (!item.maintenanceValue) return 0;
+    return item.maintenanceUnit === 'years' ? item.maintenanceValue * 12 : item.maintenanceValue;
   };
 
   // Helper to convert warranty to months
@@ -214,6 +249,51 @@ export default function NewSalePage() {
     setNewCustomerPhone('');
   };
 
+  // Add small item to cart
+  const addSmallItem = () => {
+    if (!smallItemAmount || smallItemAmount <= 0) return;
+
+    // Check if small item already exists in cart and update it
+    const existingSmallItem = cart.find((item) => item.isSmallItem);
+    if (existingSmallItem) {
+      // Replace the existing small item
+      setCart((prev) =>
+        prev.map((item) =>
+          item.isSmallItem
+            ? {
+                ...item,
+                name: smallItemDescription.trim() || 'Small Items',
+                unitPrice: smallItemAmount,
+              }
+            : item
+        )
+      );
+    } else {
+      // Add new small item
+      setCart((prev) => [
+        ...prev,
+        {
+          inventoryItemId: null,
+          name: smallItemDescription.trim() || 'Small Items',
+          quantity: 1,
+          unitPrice: smallItemAmount,
+          unit: 'lot',
+          availableStock: 999,
+          isSmallItem: true,
+        },
+      ]);
+    }
+
+    // Clear the inputs
+    setSmallItemDescription('');
+    setSmallItemAmount('');
+  };
+
+  // Remove small item from cart
+  const removeSmallItem = () => {
+    setCart((prev) => prev.filter((item) => !item.isSmallItem));
+  };
+
   // Create sale
   const handleSubmit = async () => {
     if (cart.length === 0) {
@@ -228,6 +308,9 @@ export default function NewSalePage() {
 
     setSubmitting(true);
     try {
+      // Get small item from cart if exists
+      const smallItem = cart.find((item) => item.isSmallItem);
+
       const res = await fetch('/api/sales', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -236,16 +319,20 @@ export default function NewSalePage() {
           customerName: !selectedCustomer && newCustomerName ? newCustomerName : undefined,
           customerPhone: !selectedCustomer && newCustomerPhone ? newCustomerPhone : undefined,
           accountId: selectedAccountId,
-          items: cart.map((item) => ({
+          items: cart.filter(item => !item.isSmallItem).map((item) => ({
             inventoryItemId: item.inventoryItemId,
             quantity: item.quantity,
             unitPrice: item.unitPrice,
             warrantyMonths: getWarrantyMonths(item),
-            maintenanceIntervalMonths: item.maintenanceIntervalMonths || 0,
+            maintenanceIntervalMonths: getMaintenanceMonths(item),
           })),
+          // Small item data
+          smallItemName: smallItem?.name,
+          smallItemAmount: smallItem?.unitPrice,
           discountAmount: discountPercent > 0 ? 0 : discountAmount,
           discountPercent: discountPercent > 0 ? discountPercent : 0,
           discountDescription: discountDescription || undefined,
+          notes: notes.trim() || undefined,
           saleDate,
         }),
       });
@@ -353,7 +440,16 @@ export default function NewSalePage() {
 
         {/* Item Search */}
         <section>
-          <h2 className="text-sm font-medium text-gray-500 mb-2">Add Items</h2>
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-sm font-medium text-gray-500">Add Items</h2>
+            <button
+              onClick={() => setShowAddItemModal(true)}
+              className="flex items-center gap-1 text-sm text-brand-500 hover:text-brand-600"
+            >
+              <Plus className="w-4 h-4" />
+              New Item
+            </button>
+          </div>
           <Input
             type="search"
             placeholder="Search inventory..."
@@ -399,6 +495,62 @@ export default function NewSalePage() {
           </div>
         </section>
 
+        {/* Small Items Section */}
+        <section>
+          <h2 className="text-sm font-medium text-gray-500 mb-2">Small Items</h2>
+          <Card>
+            {/* Show existing small item if in cart */}
+            {cart.find((item) => item.isSmallItem) && (
+              <div className="flex items-center justify-between pb-3 mb-3 border-b border-gray-100">
+                <div>
+                  <p className="font-medium text-gray-900">
+                    {cart.find((item) => item.isSmallItem)?.name}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    {formatCurrency(cart.find((item) => item.isSmallItem)?.unitPrice || 0)}
+                  </p>
+                </div>
+                <button
+                  onClick={removeSmallItem}
+                  className="p-2 rounded-full text-red-500 hover:bg-red-50"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+            <p className="text-xs text-gray-500 mb-2">
+              {cart.find((item) => item.isSmallItem)
+                ? 'Update small items (will replace existing)'
+                : 'Add nuts, bolts, small parts, etc.'}
+            </p>
+            <div className="space-y-2">
+              <Input
+                placeholder="Description (optional)"
+                value={smallItemDescription}
+                onChange={(e) => setSmallItemDescription(e.target.value)}
+              />
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <Input
+                    type="number"
+                    placeholder="Amount"
+                    value={smallItemAmount}
+                    onChange={(e) => setSmallItemAmount(Number(e.target.value) || '')}
+                    startIcon="₹"
+                  />
+                </div>
+                <Button
+                  onClick={addSmallItem}
+                  disabled={!smallItemAmount || smallItemAmount <= 0}
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add
+                </Button>
+              </div>
+            </div>
+          </Card>
+        </section>
+
         {/* Cart */}
         {cart.length > 0 && (
           <section>
@@ -407,13 +559,14 @@ export default function NewSalePage() {
             </h2>
             <Card>
               <div className="space-y-3">
-                {cart.map((item) => {
-                  const isExpanded = expandedItems.has(item.inventoryItemId);
-                  const hasWarrantyOrMaintenance = item.warrantyValue || item.maintenanceIntervalMonths;
+                {cart.filter(item => !item.isSmallItem).map((item) => {
+                  const itemId = item.inventoryItemId!;
+                  const isExpanded = expandedItems.has(itemId);
+                  const hasWarrantyOrMaintenance = item.warrantyValue || item.maintenanceValue;
 
                   return (
                     <div
-                      key={item.inventoryItemId}
+                      key={itemId}
                       className="py-2 border-b border-gray-100 last:border-0"
                     >
                       {/* Main item row */}
@@ -432,10 +585,10 @@ export default function NewSalePage() {
                                   {item.warrantyValue} {item.warrantyUnit}
                                 </span>
                               )}
-                              {item.maintenanceIntervalMonths && (
+                              {item.maintenanceValue && (
                                 <span className="inline-flex items-center gap-1 text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
                                   <Wrench className="w-3 h-3" />
-                                  Every {item.maintenanceIntervalMonths}mo
+                                  Every {item.maintenanceValue} {item.maintenanceUnit}
                                 </span>
                               )}
                             </div>
@@ -443,7 +596,7 @@ export default function NewSalePage() {
                         </div>
                         <div className="flex items-center gap-2">
                           <button
-                            onClick={() => updateQuantity(item.inventoryItemId, item.quantity - 1)}
+                            onClick={() => updateQuantity(itemId, item.quantity - 1)}
                             className="p-2 rounded-full bg-gray-100"
                           >
                             <Minus className="w-4 h-4" />
@@ -457,19 +610,19 @@ export default function NewSalePage() {
                             onChange={(e) => {
                               const val = parseInt(e.target.value, 10);
                               if (!isNaN(val) && val >= 1) {
-                                updateQuantity(item.inventoryItemId, Math.min(val, item.availableStock));
+                                updateQuantity(itemId, Math.min(val, item.availableStock));
                               }
                             }}
                             className="w-14 h-8 text-center font-medium bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                           />
                           <button
-                            onClick={() => updateQuantity(item.inventoryItemId, item.quantity + 1)}
+                            onClick={() => updateQuantity(itemId, item.quantity + 1)}
                             className="p-2 rounded-full bg-gray-100"
                           >
                             <Plus className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => removeFromCart(item.inventoryItemId)}
+                            onClick={() => removeFromCart(itemId)}
                             className="p-2 rounded-full text-red-500"
                           >
                             <X className="w-4 h-4" />
@@ -479,7 +632,7 @@ export default function NewSalePage() {
 
                       {/* Expand/Collapse button */}
                       <button
-                        onClick={() => toggleExpanded(item.inventoryItemId)}
+                        onClick={() => toggleExpanded(itemId)}
                         className="mt-2 w-full flex items-center justify-center gap-1 text-xs text-gray-500 hover:text-gray-700 py-1"
                       >
                         {isExpanded ? (
@@ -513,7 +666,7 @@ export default function NewSalePage() {
                                 value={item.warrantyValue || ''}
                                 onChange={(e) => {
                                   const val = parseInt(e.target.value, 10) || 0;
-                                  updateWarranty(item.inventoryItemId, val, item.warrantyUnit || 'months');
+                                  updateWarranty(itemId, val, item.warrantyUnit || 'months');
                                 }}
                                 className="flex-1 h-9 px-3 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
                               />
@@ -521,7 +674,7 @@ export default function NewSalePage() {
                                 value={item.warrantyUnit || 'months'}
                                 onChange={(e) => {
                                   updateWarranty(
-                                    item.inventoryItemId,
+                                    itemId,
                                     item.warrantyValue || 0,
                                     e.target.value as 'months' | 'years'
                                   );
@@ -538,28 +691,42 @@ export default function NewSalePage() {
                           <div>
                             <label className="flex items-center gap-1.5 text-xs font-medium text-gray-600 mb-1.5">
                               <Wrench className="w-3.5 h-3.5" />
-                              Service Reminder (Every X months)
+                              Service Reminder
                             </label>
-                            <select
-                              value={item.maintenanceIntervalMonths || ''}
-                              onChange={(e) => {
-                                updateMaintenanceInterval(item.inventoryItemId, parseInt(e.target.value, 10) || 0);
-                              }}
-                              className="w-full h-9 px-3 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
-                            >
-                              <option value="">No reminder</option>
-                              <option value="1">Every 1 month</option>
-                              <option value="2">Every 2 months</option>
-                              <option value="3">Every 3 months</option>
-                              <option value="6">Every 6 months</option>
-                              <option value="12">Every 12 months</option>
-                            </select>
-                            {item.maintenanceIntervalMonths && (selectedCustomer || newCustomerName) && (
+                            <div className="flex gap-2">
+                              <input
+                                type="number"
+                                inputMode="numeric"
+                                min={0}
+                                placeholder="0"
+                                value={item.maintenanceValue || ''}
+                                onChange={(e) => {
+                                  const val = parseInt(e.target.value, 10) || 0;
+                                  updateMaintenance(itemId, val, item.maintenanceUnit || 'months');
+                                }}
+                                className="flex-1 h-9 px-3 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+                              />
+                              <select
+                                value={item.maintenanceUnit || 'months'}
+                                onChange={(e) => {
+                                  updateMaintenance(
+                                    itemId,
+                                    item.maintenanceValue || 0,
+                                    e.target.value as 'months' | 'years'
+                                  );
+                                }}
+                                className="h-9 px-3 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+                              >
+                                <option value="months">Months</option>
+                                <option value="years">Years</option>
+                              </select>
+                            </div>
+                            {item.maintenanceValue && (selectedCustomer || newCustomerName) && (
                               <p className="mt-1.5 text-xs text-green-600">
                                 ✓ Reminder will be auto-scheduled
                               </p>
                             )}
-                            {item.maintenanceIntervalMonths && !selectedCustomer && !newCustomerName && (
+                            {item.maintenanceValue && !selectedCustomer && !newCustomerName && (
                               <p className="mt-1.5 text-xs text-amber-600">
                                 ⚠ Add customer to enable reminders
                               </p>
@@ -607,6 +774,21 @@ export default function NewSalePage() {
                     onChange={(e) => setDiscountDescription(e.target.value)}
                   />
                 )}
+              </div>
+
+              {/* Notes */}
+              <div className="mt-4 pt-4 border-t border-gray-100">
+                <label className="flex items-center gap-1.5 text-sm font-medium text-gray-600 mb-2">
+                  <StickyNote className="w-4 h-4" />
+                  Notes
+                </label>
+                <textarea
+                  placeholder="Add notes about this sale (optional)"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  rows={2}
+                  className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
+                />
               </div>
 
               {/* Sale Date */}
@@ -673,23 +855,29 @@ export default function NewSalePage() {
         </div>
       )}
 
-      {/* Customer Modal */}
+      {/* Customer Modal - Unified Search */}
       <Modal
         isOpen={showCustomerModal}
         onClose={() => setShowCustomerModal(false)}
-        title="Select Customer"
+        title="Add Customer"
       >
         <div className="space-y-4">
           <Input
             type="search"
-            placeholder="Search by name..."
+            placeholder="Search or enter customer name..."
             value={customerSearch}
-            onChange={(e) => setCustomerSearch(e.target.value)}
+            onChange={(e) => {
+              setCustomerSearch(e.target.value);
+              // Also set as new customer name for seamless creation
+              setNewCustomerName(e.target.value);
+            }}
             startIcon={<Search className="w-5 h-5" />}
           />
 
+          {/* Existing customers matching search */}
           {customers.length > 0 && (
             <div className="space-y-2">
+              <p className="text-xs text-gray-500">Existing customers</p>
               {customers.map((customer) => (
                 <button
                   key={customer.id}
@@ -705,34 +893,43 @@ export default function NewSalePage() {
             </div>
           )}
 
-          <div className="pt-4 border-t border-gray-100">
-            <p className="text-sm text-gray-500 mb-2">Or create a new customer</p>
-            <div className="space-y-3">
-              <Input
-                placeholder="Enter customer name"
-                value={newCustomerName}
-                onChange={(e) => setNewCustomerName(e.target.value)}
-              />
-              <Input
-                placeholder="Phone number (optional)"
-                value={newCustomerPhone}
-                onChange={(e) => setNewCustomerPhone(e.target.value)}
-                type="tel"
-              />
+          {/* Create new customer option */}
+          {customerSearch.trim().length >= 2 && (
+            <div className="pt-3 border-t border-gray-100">
+              <button
+                onClick={() => {
+                  setNewCustomerName(customerSearch.trim());
+                  setSelectedCustomer(null);
+                  setShowCustomerModal(false);
+                  setCustomerSearch('');
+                }}
+                className="w-full p-3 rounded-xl bg-green-50 text-left hover:bg-green-100 border border-green-200"
+              >
+                <div className="flex items-center gap-2">
+                  <Plus className="w-4 h-4 text-green-600" />
+                  <p className="font-medium text-green-700">
+                    Create new: "{customerSearch.trim()}"
+                  </p>
+                </div>
+              </button>
+              {/* Phone input for new customer */}
+              <div className="mt-3">
+                <Input
+                  placeholder="Phone number (optional)"
+                  value={newCustomerPhone}
+                  onChange={(e) => setNewCustomerPhone(e.target.value)}
+                  type="tel"
+                />
+              </div>
             </div>
-            <Button
-              fullWidth
-              className="mt-3"
-              disabled={!newCustomerName.trim()}
-              onClick={() => {
-                setSelectedCustomer(null);
-                setShowCustomerModal(false);
-                setCustomerSearch('');
-              }}
-            >
-              Use "{newCustomerName || 'New Customer'}"
-            </Button>
-          </div>
+          )}
+
+          {/* Empty state */}
+          {customerSearch.trim().length < 2 && customers.length === 0 && (
+            <p className="text-sm text-gray-400 text-center py-4">
+              Type at least 2 characters to search
+            </p>
+          )}
 
           <Button
             variant="ghost"
@@ -747,6 +944,22 @@ export default function NewSalePage() {
             Skip (Walk-in Customer)
           </Button>
         </div>
+      </Modal>
+
+      {/* Add Item Modal */}
+      <Modal
+        isOpen={showAddItemModal}
+        onClose={() => setShowAddItemModal(false)}
+        title="Add New Item"
+      >
+        <InventoryForm
+          categories={categories}
+          onSuccess={() => {
+            setShowAddItemModal(false);
+            refreshInventory();
+          }}
+          isModal
+        />
       </Modal>
     </div>
   );

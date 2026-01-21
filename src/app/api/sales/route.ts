@@ -139,6 +139,20 @@ export async function POST(request: Request) {
       });
     }
 
+    // Add small item if provided
+    if (data.smallItemAmount && data.smallItemAmount > 0) {
+      subtotal += data.smallItemAmount;
+      itemDetails.push({
+        inventory_item_id: null, // No inventory link for small items
+        item_name: data.smallItemName || 'Small Items',
+        quantity: 1,
+        unit_price: data.smallItemAmount,
+        subtotal: data.smallItemAmount,
+        warranty_months: 0,
+        maintenance_interval_months: null,
+      });
+    }
+
     // Calculate discount
     const discountAmount = data.discountPercent
       ? subtotal * (data.discountPercent / 100)
