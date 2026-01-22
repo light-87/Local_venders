@@ -5,7 +5,7 @@ import { Modal } from './modal';
 import { Button } from './button';
 import { Input } from './input';
 import { formatDateShort } from '@/lib/utils/format';
-import { Shield, Calendar, Wrench, Plus, X } from 'lucide-react';
+import { Shield, Calendar, Wrench, X } from 'lucide-react';
 
 interface ServiceReminder {
   label: string;
@@ -118,10 +118,6 @@ export function WarrantyEditModal({
 
   const effectiveEndDate = useCustomDate ? warrantyEndDate : calculatedEndDate;
   const warrantyStatus = effectiveEndDate ? getWarrantyStatus(effectiveEndDate) : null;
-
-  const addServiceReminder = () => {
-    setServiceReminders([...serviceReminders, { label: '', intervalMonths: '' }]);
-  };
 
   const removeServiceReminder = (index: number) => {
     setServiceReminders(serviceReminders.filter((_, i) => i !== index));
@@ -305,12 +301,9 @@ export function WarrantyEditModal({
             <Wrench className="w-4 h-4" />
             Service Reminders
           </label>
-          <p className="text-xs text-gray-400 mb-3">
-            Set up reminders for maintenance services (e.g., filter replacement)
-          </p>
 
-          {serviceReminders.length > 0 && (
-            <div className="space-y-2 mb-3">
+          {serviceReminders.length > 0 ? (
+            <div className="space-y-2">
               {serviceReminders.map((reminder, index) => (
                 <div key={index} className="flex items-center gap-2">
                   <input
@@ -340,17 +333,11 @@ export function WarrantyEditModal({
                 </div>
               ))}
             </div>
+          ) : (
+            <p className="text-sm text-gray-500 py-2">
+              No reminders set. Add reminders when creating a new sale.
+            </p>
           )}
-
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            icon={<Plus className="w-4 h-4" />}
-            onClick={addServiceReminder}
-          >
-            Add Reminder
-          </Button>
         </div>
 
         {/* Action Buttons */}
