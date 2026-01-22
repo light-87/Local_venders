@@ -33,6 +33,7 @@ export const changePinSchema = z
 export const customerSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   phone: phoneSchema,
+  address: z.string().optional(),
   notes: z.string().optional(),
 });
 
@@ -52,20 +53,29 @@ export const inventoryCategorySchema = z.object({
   name: z.string().min(1, 'Category name is required'),
 });
 
+// Service reminder schema (for multiple reminders per item)
+export const serviceReminderSchema = z.object({
+  label: z.string().min(1, 'Label is required'),
+  intervalMonths: z.number().min(1, 'Interval must be at least 1 month'),
+});
+
 // Sale schemas
 export const saleItemSchema = z.object({
   inventoryItemId: z.string().uuid(),
   quantity: z.number().positive('Quantity must be positive'),
   unitPrice: z.number().min(0, 'Price cannot be negative'),
   warrantyMonths: z.number().min(0).optional(),
-  maintenanceIntervalMonths: z.number().min(0).optional(),
+  maintenanceIntervalMonths: z.number().min(0).optional(), // Legacy field
+  serviceReminders: z.array(serviceReminderSchema).optional(), // New: multiple reminders
 });
 
 export const createSaleSchema = z.object({
   customerId: z.string().uuid().optional().nullable(),
   customerName: z.string().optional(),
   customerPhone: z.string().optional(),
+  customerAddress: z.string().optional(), // New: address field
   accountId: z.string().uuid(),
+  saleType: z.enum(['regular', 'service_record']).optional().default('regular'), // New: sale type
   items: z.array(saleItemSchema), // Can be empty if only small items
   smallItemName: z.string().optional(), // For miscellaneous/small items
   smallItemAmount: z.number().min(0).optional(), // Amount for small items

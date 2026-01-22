@@ -7,6 +7,26 @@ import { formatDateShort } from '@/lib/utils/format';
 import { Shield, Wrench, AlertCircle, Pencil } from 'lucide-react';
 import Link from 'next/link';
 
+interface ServiceReminder {
+  label: string;
+  interval_months: number;
+}
+
+// Helper to safely parse service_reminders (handles both JSONB and double-encoded string)
+function parseServiceReminders(data: unknown): ServiceReminder[] {
+  if (!data) return [];
+  if (Array.isArray(data)) return data as ServiceReminder[];
+  if (typeof data === 'string') {
+    try {
+      const parsed = JSON.parse(data);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
 interface SaleItem {
   id: string;
   item_name: string;
@@ -15,6 +35,8 @@ interface SaleItem {
   warranty_months: number | null;
   warranty_end_date: string | null;
   maintenance_interval_months: number | null;
+  service_reminders?: ServiceReminder[];
+  installation_date?: string | null;
   created_at: string;
   sale: {
     id: string;
@@ -79,6 +101,8 @@ export function WarrantyItemsSection({ items }: WarrantyItemsSectionProps) {
     warrantyMonths?: number;
     warrantyEndDate?: string | null;
     maintenanceIntervalMonths?: number | null;
+    installationDate?: string | null;
+    serviceReminders?: Array<{ label: string; interval_months: number }>;
   }) => {
     try {
       const res = await fetch(`/api/sale-items/${id}`, {
@@ -93,7 +117,7 @@ export function WarrantyItemsSection({ items }: WarrantyItemsSectionProps) {
         throw new Error(json.error || 'Failed to update warranty');
       }
 
-      success('Warranty updated');
+      success('Item updated successfully');
       router.refresh();
     } catch (err) {
       error(err instanceof Error ? err.message : 'Something went wrong');
@@ -126,7 +150,7 @@ export function WarrantyItemsSection({ items }: WarrantyItemsSectionProps) {
                       <Pencil className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
                     </div>
                     <p className="text-sm text-gray-500">
-                      Purchased {formatDateShort(item.sale.sale_date || item.sale.created_at)}
+                      {item.installation_date ? 'Installed' : 'Purchased'} {formatDateShort(item.installation_date || item.sale.sale_date || item.sale.created_at)}
                     </p>
                     <div className="flex flex-wrap gap-2 mt-2">
                       {/* Warranty Badge */}
@@ -150,12 +174,22 @@ export function WarrantyItemsSection({ items }: WarrantyItemsSectionProps) {
                           Custom expiry
                         </span>
                       )}
-                      {/* Maintenance Badge */}
-                      {item.maintenance_interval_months && item.maintenance_interval_months > 0 && (
-                        <span className="inline-flex items-center gap-1 text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">
-                          <Wrench className="w-3 h-3" />
-                          Every {item.maintenance_interval_months}mo
-                        </span>
+                      {/* Service Reminders Badges */}
+                      {parseServiceReminders(item.service_reminders).length > 0 ? (
+                        parseServiceReminders(item.service_reminders).map((reminder, idx) => (
+                          <span key={idx} className="inline-flex items-center gap-1 text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">
+                            <Wrench className="w-3 h-3" />
+                            {reminder.label}: {reminder.interval_months}mo
+                          </span>
+                        ))
+                      ) : (
+                        /* Fallback to legacy maintenance interval */
+                        item.maintenance_interval_months && item.maintenance_interval_months > 0 && (
+                          <span className="inline-flex items-center gap-1 text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">
+                            <Wrench className="w-3 h-3" />
+                            Every {item.maintenance_interval_months}mo
+                          </span>
+                        )
                       )}
                     </div>
                   </div>
@@ -185,6 +219,8 @@ export function WarrantyItemsSection({ items }: WarrantyItemsSectionProps) {
             warranty_months: selectedItem.warranty_months,
             warranty_end_date: selectedItem.warranty_end_date,
             maintenance_interval_months: selectedItem.maintenance_interval_months,
+            service_reminders: parseServiceReminders(selectedItem.service_reminders),
+            installation_date: selectedItem.installation_date || null,
             purchaseDate: selectedItem.sale.sale_date || selectedItem.sale.created_at,
           }}
           onUpdate={handleUpdateWarranty}

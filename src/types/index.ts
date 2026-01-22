@@ -35,6 +35,13 @@ export interface DashboardData {
   }>;
 }
 
+// Service reminder for cart items (multiple reminders per item)
+export interface CartServiceReminder {
+  label: string;
+  intervalValue: number;
+  intervalUnit: 'months' | 'years';
+}
+
 // Cart types for sales
 export interface CartItem {
   inventoryItemId: string | null; // null for small/misc items
@@ -45,8 +52,11 @@ export interface CartItem {
   availableStock: number;
   warrantyValue?: number;
   warrantyUnit?: 'months' | 'years';
+  // Legacy single maintenance field (kept for backward compatibility)
   maintenanceValue?: number;
   maintenanceUnit?: 'months' | 'years';
+  // New: multiple service reminders per item
+  serviceReminders?: CartServiceReminder[];
   isSmallItem?: boolean; // For miscellaneous/small items
 }
 
