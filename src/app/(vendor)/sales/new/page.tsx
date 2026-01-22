@@ -286,12 +286,27 @@ export default function NewSalePage() {
   // Helper to convert service reminders to API format (array of { label, intervalMonths })
   const getServiceRemindersForAPI = (item: CartItem) => {
     if (!item.serviceReminders || item.serviceReminders.length === 0) return [];
-    return item.serviceReminders
-      .filter((r) => r.label && r.intervalValue > 0)
-      .map((r) => ({
-        label: r.label,
+
+    // Only filter out reminders without an interval value
+    const validReminders = item.serviceReminders.filter((r) => r.intervalValue > 0);
+
+    // Count reminders without labels to generate default names
+    let unlabeledCount = 0;
+
+    return validReminders.map((r) => {
+      let label = r.label?.trim();
+      if (!label) {
+        unlabeledCount++;
+        // Use item name, append "Service X" if multiple unlabeled reminders
+        label = validReminders.filter(rem => !rem.label?.trim()).length > 1
+          ? `${item.name} - Service ${unlabeledCount}`
+          : item.name;
+      }
+      return {
+        label,
         intervalMonths: r.intervalUnit === 'years' ? r.intervalValue * 12 : r.intervalValue,
-      }));
+      };
+    });
   };
 
   // Helper to convert maintenance to months
