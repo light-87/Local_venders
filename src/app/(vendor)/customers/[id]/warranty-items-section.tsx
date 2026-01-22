@@ -12,6 +12,21 @@ interface ServiceReminder {
   interval_months: number;
 }
 
+// Helper to safely parse service_reminders (handles both JSONB and double-encoded string)
+function parseServiceReminders(data: unknown): ServiceReminder[] {
+  if (!data) return [];
+  if (Array.isArray(data)) return data as ServiceReminder[];
+  if (typeof data === 'string') {
+    try {
+      const parsed = JSON.parse(data);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
 interface SaleItem {
   id: string;
   item_name: string;
@@ -160,8 +175,8 @@ export function WarrantyItemsSection({ items }: WarrantyItemsSectionProps) {
                         </span>
                       )}
                       {/* Service Reminders Badges */}
-                      {item.service_reminders && item.service_reminders.length > 0 ? (
-                        item.service_reminders.map((reminder, idx) => (
+                      {parseServiceReminders(item.service_reminders).length > 0 ? (
+                        parseServiceReminders(item.service_reminders).map((reminder, idx) => (
                           <span key={idx} className="inline-flex items-center gap-1 text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">
                             <Wrench className="w-3 h-3" />
                             {reminder.label}: {reminder.interval_months}mo
@@ -204,7 +219,7 @@ export function WarrantyItemsSection({ items }: WarrantyItemsSectionProps) {
             warranty_months: selectedItem.warranty_months,
             warranty_end_date: selectedItem.warranty_end_date,
             maintenance_interval_months: selectedItem.maintenance_interval_months,
-            service_reminders: selectedItem.service_reminders || [],
+            service_reminders: parseServiceReminders(selectedItem.service_reminders),
             installation_date: selectedItem.installation_date || null,
             purchaseDate: selectedItem.sale.sale_date || selectedItem.sale.created_at,
           }}

@@ -248,8 +248,20 @@ export async function POST(request: Request) {
       }> = [];
 
       for (const saleItem of insertedSaleItems) {
-        // Handle multiple service reminders per item
-        const serviceReminders = saleItem.service_reminders as Array<{ label: string; interval_months: number }> || [];
+        // Handle multiple service reminders per item (handle both JSONB and double-encoded string)
+        let serviceReminders: Array<{ label: string; interval_months: number }> = [];
+        if (saleItem.service_reminders) {
+          if (Array.isArray(saleItem.service_reminders)) {
+            serviceReminders = saleItem.service_reminders;
+          } else if (typeof saleItem.service_reminders === 'string') {
+            try {
+              const parsed = JSON.parse(saleItem.service_reminders);
+              serviceReminders = Array.isArray(parsed) ? parsed : [];
+            } catch {
+              serviceReminders = [];
+            }
+          }
+        }
 
         for (const reminder of serviceReminders) {
           if (reminder.label && reminder.interval_months > 0) {
