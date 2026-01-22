@@ -57,6 +57,7 @@ export default function RemindersPage() {
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabType>('today');
+  const [searchQuery, setSearchQuery] = useState('');
   const [businessName, setBusinessName] = useState('');
   const [messageTemplate, setMessageTemplate] = useState<string | null>(null);
   const [deleteModal, setDeleteModal] = useState<{ open: boolean; reminder: Reminder | null }>({
@@ -347,7 +348,19 @@ export default function RemindersPage() {
     }
   };
 
-  const currentReminders = categorizedReminders[activeTab];
+  // Filter reminders by search query
+  const filterBySearch = (reminders: Reminder[]) => {
+    if (!searchQuery.trim()) return reminders;
+    const query = searchQuery.toLowerCase();
+    return reminders.filter(
+      (r) =>
+        r.customer.name.toLowerCase().includes(query) ||
+        (r.item_name && r.item_name.toLowerCase().includes(query)) ||
+        (r.customer.phone && r.customer.phone.includes(query))
+    );
+  };
+
+  const currentReminders = filterBySearch(categorizedReminders[activeTab]);
 
   if (loading) {
     return (
@@ -408,6 +421,14 @@ export default function RemindersPage() {
             </button>
           ))}
         </div>
+
+        {/* Search Bar */}
+        <Input
+          placeholder="Search by customer, item, or phone..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          startIcon={<Search className="w-4 h-4" />}
+        />
 
         {/* Reminder Cards */}
         {currentReminders.length === 0 ? (
