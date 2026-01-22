@@ -159,8 +159,11 @@ export function CustomerRemindersSection({ customerId }: CustomerRemindersSectio
       <section>
         <h3 className="text-sm font-medium text-gray-500 mb-3">Service Reminders</h3>
         <Card>
-          <div className="text-center py-4 text-gray-500">
-            No reminders scheduled for this customer
+          <div className="text-center py-4">
+            <p className="text-gray-500">No reminders scheduled</p>
+            <p className="text-xs text-gray-400 mt-1">
+              Add reminders when creating a sale or editing an item above
+            </p>
           </div>
         </Card>
       </section>
@@ -259,6 +262,11 @@ export function CustomerRemindersSection({ customerId }: CustomerRemindersSectio
           )}
         </>
       )}
+
+      {/* Helper note */}
+      <p className="text-xs text-gray-400 mt-3 text-center">
+        Tap an item above to add or edit reminders
+      </p>
     </section>
   );
 }
