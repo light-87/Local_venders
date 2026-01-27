@@ -18,6 +18,8 @@ import { MaintenanceChart } from './maintenance-chart';
 interface AnalyticsData {
   summary: {
     totalIncome: number;
+    totalProductIncome: number;
+    totalMaintenanceIncome: number;
     totalExpenses: number;
     netProfit: number;
     totalMaintenanceCount: number;
@@ -262,6 +264,74 @@ export function AnalyticsContent() {
           </p>
         </div>
       </section>
+
+      {/* Revenue Breakdown */}
+      {data.summary.totalMaintenanceIncome > 0 && (
+        <section>
+          <h2 className="text-sm font-semibold text-gray-900 mb-3 uppercase tracking-wide">
+            Revenue Breakdown
+          </h2>
+          <div className="bg-white rounded-xl border border-gray-200 p-4">
+            <div className="space-y-3">
+              {/* Product Sales */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-2">
+                    <Package className="w-4 h-4 text-gray-600" />
+                    <span className="text-sm font-medium text-gray-700">Product Sales</span>
+                  </div>
+                  <span className="font-semibold text-gray-900 tabular-nums">
+                    {formatCurrency(data.summary.totalProductIncome)}
+                  </span>
+                </div>
+                <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gray-700 rounded-full"
+                    style={{
+                      width: `${data.summary.totalIncome > 0
+                        ? (data.summary.totalProductIncome / data.summary.totalIncome) * 100
+                        : 0}%`
+                    }}
+                  />
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  {data.summary.totalIncome > 0
+                    ? Math.round((data.summary.totalProductIncome / data.summary.totalIncome) * 100)
+                    : 0}% of total revenue
+                </p>
+              </div>
+
+              {/* Maintenance/Service Income */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-2">
+                    <Wrench className="w-4 h-4 text-blue-600" />
+                    <span className="text-sm font-medium text-gray-700">Service / Maintenance</span>
+                  </div>
+                  <span className="font-semibold text-blue-600 tabular-nums">
+                    {formatCurrency(data.summary.totalMaintenanceIncome)}
+                  </span>
+                </div>
+                <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-blue-500 rounded-full"
+                    style={{
+                      width: `${data.summary.totalIncome > 0
+                        ? (data.summary.totalMaintenanceIncome / data.summary.totalIncome) * 100
+                        : 0}%`
+                    }}
+                  />
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  {data.summary.totalIncome > 0
+                    ? Math.round((data.summary.totalMaintenanceIncome / data.summary.totalIncome) * 100)
+                    : 0}% of total revenue
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Monthly Breakdown */}
       <section>

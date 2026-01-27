@@ -42,6 +42,13 @@ export interface CartServiceReminder {
   intervalUnit: 'months' | 'years';
 }
 
+// Maintenance/Service item for cart
+export interface MaintenanceCartItem {
+  id: string; // Unique ID for the cart item
+  name: string;
+  amount: number;
+}
+
 // Cart types for sales
 export interface CartItem {
   inventoryItemId: string | null; // null for small/misc items

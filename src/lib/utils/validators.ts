@@ -69,6 +69,12 @@ export const saleItemSchema = z.object({
   serviceReminders: z.array(serviceReminderSchema).optional(), // New: multiple reminders
 });
 
+// Maintenance/service item schema
+export const maintenanceItemSchema = z.object({
+  name: z.string().min(1, 'Item name is required'),
+  amount: z.number().positive('Amount must be positive'),
+});
+
 export const createSaleSchema = z.object({
   customerId: z.string().uuid().optional().nullable(),
   customerName: z.string().optional(),
@@ -76,7 +82,8 @@ export const createSaleSchema = z.object({
   customerAddress: z.string().optional(), // New: address field
   accountId: z.string().uuid(),
   saleType: z.enum(['regular', 'service_record']).optional().default('regular'), // New: sale type
-  items: z.array(saleItemSchema), // Can be empty if only small items
+  items: z.array(saleItemSchema), // Can be empty if only small items or maintenance only
+  maintenanceItems: z.array(maintenanceItemSchema).optional(), // Maintenance/service items
   smallItemName: z.string().optional(), // For miscellaneous/small items
   smallItemAmount: z.number().min(0).optional(), // Amount for small items
   discountAmount: z.number().min(0).optional(),
@@ -86,8 +93,8 @@ export const createSaleSchema = z.object({
   notes: z.string().optional(),
   saleDate: z.string().optional(),
 }).refine(
-  (data) => data.items.length > 0 || (data.smallItemAmount && data.smallItemAmount > 0),
-  { message: 'At least one item or small item is required' }
+  (data) => data.items.length > 0 || (data.smallItemAmount && data.smallItemAmount > 0) || (data.maintenanceItems && data.maintenanceItems.length > 0),
+  { message: 'At least one item, small item, or maintenance item is required' }
 );
 
 // Schema for updating a sale (only editable fields)
