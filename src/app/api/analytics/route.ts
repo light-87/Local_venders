@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 import { validateSession } from '@/lib/auth';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { startOfMonth, subMonths, subYears, format } from 'date-fns';
+import { startOfMonth, subMonths, startOfDay, endOfDay, addDays, format } from 'date-fns';
 
 export const dynamic = 'force-dynamic';
 
-type Period = '12months' | 'year' | 'all';
+type Period = '7days' | '30days' | '12months' | 'year' | 'all';
 
 export async function GET(request: Request) {
   try {
@@ -15,27 +15,48 @@ export async function GET(request: Request) {
     }
 
     const { searchParams } = new URL(request.url);
-    const period = (searchParams.get('period') || '12months') as Period;
+    const period = (searchParams.get('period') || '30days') as Period;
 
     const supabase = createAdminClient();
     const now = new Date();
+    const today = startOfDay(now);
 
     // Determine date range based on period
     let startDate: Date | null = null;
+    let previousStartDate: Date | null = null;
+    let previousEndDate: Date | null = null;
     let monthsToShow = 12;
 
     switch (period) {
+      case '7days':
+        startDate = addDays(now, -7);
+        previousStartDate = addDays(now, -14);
+        previousEndDate = addDays(now, -7);
+        monthsToShow = 1;
+        break;
+      case '30days':
+        startDate = addDays(now, -30);
+        previousStartDate = addDays(now, -60);
+        previousEndDate = addDays(now, -30);
+        monthsToShow = 2;
+        break;
       case '12months':
         startDate = subMonths(now, 12);
+        previousStartDate = subMonths(now, 24);
+        previousEndDate = subMonths(now, 12);
         monthsToShow = 12;
         break;
       case 'year':
         startDate = new Date(now.getFullYear(), 0, 1); // Jan 1st of current year
+        previousStartDate = new Date(now.getFullYear() - 1, 0, 1);
+        previousEndDate = new Date(now.getFullYear() - 1, 11, 31);
         monthsToShow = now.getMonth() + 1;
         break;
       case 'all':
-        startDate = null; // No filter
-        monthsToShow = 12; // Show last 12 months for chart
+        startDate = null;
+        previousStartDate = null;
+        previousEndDate = null;
+        monthsToShow = 12;
         break;
     }
 
@@ -69,6 +90,109 @@ export async function GET(request: Request) {
 
     const totalExpenses = expenses?.reduce((sum, e) => sum + Number(e.amount), 0) ?? 0;
     const netProfit = totalIncome - totalExpenses;
+    const profitMargin = totalIncome > 0 ? (netProfit / totalIncome) * 100 : 0;
+
+    // Calculate comparison data (previous period)
+    let comparison = {
+      incomeChange: 0,
+      expenseChange: 0,
+      profitChange: 0,
+      hasPreviousData: false,
+    };
+
+    if (previousStartDate && previousEndDate) {
+      // Previous period sales
+      const { data: prevSales } = await supabase
+        .from('sales')
+        .select('total_amount')
+        .eq('vendor_id', session.id)
+        .gte('created_at', previousStartDate.toISOString())
+        .lt('created_at', previousEndDate.toISOString());
+
+      const prevIncome = prevSales?.reduce((sum, s) => sum + Number(s.total_amount), 0) ?? 0;
+
+      // Previous period expenses
+      const { data: prevExpenses } = await supabase
+        .from('expenses')
+        .select('amount')
+        .eq('vendor_id', session.id)
+        .gte('expense_date', format(previousStartDate, 'yyyy-MM-dd'))
+        .lt('expense_date', format(previousEndDate, 'yyyy-MM-dd'));
+
+      const prevExpenseTotal = prevExpenses?.reduce((sum, e) => sum + Number(e.amount), 0) ?? 0;
+      const prevProfit = prevIncome - prevExpenseTotal;
+
+      comparison = {
+        incomeChange: prevIncome > 0 ? ((totalIncome - prevIncome) / prevIncome) * 100 : (totalIncome > 0 ? 100 : 0),
+        expenseChange: prevExpenseTotal > 0 ? ((totalExpenses - prevExpenseTotal) / prevExpenseTotal) * 100 : (totalExpenses > 0 ? 100 : 0),
+        profitChange: prevProfit !== 0 ? ((netProfit - prevProfit) / Math.abs(prevProfit)) * 100 : (netProfit > 0 ? 100 : 0),
+        hasPreviousData: prevIncome > 0 || prevExpenseTotal > 0,
+      };
+    }
+
+    // Quick Actions data
+    // 1. Overdue reminders
+    const { count: overdueReminders } = await supabase
+      .from('scheduled_messages')
+      .select('*', { count: 'exact', head: true })
+      .eq('vendor_id', session.id)
+      .eq('status', 'pending')
+      .lt('scheduled_date', today.toISOString());
+
+    // 2. Today's reminders
+    const { count: todayReminders } = await supabase
+      .from('scheduled_messages')
+      .select('*', { count: 'exact', head: true })
+      .eq('vendor_id', session.id)
+      .eq('status', 'pending')
+      .gte('scheduled_date', today.toISOString())
+      .lt('scheduled_date', endOfDay(today).toISOString());
+
+    // 3. This week's reminders (next 7 days)
+    const weekEnd = addDays(today, 7);
+    const { count: thisWeekReminders } = await supabase
+      .from('scheduled_messages')
+      .select('*', { count: 'exact', head: true })
+      .eq('vendor_id', session.id)
+      .eq('status', 'pending')
+      .gte('scheduled_date', today.toISOString())
+      .lt('scheduled_date', weekEnd.toISOString());
+
+    // 4. Pending payments
+    const { data: pendingSales } = await supabase
+      .from('sales')
+      .select('id, total_amount, created_at')
+      .eq('vendor_id', session.id)
+      .eq('payment_status', 'pending');
+
+    const pendingPaymentsCount = pendingSales?.length ?? 0;
+    const pendingPaymentsTotal = pendingSales?.reduce((sum, s) => sum + Number(s.total_amount), 0) ?? 0;
+
+    // 5. Low stock items
+    const { data: lowStockItems } = await supabase
+      .from('inventory_items')
+      .select('id, name, current_stock, min_stock_alert, unit')
+      .eq('vendor_id', session.id)
+      .eq('is_active', true);
+
+    const lowStockCount = (lowStockItems ?? []).filter(
+      (item) => item.current_stock <= item.min_stock_alert
+    ).length;
+
+    const criticalStockCount = (lowStockItems ?? []).filter(
+      (item) => item.current_stock === 0
+    ).length;
+
+    // Quick actions summary
+    const quickActions = {
+      overdueReminders: overdueReminders ?? 0,
+      todayReminders: todayReminders ?? 0,
+      thisWeekReminders: thisWeekReminders ?? 0,
+      pendingPaymentsCount,
+      pendingPaymentsTotal,
+      lowStockCount,
+      criticalStockCount,
+    };
 
     // Monthly breakdown for table
     const monthlyBreakdown = [];
@@ -244,8 +368,12 @@ export async function GET(request: Request) {
           totalMaintenanceIncome,
           totalExpenses,
           netProfit,
+          profitMargin: Math.round(profitMargin * 10) / 10,
           totalMaintenanceCount: totalMaintenanceCount ?? 0,
+          salesCount: sales?.length ?? 0,
         },
+        comparison,
+        quickActions,
         monthlyBreakdown,
         maintenanceChart: maintenanceChartData,
         restockRecommendations,
