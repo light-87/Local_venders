@@ -32,7 +32,7 @@ import {
   Info,
   Bell,
 } from 'lucide-react';
-import type { InventoryItem, Account, Customer, CartItem, InventoryCategory, CartServiceReminder } from '@/types';
+import type { InventoryItem, Account, Customer, CartItem, InventoryCategory, CartServiceReminder, MaintenanceCartItem } from '@/types';
 import { InventoryForm } from '@/app/(vendor)/inventory/inventory-form';
 
 export default function NewSalePage() {
@@ -73,6 +73,11 @@ export default function NewSalePage() {
   // Small items state
   const [smallItemDescription, setSmallItemDescription] = useState('');
   const [smallItemAmount, setSmallItemAmount] = useState<number | ''>('');
+
+  // Maintenance items state
+  const [maintenanceItems, setMaintenanceItems] = useState<MaintenanceCartItem[]>([]);
+  const [maintenanceItemName, setMaintenanceItemName] = useState('');
+  const [maintenanceItemAmount, setMaintenanceItemAmount] = useState<number | ''>('');
 
   // Load initial data
   useEffect(() => {
@@ -152,7 +157,9 @@ export default function NewSalePage() {
   );
 
   // Cart calculations
-  const subtotal = cart.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
+  const productSubtotal = cart.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
+  const maintenanceTotal = maintenanceItems.reduce((sum, item) => sum + item.amount, 0);
+  const subtotal = productSubtotal + maintenanceTotal;
   const discountValue = discountPercent > 0 ? subtotal * (discountPercent / 100) : discountAmount;
   const total = subtotal - discountValue;
 
@@ -376,10 +383,40 @@ export default function NewSalePage() {
     setCart((prev) => prev.filter((item) => !item.isSmallItem));
   };
 
+  // Add maintenance item
+  const addMaintenanceItem = () => {
+    if (!maintenanceItemAmount || maintenanceItemAmount <= 0) return;
+    if (!maintenanceItemName.trim()) return;
+
+    setMaintenanceItems((prev) => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        name: maintenanceItemName.trim(),
+        amount: maintenanceItemAmount,
+      },
+    ]);
+
+    // Clear inputs
+    setMaintenanceItemName('');
+    setMaintenanceItemAmount('');
+  };
+
+  // Remove maintenance item
+  const removeMaintenanceItem = (id: string) => {
+    setMaintenanceItems((prev) => prev.filter((item) => item.id !== id));
+  };
+
   // Create sale
   const handleSubmit = async () => {
-    if (cart.length === 0) {
-      error('Add at least one item');
+    if (cart.length === 0 && maintenanceItems.length === 0) {
+      error('Add at least one item or maintenance service');
+      return;
+    }
+
+    // Require customer for maintenance-only sales
+    if (maintenanceItems.length > 0 && cart.length === 0 && !selectedCustomer && !newCustomerName) {
+      error('Customer is required for maintenance services');
       return;
     }
 
@@ -410,6 +447,11 @@ export default function NewSalePage() {
             warrantyMonths: getWarrantyMonths(item),
             maintenanceIntervalMonths: getMaintenanceMonths(item),
             serviceReminders: getServiceRemindersForAPI(item),
+          })),
+          // Maintenance items
+          maintenanceItems: maintenanceItems.map((item) => ({
+            name: item.name,
+            amount: item.amount,
           })),
           // Small item data
           smallItemName: smallItem?.name,
@@ -573,6 +615,80 @@ export default function NewSalePage() {
           )}
         </section>
 
+        {/* Maintenance / Service Section */}
+        {(selectedCustomer || newCustomerName) && (
+          <section>
+            <div className="flex items-center gap-2 mb-2">
+              <Wrench className="w-4 h-4 text-gray-500" />
+              <h2 className="text-sm font-medium text-gray-500">Maintenance / Service</h2>
+            </div>
+            <Card>
+              {/* Existing maintenance items */}
+              {maintenanceItems.length > 0 && (
+                <div className="space-y-2 pb-3 mb-3 border-b border-gray-100">
+                  {maintenanceItems.map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex items-center justify-between p-2 bg-blue-50 rounded-lg"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Wrench className="w-4 h-4 text-blue-600" />
+                        <span className="font-medium text-gray-900">{item.name}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-blue-600">
+                          {formatCurrency(item.amount)}
+                        </span>
+                        <button
+                          onClick={() => removeMaintenanceItem(item.id)}
+                          className="p-1 rounded-full text-red-500 hover:bg-red-50"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  <div className="flex justify-between text-sm pt-2">
+                    <span className="text-gray-500">Maintenance Total</span>
+                    <span className="font-bold text-blue-600">
+                      {formatCurrency(maintenanceTotal)}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              <p className="text-xs text-gray-500 mb-2">
+                Add service charges, repair work, cleaning, etc.
+              </p>
+              <div className="space-y-2">
+                <Input
+                  placeholder="Service name (e.g., RO Service, Filter Cleaning)"
+                  value={maintenanceItemName}
+                  onChange={(e) => setMaintenanceItemName(e.target.value)}
+                />
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <Input
+                      type="number"
+                      placeholder="Amount"
+                      value={maintenanceItemAmount}
+                      onChange={(e) => setMaintenanceItemAmount(Number(e.target.value) || '')}
+                      startIcon="₹"
+                    />
+                  </div>
+                  <Button
+                    onClick={addMaintenanceItem}
+                    disabled={!maintenanceItemAmount || maintenanceItemAmount <= 0 || !maintenanceItemName.trim()}
+                  >
+                    <Plus className="w-4 h-4 mr-1" />
+                    Add
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          </section>
+        )}
+
         {/* Item Search */}
         <section>
           <div className="flex items-center justify-between mb-2">
@@ -688,10 +804,10 @@ export default function NewSalePage() {
         </section>
 
         {/* Cart */}
-        {cart.length > 0 && (
+        {(cart.length > 0 || maintenanceItems.length > 0) && (
           <section>
             <h2 className="text-sm font-medium text-gray-500 mb-2">
-              Cart ({cart.length} items)
+              Cart ({cart.length + maintenanceItems.length} items)
             </h2>
             <Card>
               <div className="space-y-3">
@@ -975,6 +1091,21 @@ export default function NewSalePage() {
 
               {/* Totals */}
               <div className="mt-4 pt-4 border-t border-gray-100 space-y-2">
+                {productSubtotal > 0 && maintenanceTotal > 0 && (
+                  <>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">Products</span>
+                      <span className="tabular-nums">{formatCurrency(productSubtotal)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500 flex items-center gap-1">
+                        <Wrench className="w-3 h-3" />
+                        Maintenance
+                      </span>
+                      <span className="tabular-nums text-blue-600">{formatCurrency(maintenanceTotal)}</span>
+                    </div>
+                  </>
+                )}
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Subtotal</span>
                   <span className="tabular-nums">{formatCurrency(subtotal)}</span>
@@ -995,7 +1126,7 @@ export default function NewSalePage() {
         )}
 
         {/* Payment Account */}
-        {cart.length > 0 && (
+        {(cart.length > 0 || maintenanceItems.length > 0) && (
           <section>
             <h2 className="text-sm font-medium text-gray-500 mb-2">Payment Account</h2>
             <Select
@@ -1011,7 +1142,7 @@ export default function NewSalePage() {
       </div>
 
       {/* Fixed Bottom Button */}
-      {cart.length > 0 && (
+      {(cart.length > 0 || maintenanceItems.length > 0) && (
         <div className="fixed bottom-20 left-0 right-0 p-4 bg-white border-t border-gray-200 safe-area-bottom">
           <Button
             fullWidth

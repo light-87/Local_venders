@@ -77,6 +77,7 @@ export interface Sale {
   discount_description: string | null;
   tax_amount: number;
   total_amount: number;
+  maintenance_amount: number;
   payment_status: 'paid' | 'pending' | 'partial';
   sale_type: 'regular' | 'service_record';
   notes: string | null;

@@ -3,7 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { formatCurrency, formatDate } from '@/lib/utils/format';
 import { PageHeader } from '@/components/layout';
 import { Card } from '@/components/ui';
-import { User, Phone, ShoppingBag, MapPin } from 'lucide-react';
+import { User, Phone, ShoppingBag, MapPin, Wrench } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { CustomerActions } from './customer-actions';
@@ -49,10 +49,21 @@ async function getCustomer(vendorId: string, customerId: string) {
   // Get recent sales
   const { data: sales } = await supabase
     .from('sales')
-    .select('id, bill_number, bill_id, total_amount, sale_date, created_at')
+    .select('id, bill_number, bill_id, total_amount, maintenance_amount, sale_date, created_at')
     .eq('customer_id', customerId)
     .order('created_at', { ascending: false })
     .limit(10);
+
+  // Calculate total maintenance spent
+  const { data: allSales } = await supabase
+    .from('sales')
+    .select('maintenance_amount')
+    .eq('customer_id', customerId);
+
+  const totalMaintenanceSpent = (allSales ?? []).reduce(
+    (sum, s) => sum + Number(s.maintenance_amount || 0),
+    0
+  );
 
   // Get all items purchased by this customer with warranty info
   const { data: saleItems } = await supabase
@@ -81,7 +92,7 @@ async function getCustomer(vendorId: string, customerId: string) {
       sale: Array.isArray(item.sale) ? item.sale[0] : item.sale,
     })) as SaleItem[];
 
-  return { customer, sales: sales ?? [], purchasedItems };
+  return { customer, sales: sales ?? [], purchasedItems, totalMaintenanceSpent };
 }
 
 export default async function CustomerDetailPage({
@@ -99,7 +110,7 @@ export default async function CustomerDetailPage({
     notFound();
   }
 
-  const { customer, sales, purchasedItems } = data;
+  const { customer, sales, purchasedItems, totalMaintenanceSpent } = data;
 
   return (
     <div>
@@ -138,7 +149,7 @@ export default async function CustomerDetailPage({
             <CustomerActions customer={customer} />
           </div>
 
-          <div className="grid grid-cols-2 gap-4 mt-6">
+          <div className={`grid ${totalMaintenanceSpent > 0 ? 'grid-cols-3' : 'grid-cols-2'} gap-3 mt-6`}>
             <div className="text-center p-3 bg-gray-50 rounded-xl">
               <p className="text-2xl font-semibold text-gray-900">
                 {customer.total_purchases}
@@ -151,6 +162,17 @@ export default async function CustomerDetailPage({
               </p>
               <p className="text-sm text-gray-500">Total Spent</p>
             </div>
+            {totalMaintenanceSpent > 0 && (
+              <div className="text-center p-3 bg-blue-50 rounded-xl">
+                <p className="text-2xl font-semibold text-blue-600 tabular-nums">
+                  {formatCurrency(totalMaintenanceSpent)}
+                </p>
+                <p className="text-sm text-blue-600 flex items-center justify-center gap-1">
+                  <Wrench className="w-3 h-3" />
+                  Service
+                </p>
+              </div>
+            )}
           </div>
         </Card>
 

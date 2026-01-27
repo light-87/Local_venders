@@ -120,6 +120,7 @@ export async function POST(request: Request) {
       warranty_months: number;
       maintenance_interval_months: number | null;
       service_reminders: Array<{ label: string; interval_months: number }>;
+      is_maintenance?: boolean;
     }> = [];
 
     for (let i = 0; i < data.items.length; i++) {
@@ -155,6 +156,7 @@ export async function POST(request: Request) {
           label: r.label,
           interval_months: r.intervalMonths,
         })),
+        is_maintenance: false,
       });
     }
 
@@ -170,7 +172,28 @@ export async function POST(request: Request) {
         warranty_months: 0,
         maintenance_interval_months: null,
         service_reminders: [],
+        is_maintenance: false,
       });
+    }
+
+    // Calculate maintenance amount and add maintenance items
+    let maintenanceAmount = 0;
+    if (data.maintenanceItems && data.maintenanceItems.length > 0) {
+      for (const maintItem of data.maintenanceItems) {
+        maintenanceAmount += maintItem.amount;
+        subtotal += maintItem.amount;
+        itemDetails.push({
+          inventory_item_id: null, // No inventory link for maintenance items
+          item_name: maintItem.name,
+          quantity: 1,
+          unit_price: maintItem.amount,
+          subtotal: maintItem.amount,
+          warranty_months: 0,
+          maintenance_interval_months: null,
+          service_reminders: [],
+          is_maintenance: true,
+        });
+      }
     }
 
     // Calculate discount
@@ -183,7 +206,7 @@ export async function POST(request: Request) {
     // Use provided sale date or current IST date
     const saleDate = data.saleDate || getISTDateString();
 
-    // Create sale with sale_type
+    // Create sale with sale_type and maintenance_amount
     const { data: sale, error: saleError } = await supabase
       .from('sales')
       .insert({
@@ -198,6 +221,7 @@ export async function POST(request: Request) {
         discount_description: data.discountDescription ?? null,
         tax_amount: data.taxAmount ?? 0,
         total_amount: totalAmount,
+        maintenance_amount: maintenanceAmount,
         payment_status: 'paid',
         sale_type: data.saleType || 'regular',
         notes: data.notes ?? null,
@@ -225,6 +249,7 @@ export async function POST(request: Request) {
       warranty_months: item.warranty_months,
       maintenance_interval_months: item.maintenance_interval_months,
       service_reminders: item.service_reminders,
+      is_maintenance: item.is_maintenance || false,
     }));
 
     const { data: insertedSaleItems } = await supabase

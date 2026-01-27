@@ -42,7 +42,7 @@ export async function GET(request: Request) {
     // Build query for total income (sales)
     let salesQuery = supabase
       .from('sales')
-      .select('total_amount, subtotal, created_at, sale_date')
+      .select('total_amount, subtotal, maintenance_amount, created_at, sale_date')
       .eq('vendor_id', session.id);
 
     if (startDate) {
@@ -52,6 +52,8 @@ export async function GET(request: Request) {
     const { data: sales } = await salesQuery;
 
     const totalIncome = sales?.reduce((sum, s) => sum + Number(s.total_amount), 0) ?? 0;
+    const totalMaintenanceIncome = sales?.reduce((sum, s) => sum + Number(s.maintenance_amount || 0), 0) ?? 0;
+    const totalProductIncome = totalIncome - totalMaintenanceIncome;
 
     // Build query for total expenses
     let expensesQuery = supabase
@@ -238,6 +240,8 @@ export async function GET(request: Request) {
       data: {
         summary: {
           totalIncome,
+          totalProductIncome,
+          totalMaintenanceIncome,
           totalExpenses,
           netProfit,
           totalMaintenanceCount: totalMaintenanceCount ?? 0,
