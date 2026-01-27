@@ -28,6 +28,7 @@ export async function GET() {
       customersResult,
       todayRemindersResult,
       overdueRemindersResult,
+      balanceResult,
     ] = await Promise.all([
       // Today's sales
       supabase
@@ -64,6 +65,13 @@ export async function GET() {
         .eq('vendor_id', session.id)
         .eq('status', 'pending')
         .lt('scheduled_date', todayDateStr),
+
+      // Customers with pending balance
+      supabase
+        .from('customers')
+        .select('balance_amount')
+        .eq('vendor_id', session.id)
+        .gt('balance_amount', 0),
     ]);
 
     const todaySalesTotal = salesResult.data?.reduce(
@@ -77,6 +85,13 @@ export async function GET() {
     const todayRemindersCount = todayRemindersResult.count ?? 0;
     const overdueRemindersCount = overdueRemindersResult.count ?? 0;
 
+    // Balance calculations
+    const totalPendingBalance = balanceResult.data?.reduce(
+      (sum, c) => sum + Number(c.balance_amount),
+      0
+    ) ?? 0;
+    const customersWithBalanceCount = balanceResult.data?.length ?? 0;
+
     return NextResponse.json({
       success: true,
       data: {
@@ -86,6 +101,8 @@ export async function GET() {
         customersCount,
         todayRemindersCount,
         overdueRemindersCount,
+        totalPendingBalance,
+        customersWithBalanceCount,
       },
     });
   } catch (error) {

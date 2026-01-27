@@ -14,7 +14,12 @@ interface BillData {
   customerPhone: string | null;
   businessName: string;
   items: Array<{ name: string; quantity: number; price: number }>;
+  subtotal?: number;
+  discount?: number;
+  discountPercent?: number;
   total: number;
+  amountPaid?: number;
+  balance?: number;
   date: string;
 }
 
@@ -45,7 +50,12 @@ export function BillActions({ billId, billData, vendorHasUpiId }: BillActionsPro
         customerName: billData.customerName,
         businessName: billData.businessName,
         items: formattedItems,
+        subtotal: billData.subtotal,
+        discount: billData.discount,
+        discountPercent: billData.discountPercent,
         total: billData.total,
+        amountPaid: billData.amountPaid,
+        balance: billData.balance,
         date: billData.date,
         paymentLink: paymentUrl, // Include payment link if vendor has UPI ID
       });

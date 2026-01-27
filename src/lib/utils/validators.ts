@@ -92,6 +92,7 @@ export const createSaleSchema = z.object({
   taxAmount: z.number().min(0).optional(),
   notes: z.string().optional(),
   saleDate: z.string().optional(),
+  amountPaid: z.number().min(0).optional(), // Amount customer is paying now (for partial payments)
 }).refine(
   (data) => data.items.length > 0 || (data.smallItemAmount && data.smallItemAmount > 0) || (data.maintenanceItems && data.maintenanceItems.length > 0),
   { message: 'At least one item, small item, or maintenance item is required' }

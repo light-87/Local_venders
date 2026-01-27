@@ -35,6 +35,7 @@ export interface Customer {
   total_spent: number;
   last_purchase_date: string | null;
   notes: string | null;
+  balance_amount: number;
   created_at: string;
   updated_at: string;
 }
@@ -77,6 +78,8 @@ export interface Sale {
   discount_description: string | null;
   tax_amount: number;
   total_amount: number;
+  amount_paid: number;
+  balance_amount: number;
   maintenance_amount: number;
   payment_status: 'paid' | 'pending' | 'partial';
   sale_type: 'regular' | 'service_record';
@@ -233,4 +236,21 @@ export interface VendorWhatsAppTemplate {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+}
+
+export interface CustomerBalanceTransaction {
+  id: string;
+  vendor_id: string;
+  customer_id: string;
+  sale_id: string | null;
+  type: 'sale' | 'payment';
+  amount: number;
+  running_balance: number;
+  notes: string | null;
+  payment_account_id: string | null;
+  created_at: string;
+  // Joined fields
+  customer?: Customer;
+  sale?: Sale;
+  payment_account?: Account;
 }
