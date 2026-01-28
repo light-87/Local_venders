@@ -10,6 +10,7 @@ import {
 } from '@/lib/utils/whatsapp';
 
 interface BillData {
+  customerId: string | null;
   customerName: string;
   customerPhone: string | null;
   businessName: string;
@@ -32,6 +33,7 @@ interface BillActionsProps {
 export function BillActions({ billId, billData, vendorHasUpiId }: BillActionsProps) {
   const [downloading, setDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState(false);
+  const [sendingWhatsApp, setSendingWhatsApp] = useState(false);
 
   const billUrl = typeof window !== 'undefined'
     ? `${window.location.origin}/bill/${billId}`
@@ -61,8 +63,50 @@ export function BillActions({ billId, billData, vendorHasUpiId }: BillActionsPro
       });
       const whatsappUrl = createWhatsAppLink(billData.customerPhone, message);
       window.open(whatsappUrl, '_blank');
+  const handleWhatsAppShare = async () => {
+    // If we have a customer ID, fetch fresh phone number from database
+    if (billData?.customerId) {
+      setSendingWhatsApp(true);
+      try {
+        const res = await fetch(`/api/customers/${billData.customerId}/phone?t=${Date.now()}`, {
+          cache: 'no-store',
+        });
+        const json = await res.json();
+
+        if (json.success && json.phone) {
+          const formattedItems = formatItemsForBill(billData.items);
+          const message = generateBillMessage({
+            customerName: billData.customerName,
+            businessName: billData.businessName,
+            items: formattedItems,
+            total: billData.total,
+            date: billData.date,
+            paymentLink: paymentUrl,
+          });
+          const whatsappUrl = createWhatsAppLink(json.phone, message);
+          window.open(whatsappUrl, '_blank');
+        } else {
+          // Fallback to simple link share if no phone
+          let message = `Here is your bill: ${billUrl}`;
+          if (paymentUrl) {
+            message += `\n\nPay Online: ${paymentUrl}`;
+          }
+          const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+          window.open(whatsappUrl, '_blank');
+        }
+      } catch {
+        // Fallback on error
+        let message = `Here is your bill: ${billUrl}`;
+        if (paymentUrl) {
+          message += `\n\nPay Online: ${paymentUrl}`;
+        }
+        const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+        window.open(whatsappUrl, '_blank');
+      } finally {
+        setSendingWhatsApp(false);
+      }
     } else {
-      // Fallback to simple link share (opens WhatsApp without recipient)
+      // No customer ID - fallback to simple link share
       let message = `Here is your bill: ${billUrl}`;
       if (paymentUrl) {
         message += `\n\nPay Online: ${paymentUrl}`;
@@ -118,6 +162,7 @@ export function BillActions({ billId, billData, vendorHasUpiId }: BillActionsPro
         variant="primary"
         fullWidth
         onClick={handleWhatsAppShare}
+        loading={sendingWhatsApp}
         icon={<MessageCircle className="w-5 h-5" />}
         className="!bg-green-600 hover:!bg-green-700 !border-green-600 py-3.5"
       >

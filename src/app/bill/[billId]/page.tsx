@@ -57,7 +57,7 @@ export default async function BillPage({
     business_logo: string | null;
     upi_id: string | null;
   };
-  const customer = sale.customer as { name: string; phone: string | null } | null;
+  const customer = sale.customer as { id: string; name: string; phone: string | null } | null;
 
   return (
     <div className="min-h-screen bg-surface-primary">
@@ -222,6 +222,7 @@ export default async function BillPage({
           billId={billId}
           vendorHasUpiId={!!vendor.upi_id}
           billData={{
+            customerId: customer?.id || null,
             customerName: customer?.name || 'Customer',
             customerPhone: customer?.phone || null,
             businessName: vendor.business_name,
