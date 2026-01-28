@@ -44,25 +44,6 @@ export function BillActions({ billId, billData, vendorHasUpiId }: BillActionsPro
     ? `${window.location.origin}/pay/${billId}`
     : undefined;
 
-  const handleWhatsAppShare = () => {
-    // If we have bill data and customer phone, send formatted message directly
-    if (billData?.customerPhone) {
-      const formattedItems = formatItemsForBill(billData.items);
-      const message = generateBillMessage({
-        customerName: billData.customerName,
-        businessName: billData.businessName,
-        items: formattedItems,
-        subtotal: billData.subtotal,
-        discount: billData.discount,
-        discountPercent: billData.discountPercent,
-        total: billData.total,
-        amountPaid: billData.amountPaid,
-        balance: billData.balance,
-        date: billData.date,
-        paymentLink: paymentUrl, // Include payment link if vendor has UPI ID
-      });
-      const whatsappUrl = createWhatsAppLink(billData.customerPhone, message);
-      window.open(whatsappUrl, '_blank');
   const handleWhatsAppShare = async () => {
     // If we have a customer ID, fetch fresh phone number from database
     if (billData?.customerId) {
@@ -79,7 +60,12 @@ export function BillActions({ billId, billData, vendorHasUpiId }: BillActionsPro
             customerName: billData.customerName,
             businessName: billData.businessName,
             items: formattedItems,
+            subtotal: billData.subtotal,
+            discount: billData.discount,
+            discountPercent: billData.discountPercent,
             total: billData.total,
+            amountPaid: billData.amountPaid,
+            balance: billData.balance,
             date: billData.date,
             paymentLink: paymentUrl,
           });
