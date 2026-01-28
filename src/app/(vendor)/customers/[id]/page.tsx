@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { CustomerActions } from './customer-actions';
 import { WarrantyItemsSection } from './warranty-items-section';
 import { CustomerRemindersSection } from './customer-reminders-section';
+import { CustomerBalanceHistory } from './customer-balance-history';
 
 interface ServiceReminder {
   label: string;
@@ -194,6 +195,9 @@ export default async function CustomerDetailPage({
 
         {/* Service Reminders */}
         <CustomerRemindersSection customerId={customer.id} />
+
+        {/* Balance History */}
+        <CustomerBalanceHistory customerId={customer.id} currentBalance={customer.balance_amount || 0} />
 
         {/* Purchase History */}
         <section>

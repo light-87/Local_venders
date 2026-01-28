@@ -17,12 +17,12 @@ export async function GET(
 
     const { data: customer, error } = await supabase
       .from('customers')
-      .select('phone')
+      .select('phone, name')
       .eq('id', id)
       .single();
 
     if (error || !customer) {
-      const response = NextResponse.json({ success: false, phone: null });
+      const response = NextResponse.json({ success: false, phone: null, customerName: null });
       response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
       return response;
     }
@@ -30,6 +30,7 @@ export async function GET(
     const response = NextResponse.json({
       success: true,
       phone: customer.phone,
+      customerName: customer.name,
     });
     response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
     return response;
