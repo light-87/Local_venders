@@ -45,8 +45,10 @@ export function CustomerActions({ customer }: CustomerActionsProps) {
   const handleWhatsApp = async () => {
     setWhatsappLoading(true);
     try {
-      // Fetch fresh customer data to get the latest phone number
-      const res = await fetch(`/api/customers/${customer.id}`);
+      // Fetch fresh customer data to get the latest phone number (with cache busting)
+      const res = await fetch(`/api/customers/${customer.id}?t=${Date.now()}`, {
+        cache: 'no-store',
+      });
       const json = await res.json();
 
       if (json.success && json.customer?.phone) {

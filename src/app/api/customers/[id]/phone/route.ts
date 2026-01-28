@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 
+// Disable caching - always fetch fresh data
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 // Public endpoint to get just the customer phone number
 // Used by bill page to get fresh phone before sending WhatsApp
 export async function GET(
@@ -18,15 +22,21 @@ export async function GET(
       .single();
 
     if (error || !customer) {
-      return NextResponse.json({ success: false, phone: null });
+      const response = NextResponse.json({ success: false, phone: null });
+      response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+      return response;
     }
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       phone: customer.phone,
     });
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+    return response;
   } catch (error) {
     console.error('Customer phone fetch error:', error);
-    return NextResponse.json({ success: false, phone: null });
+    const response = NextResponse.json({ success: false, phone: null });
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+    return response;
   }
 }

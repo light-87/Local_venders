@@ -171,9 +171,11 @@ export default function RemindersPage() {
   ];
 
   const handleSendWhatsApp = async (reminder: Reminder) => {
-    // Fetch fresh phone number from database
+    // Fetch fresh phone number from database (with cache busting)
     try {
-      const res = await fetch(`/api/customers/${reminder.customer.id}/phone`);
+      const res = await fetch(`/api/customers/${reminder.customer.id}/phone?t=${Date.now()}`, {
+        cache: 'no-store',
+      });
       const json = await res.json();
 
       if (!json.success || !json.phone) {

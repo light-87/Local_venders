@@ -44,7 +44,9 @@ export function BillActions({ billId, billData, vendorHasUpiId }: BillActionsPro
     if (billData?.customerId) {
       setSendingWhatsApp(true);
       try {
-        const res = await fetch(`/api/customers/${billData.customerId}/phone`);
+        const res = await fetch(`/api/customers/${billData.customerId}/phone?t=${Date.now()}`, {
+          cache: 'no-store',
+        });
         const json = await res.json();
 
         if (json.success && json.phone) {
