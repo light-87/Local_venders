@@ -181,8 +181,8 @@ export function generateBillMessage(params: {
 
   // Show payment breakdown if partial payment
   if (amountPaid !== undefined && balance !== undefined && balance > 0) {
-    message += `\n✅ *Paid:* Rs.${amountPaid.toLocaleString('en-IN')}\n`;
-    message += `⏳ *Balance Due:* Rs.${balance.toLocaleString('en-IN')}\n`;
+    message += `\n*Paid:* Rs.${amountPaid.toLocaleString('en-IN')}\n`;
+    message += `*Balance Due:* Rs.${balance.toLocaleString('en-IN')}\n`;
   }
 
   message += `\n*Date:* ${date}\n`;
