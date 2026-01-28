@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Modal, Input, Button, Textarea, useToast } from '@/components/ui';
 import type { Customer } from '@/types';
@@ -21,6 +21,18 @@ export function CustomerEditModal({ customer, isOpen, onClose }: CustomerEditMod
     address: customer.address || '',
     notes: customer.notes || '',
   });
+
+  // Sync form state when customer prop changes or modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setForm({
+        name: customer.name,
+        phone: customer.phone || '',
+        address: customer.address || '',
+        notes: customer.notes || '',
+      });
+    }
+  }, [isOpen, customer]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
