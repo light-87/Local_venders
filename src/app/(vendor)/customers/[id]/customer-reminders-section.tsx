@@ -5,6 +5,12 @@ import { useRouter } from 'next/navigation';
 import { Card, Button, useToast } from '@/components/ui';
 import { formatDateShort } from '@/lib/utils/format';
 import { Bell, Clock, Check, AlertCircle, ChevronDown, ChevronUp, Send } from 'lucide-react';
+import { format, isPast, isToday } from 'date-fns';
+import {
+  createWhatsAppLink,
+  generateMaintenanceReminderMessage,
+  generateFollowUpReminderMessage,
+} from '@/lib/utils/whatsapp';
 
 interface Reminder {
   id: string;
@@ -34,10 +40,38 @@ export function CustomerRemindersSection({ customerId }: CustomerRemindersSectio
   const [loading, setLoading] = useState(true);
   const [showHistory, setShowHistory] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [businessName, setBusinessName] = useState('');
+  const [messageTemplate, setMessageTemplate] = useState<string | null>(null);
 
   useEffect(() => {
     fetchReminders();
+    fetchBusinessName();
+    fetchMessageTemplate();
   }, [customerId]);
+
+  const fetchBusinessName = async () => {
+    try {
+      const res = await fetch('/api/settings');
+      const json = await res.json();
+      if (json.success && json.data?.vendor) {
+        setBusinessName(json.data.vendor.business_name || json.data.vendor.name || 'Your Business');
+      }
+    } catch (err) {
+      console.error('Failed to fetch settings:', err);
+    }
+  };
+
+  const fetchMessageTemplate = async () => {
+    try {
+      const res = await fetch('/api/settings/message-template');
+      const json = await res.json();
+      if (json.success) {
+        setMessageTemplate(json.data.customTemplate || json.data.defaultTemplate);
+      }
+    } catch (err) {
+      console.error('Failed to fetch message template:', err);
+    }
+  };
 
   const fetchReminders = async () => {
     try {
@@ -57,8 +91,53 @@ export function CustomerRemindersSection({ customerId }: CustomerRemindersSectio
     }
   };
 
+  const handleSendWhatsApp = async (reminder: Reminder) => {
+    setActionLoading(reminder.id);
+    try {
+      // Fetch fresh phone number from database
+      const phoneRes = await fetch(`/api/customers/${reminder.customer_id}/phone?t=${Date.now()}`, {
+        cache: 'no-store',
+      });
+      const phoneJson = await phoneRes.json();
+
+      if (!phoneJson.success || !phoneJson.phone) {
+        error('Customer has no phone number');
+        setActionLoading(null);
+        return;
+      }
+
+      const reminderIsOverdue = isPast(new Date(reminder.scheduled_date)) && !isToday(new Date(reminder.scheduled_date));
+
+      let message: string;
+      if (reminderIsOverdue && (reminder.sent_count || 0) > 0) {
+        message = generateFollowUpReminderMessage({
+          customerName: phoneJson.customerName || 'Customer',
+          itemName: reminder.item_name || 'equipment',
+          businessName,
+        });
+      } else {
+        message = generateMaintenanceReminderMessage({
+          customerName: phoneJson.customerName || 'Customer',
+          itemName: reminder.item_name || 'equipment',
+          scheduledDate: format(new Date(reminder.scheduled_date), 'MMMM d, yyyy'),
+          timeSlot: reminder.time_slot || undefined,
+          businessName,
+          customTemplate: messageTemplate,
+        });
+      }
+
+      const link = createWhatsAppLink(phoneJson.phone, message);
+      window.open(link, '_blank');
+
+      // Mark as sent after opening WhatsApp
+      await handleMarkSent(reminder.id);
+    } catch {
+      error('Failed to send reminder');
+      setActionLoading(null);
+    }
+  };
+
   const handleMarkSent = async (id: string) => {
-    setActionLoading(id);
     try {
       const res = await fetch(`/api/reminders/${id}`, {
         method: 'PATCH',
@@ -67,14 +146,11 @@ export function CustomerRemindersSection({ customerId }: CustomerRemindersSectio
       });
       const json = await res.json();
       if (json.success) {
-        success('Marked as sent');
         fetchReminders();
         router.refresh();
-      } else {
-        error(json.error || 'Failed to update');
       }
     } catch {
-      error('Something went wrong');
+      console.error('Failed to mark as sent');
     } finally {
       setActionLoading(null);
     }
@@ -199,13 +275,14 @@ export function CustomerRemindersSection({ customerId }: CustomerRemindersSectio
                 </div>
                 <div className="flex gap-2 flex-shrink-0">
                   <Button
-                    variant="secondary"
                     size="sm"
-                    onClick={() => handleMarkSent(reminder.id)}
+                    icon={<Send className="w-4 h-4" />}
+                    onClick={() => handleSendWhatsApp(reminder)}
                     loading={actionLoading === reminder.id}
                     disabled={actionLoading !== null}
+                    className={isOverdue(reminder.scheduled_date) ? 'bg-red-500 hover:bg-red-600' : ''}
                   >
-                    Sent
+                    {isOverdue(reminder.scheduled_date) ? 'Send Follow-up' : 'Send Reminder'}
                   </Button>
                   <Button
                     variant="secondary"
