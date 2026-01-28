@@ -83,15 +83,18 @@
 
 **Major Changes:**
 - Added maintenance/service income tracking to analytics
+- **NEW: Maintenance/Service add button** in sales page - allows recording service charges (RO service, filter cleaning, repairs, etc.) separately from product sales
+- Maintenance items tracked independently with their own cart section
 - Enhanced sales form to differentiate service vs product sales
-- New analytics content showing maintenance revenue
-- Updated sales validation and types
+- New analytics content showing maintenance revenue separately
+- Updated sales validation and types to support maintenance items
 
 **Files Changed:** 8 files, +285 insertions, -18 deletions
 - `analytics-content.tsx` - Added 70 lines for maintenance tracking
-- Enhanced sales page with service type selection (147+ lines added)
+- Enhanced sales page with dedicated maintenance section (147+ lines added)
+- Maintenance items can be added with custom names and amounts
 
-**Impact:** Better business intelligence - track service revenue separately from product sales
+**Impact:** Better business intelligence - track service revenue separately from product sales, capture ALL income sources (products + maintenance/services)
 
 ---
 
@@ -195,7 +198,8 @@
 - Complete customer balance tracking system
 - Partial payment support
 - Service vs product revenue separation
-- Analytics enhancements
+- **Maintenance/Service add button** - Record service charges (repairs, cleaning, etc.) separately
+- Analytics enhancements for tracking all income sources
 
 ### 2. 🔔 Reminder & Automation (Commits #6, #7)
 - Complete reminder system overhaul
@@ -243,10 +247,10 @@
 ## Conclusion
 
 The **Kuberbook** repository has seen **intense, focused development** with major feature additions in:
-1. **Financial tracking** (balance management, partial payments)
+1. **Financial tracking** (balance management, partial payments, maintenance/service income tracking)
 2. **Automation** (auto-scheduling reminders)
 3. **Customer management** (comprehensive reminder system)
 4. **Communication** (WhatsApp integration improvements)
 5. **Professional branding** (Kuberbook identity)
 
-The app is evolving from a basic vendor management tool into a **comprehensive business automation platform** for local service vendors, with strong focus on ensuring no maintenance revenue is lost through automated reminders and better financial tracking.
+The app is evolving from a basic vendor management tool into a **comprehensive business automation platform** for local service vendors, with strong focus on ensuring no maintenance revenue is lost through automated reminders, dedicated maintenance/service add button for capturing all income sources, and better financial tracking.
