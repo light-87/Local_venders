@@ -74,6 +74,9 @@ export default function NewSalePage() {
   const [smallItemDescription, setSmallItemDescription] = useState('');
   const [smallItemAmount, setSmallItemAmount] = useState<number | ''>('');
 
+  // Partial payment state
+  const [amountPaid, setAmountPaid] = useState<number | ''>('');
+
   // Maintenance items state
   const [maintenanceItems, setMaintenanceItems] = useState<MaintenanceCartItem[]>([]);
   const [maintenanceItemName, setMaintenanceItemName] = useState('');
@@ -162,6 +165,10 @@ export default function NewSalePage() {
   const subtotal = productSubtotal + maintenanceTotal;
   const discountValue = discountPercent > 0 ? subtotal * (discountPercent / 100) : discountAmount;
   const total = subtotal - discountValue;
+
+  // Balance calculation - if amountPaid not set, assume full payment
+  const actualAmountPaid = amountPaid === '' ? total : amountPaid;
+  const balanceAmount = Math.max(0, total - actualAmountPaid);
 
   // Add item to cart
   const addToCart = (item: InventoryItem) => {
@@ -461,6 +468,7 @@ export default function NewSalePage() {
           discountDescription: discountDescription || undefined,
           notes: notes.trim() || undefined,
           saleDate,
+          amountPaid: amountPaid === '' ? undefined : amountPaid, // Send only if explicitly set
         }),
       });
 
@@ -1112,7 +1120,7 @@ export default function NewSalePage() {
                 </div>
                 {discountValue > 0 && (
                   <div className="flex justify-between text-sm text-green-600">
-                    <span>Discount</span>
+                    <span>Discount{discountPercent > 0 ? ` (${discountPercent}%)` : ''}</span>
                     <span className="tabular-nums">-{formatCurrency(discountValue)}</span>
                   </div>
                 )}
@@ -1121,6 +1129,52 @@ export default function NewSalePage() {
                   <span className="tabular-nums">{formatCurrency(total)}</span>
                 </div>
               </div>
+
+              {/* Amount Paid / Balance Section */}
+              {(selectedCustomer || newCustomerName) && (
+                <div className="mt-4 pt-4 border-t border-gray-100">
+                  <label className="text-sm font-medium text-gray-600 mb-2 block">
+                    Amount Paying Now
+                  </label>
+                  <div className="flex gap-2 items-center">
+                    <div className="flex-1">
+                      <Input
+                        type="number"
+                        placeholder={`Full amount: ${formatCurrency(total)}`}
+                        value={amountPaid}
+                        onChange={(e) => setAmountPaid(e.target.value ? Number(e.target.value) : '')}
+                        startIcon="₹"
+                      />
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setAmountPaid(total)}
+                      className="whitespace-nowrap"
+                    >
+                      Full
+                    </Button>
+                  </div>
+                  {balanceAmount > 0 && (
+                    <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-xl">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-amber-800">Balance Due</span>
+                        <span className="text-lg font-bold text-amber-700 tabular-nums">
+                          {formatCurrency(balanceAmount)}
+                        </span>
+                      </div>
+                      <p className="text-xs text-amber-600 mt-1">
+                        This will be added to customer&apos;s pending balance
+                      </p>
+                    </div>
+                  )}
+                  {amountPaid !== '' && balanceAmount === 0 && (
+                    <p className="mt-2 text-xs text-green-600">
+                      Full payment - no balance
+                    </p>
+                  )}
+                </div>
+              )}
             </Card>
           </section>
         )}
@@ -1144,14 +1198,32 @@ export default function NewSalePage() {
       {/* Fixed Bottom Button */}
       {(cart.length > 0 || maintenanceItems.length > 0) && (
         <div className="fixed bottom-20 left-0 right-0 p-4 bg-white border-t border-gray-200 safe-area-bottom">
-          <Button
-            fullWidth
-            loading={submitting}
-            onClick={handleSubmit}
-            icon={<Check className="w-5 h-5" />}
-          >
-            Complete Sale • {formatCurrency(total)}
-          </Button>
+          {balanceAmount > 0 && (selectedCustomer || newCustomerName) ? (
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm px-1">
+                <span className="text-gray-600">Receiving: <span className="font-semibold">{formatCurrency(actualAmountPaid)}</span></span>
+                <span className="text-amber-600">Balance: <span className="font-semibold">{formatCurrency(balanceAmount)}</span></span>
+              </div>
+              <Button
+                fullWidth
+                loading={submitting}
+                onClick={handleSubmit}
+                icon={<Check className="w-5 h-5" />}
+                className="!bg-amber-600 hover:!bg-amber-700 !border-amber-600"
+              >
+                Complete Sale with Balance
+              </Button>
+            </div>
+          ) : (
+            <Button
+              fullWidth
+              loading={submitting}
+              onClick={handleSubmit}
+              icon={<Check className="w-5 h-5" />}
+            >
+              Complete Sale • {formatCurrency(total)}
+            </Button>
+          )}
         </div>
       )}
 
