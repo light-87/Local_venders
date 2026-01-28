@@ -170,35 +170,43 @@ export default function RemindersPage() {
     { id: 'completed', label: 'Done', count: categorizedReminders.completed.length, icon: <CheckCircle2 className="w-4 h-4" /> },
   ];
 
-  const handleSendWhatsApp = (reminder: Reminder) => {
-    if (!reminder.customer.phone) {
-      showError('Customer has no phone number');
-      return;
+  const handleSendWhatsApp = async (reminder: Reminder) => {
+    // Fetch fresh phone number from database
+    try {
+      const res = await fetch(`/api/customers/${reminder.customer.id}/phone`);
+      const json = await res.json();
+
+      if (!json.success || !json.phone) {
+        showError('Customer has no phone number');
+        return;
+      }
+
+      const isOverdue = isPast(new Date(reminder.scheduled_date)) && !isToday(new Date(reminder.scheduled_date));
+
+      let message: string;
+      if (isOverdue && reminder.sent_count > 0) {
+        message = generateFollowUpReminderMessage({
+          customerName: reminder.customer.name,
+          itemName: reminder.item_name || 'equipment',
+          businessName,
+        });
+      } else {
+        message = generateMaintenanceReminderMessage({
+          customerName: reminder.customer.name,
+          itemName: reminder.item_name || 'equipment',
+          scheduledDate: format(new Date(reminder.scheduled_date), 'MMMM d, yyyy'),
+          timeSlot: reminder.time_slot || undefined,
+          businessName,
+          customTemplate: messageTemplate,
+        });
+      }
+
+      const link = createWhatsAppLink(json.phone, message);
+      window.open(link, '_blank');
+      handleMarkSent(reminder.id);
+    } catch {
+      showError('Failed to fetch customer phone');
     }
-
-    const isOverdue = isPast(new Date(reminder.scheduled_date)) && !isToday(new Date(reminder.scheduled_date));
-
-    let message: string;
-    if (isOverdue && reminder.sent_count > 0) {
-      message = generateFollowUpReminderMessage({
-        customerName: reminder.customer.name,
-        itemName: reminder.item_name || 'equipment',
-        businessName,
-      });
-    } else {
-      message = generateMaintenanceReminderMessage({
-        customerName: reminder.customer.name,
-        itemName: reminder.item_name || 'equipment',
-        scheduledDate: format(new Date(reminder.scheduled_date), 'MMMM d, yyyy'),
-        timeSlot: reminder.time_slot || undefined,
-        businessName,
-        customTemplate: messageTemplate,
-      });
-    }
-
-    const link = createWhatsAppLink(reminder.customer.phone, message);
-    window.open(link, '_blank');
-    handleMarkSent(reminder.id);
   };
 
   const handleMarkSent = async (reminderId: string) => {
