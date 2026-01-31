@@ -171,6 +171,9 @@ export default function RemindersPage() {
   ];
 
   const handleSendWhatsApp = async (reminder: Reminder) => {
+    // Open window immediately to avoid popup blocker (must be synchronous with user click)
+    const newWindow = window.open('', '_blank');
+
     // Fetch fresh phone number from database (with cache busting)
     try {
       const res = await fetch(`/api/customers/${reminder.customer.id}/phone?t=${Date.now()}`, {
@@ -179,6 +182,7 @@ export default function RemindersPage() {
       const json = await res.json();
 
       if (!json.success || !json.phone) {
+        if (newWindow) newWindow.close();
         showError('Customer has no phone number');
         return;
       }
@@ -204,9 +208,12 @@ export default function RemindersPage() {
       }
 
       const link = createWhatsAppLink(json.phone, message);
-      window.open(link, '_blank');
+      if (newWindow) {
+        newWindow.location.href = link;
+      }
       handleMarkSent(reminder.id);
     } catch {
+      if (newWindow) newWindow.close();
       showError('Failed to fetch customer phone');
     }
   };

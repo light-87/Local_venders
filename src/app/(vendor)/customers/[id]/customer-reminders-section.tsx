@@ -92,6 +92,9 @@ export function CustomerRemindersSection({ customerId }: CustomerRemindersSectio
   };
 
   const handleSendWhatsApp = async (reminder: Reminder) => {
+    // Open window immediately to avoid popup blocker (must be synchronous with user click)
+    const newWindow = window.open('', '_blank');
+
     setActionLoading(reminder.id);
     try {
       // Fetch fresh phone number from database
@@ -101,6 +104,7 @@ export function CustomerRemindersSection({ customerId }: CustomerRemindersSectio
       const phoneJson = await phoneRes.json();
 
       if (!phoneJson.success || !phoneJson.phone) {
+        if (newWindow) newWindow.close();
         error('Customer has no phone number');
         setActionLoading(null);
         return;
@@ -127,11 +131,14 @@ export function CustomerRemindersSection({ customerId }: CustomerRemindersSectio
       }
 
       const link = createWhatsAppLink(phoneJson.phone, message);
-      window.open(link, '_blank');
+      if (newWindow) {
+        newWindow.location.href = link;
+      }
 
       // Mark as sent after opening WhatsApp
       await handleMarkSent(reminder.id);
     } catch {
+      if (newWindow) newWindow.close();
       error('Failed to send reminder');
       setActionLoading(null);
     }
