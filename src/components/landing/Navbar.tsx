@@ -93,7 +93,6 @@ export function Navbar() {
                         exit={{ opacity: 0, y: -20 }}
                         transition={{ duration: 0.2 }}
                         className="fixed top-[90px] left-0 right-0 z-40 md:hidden"
-                        style={{ top: 'calc(var(--navbar-height, 90px))' }}
                     >
                         <div className="mx-6 bg-white/95 backdrop-blur-md border border-ledger-border rounded-2xl shadow-lg overflow-hidden">
                             <div className="flex flex-col p-4">

@@ -124,7 +124,6 @@ export function Hero() {
                 <div
                     ref={bookRef}
                     className="relative w-full max-w-5xl mx-auto mt-20 aspect-video bg-white rounded-2xl shadow-[0_32px_72px_-16px_rgba(0,0,0,0.25)] border border-ledger-border overflow-hidden"
-                    style={{ transformStyle: 'preserve-3d', perspective: '2000px' }}
                 >
                     <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-white to-ledger-paper">
                         <div className="flex flex-col items-center gap-4 p-8 text-center">
