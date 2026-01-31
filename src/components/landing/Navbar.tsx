@@ -77,8 +77,8 @@ export function Navbar() {
                             href="/get-started"
                             className="px-4 sm:px-6 py-2 text-xs sm:text-sm font-semibold text-white transition-all rounded-full bg-ledger-charcoal hover:bg-brand-900 shadow-md"
                         >
-                            <span className="hidden xs:inline">Book a Demo</span>
-                            <span className="xs:hidden">Demo</span>
+                            <span className="hidden sm:inline">Book a Demo</span>
+                            <span className="sm:hidden">Demo</span>
                         </Link>
                     </motion.div>
                 </div>
@@ -92,7 +92,8 @@ export function Navbar() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -20 }}
                         transition={{ duration: 0.2 }}
-                        className="fixed top-[88px] left-0 right-0 z-40 md:hidden"
+                        className="fixed top-[90px] left-0 right-0 z-40 md:hidden"
+                        style={{ top: 'calc(var(--navbar-height, 90px))' }}
                     >
                         <div className="mx-6 bg-white/95 backdrop-blur-md border border-ledger-border rounded-2xl shadow-lg overflow-hidden">
                             <div className="flex flex-col p-4">
