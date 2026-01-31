@@ -4,11 +4,11 @@ import { motion } from 'framer-motion';
 import { LayoutDashboard, Package, ShoppingCart, Users, CalendarClock, MessageSquare } from 'lucide-react';
 
 const screenshots = [
-    { id: 'dashboard', title: "Business Dashboard", icon: LayoutDashboard, desc: "A total overhead view of your daily sales and service pulse.", img: "/screenshots/edited/11.png" },
-    { id: 'inventory', title: "Intelligent Inventory", icon: Package, desc: "Live stock tracking with automatic low-balance reorder alerts.", img: "/screenshots/edited/10.png" },
-    { id: 'billing', title: "Professional Invoicing", icon: ShoppingCart, desc: "Send polished digital bills via WhatsApp in under 30 seconds.", img: "/screenshots/edited/1.png" },
-    { id: 'reminders', title: "Automated Reminders", icon: MessageSquare, desc: "Set-and-forget WhatsApp alerts that bring customers back.", img: "/screenshots/edited/9.png" },
-    { id: 'ledger', title: "Customer Journals", icon: Users, desc: "Every purchase and service history organized for every client.", img: "/screenshots/edited/6.png" },
+    { id: 'dashboard', title: "Business Dashboard", icon: LayoutDashboard, desc: "A total overhead view of your daily sales and service pulse.", img: "/screenshots/optimized/11.webp" },
+    { id: 'inventory', title: "Intelligent Inventory", icon: Package, desc: "Live stock tracking with automatic low-balance reorder alerts.", img: "/screenshots/optimized/10.webp" },
+    { id: 'billing', title: "Professional Invoicing", icon: ShoppingCart, desc: "Send polished digital bills via WhatsApp in under 30 seconds.", img: "/screenshots/optimized/1.webp" },
+    { id: 'reminders', title: "Automated Reminders", icon: MessageSquare, desc: "Set-and-forget WhatsApp alerts that bring customers back.", img: "/screenshots/optimized/9.webp" },
+    { id: 'ledger', title: "Customer Journals", icon: Users, desc: "Every purchase and service history organized for every client.", img: "/screenshots/optimized/6.webp" },
     { id: 'schedule', title: "Service Pipelines", icon: CalendarClock, desc: "A streamlined queue for managing today's maintenance calls.", img: "/screenshots/edited/12.jpeg" },
 ];
 
@@ -36,6 +36,7 @@ export function AppShowcase() {
                                     src={item.img}
                                     alt={item.title}
                                     className="w-full h-auto block"
+                                    loading="lazy"
                                 />
                             </div>
 
@@ -76,9 +77,10 @@ export function AppShowcase() {
                         </div>
                         <div className="relative aspect-[16/9] md:aspect-[16/7] bg-ledger-paper/30 overflow-hidden">
                             <img
-                                src="/screenshots/edited/3.png"
+                                src="/screenshots/optimized/3.webp"
                                 alt="Full Pulse Analytics Dashboard"
                                 className="w-full h-full object-cover object-top"
+                                loading="lazy"
                             />
                         </div>
                     </motion.div>

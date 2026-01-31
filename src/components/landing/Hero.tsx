@@ -130,8 +130,8 @@ export function Hero() {
                             <p className="text-ledger-charcoal/40 max-w-md">The complete video walkthrough is being finalized. Stay tuned for the definitive business command center tour.</p>
                         </div>
 
-                        {/* The "Paper" Texture Overlay */}
-                        <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')]" />
+                        {/* The "Paper" Texture Overlay - subtle noise effect */}
+                        <div className="absolute inset-0 opacity-[0.02] pointer-events-none bg-gradient-to-br from-gray-100 to-transparent" />
                     </div>
                 </div>
 
