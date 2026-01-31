@@ -39,7 +39,7 @@ export default function LandingPage() {
                             </p>
                             <div className="space-y-6">
                                 <p className="text-lg text-ledger-charcoal/60 leading-relaxed italic">
-                                    "Kuberbook isn't just an app; it's your business partner. It's designed to be simple, aesthetic, and incredibly powerful. Welcome to the new era of business documentation."
+                                    &ldquo;Kuberbook isn&rsquo;t just an app; it&rsquo;s your business partner. It&rsquo;s designed to be simple, aesthetic, and incredibly powerful. Welcome to the new era of business documentation.&rdquo;
                                 </p>
                                 <div className="pt-6 border-t border-ledger-border/40 inline-block px-12">
                                     <p className="font-bold text-2xl text-ledger-charcoal">Vaibhav</p>

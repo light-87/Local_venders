@@ -15,6 +15,11 @@ const nextConfig = {
         hostname: '*.supabase.co',
         pathname: '/storage/v1/object/public/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'api.qrserver.com',
+        pathname: '/v1/create-qr-code/**',
+      },
     ],
   },
 };

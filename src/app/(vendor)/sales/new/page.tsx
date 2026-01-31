@@ -1005,7 +1005,7 @@ export default function NewSalePage() {
                               </div>
                             ) : (
                               <p className="text-xs text-gray-400 italic">
-                                No service reminders added. Click "Add Reminder" to add one.
+                                No service reminders added. Click &ldquo;Add Reminder&rdquo; to add one.
                               </p>
                             )}
 
@@ -1280,7 +1280,7 @@ export default function NewSalePage() {
                 <div className="flex items-center gap-2">
                   <Plus className="w-4 h-4 text-green-600" />
                   <p className="font-medium text-green-700">
-                    Create new: "{customerSearch.trim()}"
+                    Create new: &ldquo;{customerSearch.trim()}&rdquo;
                   </p>
                 </div>
               </button>

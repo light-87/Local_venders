@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { formatCurrency, formatDateShort } from '@/lib/utils/format';
 import { notFound } from 'next/navigation';
+import Image from 'next/image';
 import { BillActions } from './bill-actions';
 import { BillNavigation } from './bill-navigation';
 
@@ -70,9 +71,11 @@ export default async function BillPage({
           {/* Header - Blue theme */}
           <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-8 text-center">
             {vendor.business_logo ? (
-              <img
+              <Image
                 src={vendor.business_logo}
                 alt={vendor.business_name}
+                width={64}
+                height={64}
                 className="w-16 h-16 rounded-full mx-auto mb-3 object-cover bg-white"
               />
             ) : (
