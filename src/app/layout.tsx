@@ -38,7 +38,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${inter.variable} ${ebGaramond.variable}`}>
-      <body className="font-sans antialiased bg-ledger-paper text-ledger-charcoal min-h-screen">
+      <body className="font-sans antialiased bg-ledger-paper text-ledger-charcoal min-h-screen overflow-x-hidden">
         {children}
       </body>
     </html>
