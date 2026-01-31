@@ -82,7 +82,7 @@ export function PaymentFeature() {
                                 whileInView={{ y: 0, opacity: 1 }}
                                 viewport={{ once: true }}
                                 transition={{ duration: 1.2, delay: 0.2, ease: "easeOut" }}
-                                className="relative z-20 w-full max-w-[280px] bg-white rounded-2xl shadow-2xl border border-ledger-border overflow-hidden ring-4 ring-white md:-ml-0 lg:-ml-8"
+                                className="relative z-20 w-full max-w-[280px] bg-white rounded-2xl shadow-2xl border border-ledger-border overflow-hidden ring-4 ring-white lg:-ml-8"
                             >
                                 <Image
                                     src="/screenshots/edited/1.png"

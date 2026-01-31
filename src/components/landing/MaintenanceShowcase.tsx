@@ -79,7 +79,7 @@ export function MaintenanceShowcase() {
                                 whileInView={{ y: 0, opacity: 1 }}
                                 viewport={{ once: true }}
                                 transition={{ duration: 0.8, delay: 0.2 }}
-                                className="relative z-20 w-full max-w-[280px] bg-white rounded-2xl shadow-2xl border border-ledger-border overflow-hidden ring-4 ring-white md:-ml-0 lg:-ml-8"
+                                className="relative z-20 w-full max-w-[280px] bg-white rounded-2xl shadow-2xl border border-ledger-border overflow-hidden ring-4 ring-white lg:-ml-8"
                             >
                                 <div className="bg-[#075e54] p-3 text-white text-[10px] font-bold flex items-center gap-2">
                                     <div className="w-5 h-5 rounded-full bg-white/20" />
