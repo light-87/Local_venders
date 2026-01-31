@@ -43,6 +43,9 @@ export function CustomerActions({ customer }: CustomerActionsProps) {
   };
 
   const handleWhatsApp = async () => {
+    // Open window immediately to avoid popup blocker (must be synchronous with user click)
+    const newWindow = window.open('', '_blank');
+
     setWhatsappLoading(true);
     try {
       // Fetch fresh customer data to get the latest phone number (with cache busting)
@@ -54,13 +57,18 @@ export function CustomerActions({ customer }: CustomerActionsProps) {
       if (json.success && json.customer?.phone) {
         const phone = json.customer.phone.replace(/\D/g, '');
         const url = `https://wa.me/${phone.startsWith('91') ? phone : '91' + phone}`;
-        window.open(url, '_blank');
+        if (newWindow) {
+          newWindow.location.href = url;
+        }
       } else if (json.success && !json.customer?.phone) {
+        if (newWindow) newWindow.close();
         error('Customer has no phone number');
       } else {
+        if (newWindow) newWindow.close();
         error('Failed to fetch customer data');
       }
     } catch {
+      if (newWindow) newWindow.close();
       error('Something went wrong');
     } finally {
       setWhatsappLoading(false);

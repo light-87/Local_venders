@@ -45,6 +45,9 @@ export function BillActions({ billId, billData, vendorHasUpiId }: BillActionsPro
     : undefined;
 
   const handleWhatsAppShare = async () => {
+    // Open window immediately to avoid popup blocker (must be synchronous with user click)
+    const newWindow = window.open('', '_blank');
+
     // If we have a customer ID, fetch fresh phone number from database
     if (billData?.customerId) {
       setSendingWhatsApp(true);
@@ -70,7 +73,9 @@ export function BillActions({ billId, billData, vendorHasUpiId }: BillActionsPro
             paymentLink: paymentUrl,
           });
           const whatsappUrl = createWhatsAppLink(json.phone, message);
-          window.open(whatsappUrl, '_blank');
+          if (newWindow) {
+            newWindow.location.href = whatsappUrl;
+          }
         } else {
           // Fallback to simple link share if no phone
           let message = `Here is your bill: ${billUrl}`;
@@ -78,7 +83,9 @@ export function BillActions({ billId, billData, vendorHasUpiId }: BillActionsPro
             message += `\n\nPay Online: ${paymentUrl}`;
           }
           const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
-          window.open(whatsappUrl, '_blank');
+          if (newWindow) {
+            newWindow.location.href = whatsappUrl;
+          }
         }
       } catch {
         // Fallback on error
@@ -87,7 +94,9 @@ export function BillActions({ billId, billData, vendorHasUpiId }: BillActionsPro
           message += `\n\nPay Online: ${paymentUrl}`;
         }
         const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
-        window.open(whatsappUrl, '_blank');
+        if (newWindow) {
+          newWindow.location.href = whatsappUrl;
+        }
       } finally {
         setSendingWhatsApp(false);
       }
@@ -98,7 +107,9 @@ export function BillActions({ billId, billData, vendorHasUpiId }: BillActionsPro
         message += `\n\nPay Online: ${paymentUrl}`;
       }
       const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
-      window.open(whatsappUrl, '_blank');
+      if (newWindow) {
+        newWindow.location.href = whatsappUrl;
+      }
     }
   };
 
