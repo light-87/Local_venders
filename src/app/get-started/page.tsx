@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useState } from 'react';
 import { MessageSquare, Calendar, ArrowLeft, ArrowRight, ShieldCheck, Clock } from 'lucide-react';
 
@@ -44,7 +45,7 @@ export default function GetStartedPage() {
                         animate={{ opacity: 1, y: 0 }}
                         className="text-center mb-10"
                     >
-                        <h1 className="text-4xl md:text-5xl font-serif font-bold text-ledger-charcoal mb-4">Let's Grow Your Business</h1>
+                        <h1 className="text-4xl md:text-5xl font-serif font-bold text-ledger-charcoal mb-4">Let&rsquo;s Grow Your Business</h1>
                         <p className="text-lg text-ledger-charcoal/60 max-w-2xl mx-auto">Choose your preferred way to start with Kuberbook.</p>
                     </motion.div>
 
@@ -74,9 +75,11 @@ export default function GetStartedPage() {
 
                             <div className="flex flex-col items-center gap-4 py-8 mb-8 bg-ledger-paper/30 rounded-3xl border border-ledger-border/50 transition-colors group-hover:bg-ledger-paper/50">
                                 <div className="bg-white p-3 rounded-2xl shadow-md shrink-0 ring-8 ring-white/50">
-                                    <img
+                                    <Image
                                         src={qrCodeUrl}
                                         alt="WhatsApp QR Code"
+                                        width={128}
+                                        height={128}
                                         className="w-32 h-32"
                                     />
                                 </div>
@@ -167,9 +170,11 @@ export default function GetStartedPage() {
                                         className="bg-brand-500/5 p-4 rounded-3xl border border-brand-500/20 flex flex-col sm:flex-row items-center gap-6"
                                     >
                                         <div className="bg-white p-2 rounded-2xl shadow-md shrink-0 ring-4 ring-white/50">
-                                            <img
+                                            <Image
                                                 src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(getWaLink(`Hi! I would like to book a demo for Kuberbook.\n\nPreferred Date: ${selectedDate}\nPreferred Time: ${selectedTime}`))}`}
                                                 alt="Booking QR Code"
+                                                width={112}
+                                                height={112}
                                                 className="w-28 h-28"
                                             />
                                         </div>

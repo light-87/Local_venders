@@ -98,8 +98,8 @@ export function Features() {
                 </div>
             </div>
 
-            {/* Background flourish */}
-            <div className="absolute top-1/2 left-0 -translate-y-1/2 w-64 h-64 bg-brand-100 rounded-full blur-[100px] opacity-20 -z-10" />
+            {/* Background flourish - hidden on mobile for performance */}
+            <div className="absolute top-1/2 left-0 -translate-y-1/2 w-64 h-64 bg-brand-100 rounded-full blur-[100px] opacity-20 -z-10 hidden md:block" />
         </section>
     );
 }

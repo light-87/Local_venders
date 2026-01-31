@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { formatCurrency, formatDateShort } from '@/lib/utils/format';
 import { notFound } from 'next/navigation';
+import Image from 'next/image';
 import { PaymentButtons } from './payment-buttons';
 
 // Disable caching to always show fresh data
@@ -84,9 +85,11 @@ export default async function PaymentPage({
           {/* Header */}
           <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-6 text-center">
             {vendor.business_logo ? (
-              <img
+              <Image
                 src={vendor.business_logo}
                 alt={vendor.business_name}
+                width={56}
+                height={56}
                 className="w-14 h-14 rounded-full mx-auto mb-3 object-cover bg-white"
               />
             ) : (

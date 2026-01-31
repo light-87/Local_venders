@@ -14,32 +14,39 @@ export function Hero() {
     const titleRef = useRef<HTMLHeadingElement>(null);
 
     useEffect(() => {
+        // Check if user prefers reduced motion
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        
         const ctx = gsap.context(() => {
+            if (!prefersReducedMotion) {
+                // Opening book animation - simpler on mobile
+                const isMobile = window.innerWidth < 768;
+                gsap.fromTo(
+                    bookRef.current,
+                    { rotateY: isMobile ? 0 : -90, opacity: 0, scale: 0.9 },
+                    {
+                        rotateY: 0,
+                        opacity: 1,
+                        scale: 1,
+                        duration: isMobile ? 0.8 : 1.5,
+                        ease: isMobile ? "power2.out" : "back.out(1.2)"
+                    }
+                );
 
-            // Opening book animation
-            gsap.fromTo(
-                bookRef.current,
-                { rotateY: -90, opacity: 0, scale: 0.8 },
-                {
-                    rotateY: 0,
-                    opacity: 1,
-                    scale: 1,
-                    duration: 1.5,
-                    ease: "back.out(1.2)"
+                // Parallax effect on title - disabled on mobile for performance
+                if (!isMobile) {
+                    gsap.to(titleRef.current, {
+                        scrollTrigger: {
+                            trigger: containerRef.current,
+                            start: "top top",
+                            end: "bottom top",
+                            scrub: true
+                        },
+                        y: 100,
+                        opacity: 0.5
+                    });
                 }
-            );
-
-            // Parallax effect on title
-            gsap.to(titleRef.current, {
-                scrollTrigger: {
-                    trigger: containerRef.current,
-                    start: "top top",
-                    end: "bottom top",
-                    scrub: true
-                },
-                y: 100,
-                opacity: 0.5
-            });
+            }
         }, containerRef);
 
         return () => ctx.revert();
@@ -48,10 +55,10 @@ export function Hero() {
     return (
         <section
             ref={containerRef}
-            className="relative min-h-[85vh] flex flex-col items-center justify-center pt-32 pb-20 overflow-hidden bg-ledger-paper"
+            className="relative min-h-[85vh] flex flex-col items-center justify-center pt-20 md:pt-32 pb-16 md:pb-20 overflow-hidden bg-ledger-paper"
         >
-            {/* Decorative background elements */}
-            <div className="absolute top-0 left-0 w-full h-full opacity-5 pointer-events-none">
+            {/* Decorative background elements - hidden on mobile for performance */}
+            <div className="absolute top-0 left-0 w-full h-full opacity-5 pointer-events-none hidden md:block">
                 <div className="absolute top-[-10%] left-[-5%] w-[40%] h-[40%] rounded-full bg-brand-500 blur-[120px]" />
                 <div className="absolute bottom-[-10%] right-[-5%] w-[40%] h-[40%] rounded-full bg-brand-500 blur-[120px]" />
             </div>
@@ -69,7 +76,7 @@ export function Hero() {
 
                 <h1
                     ref={titleRef}
-                    className="relative text-6xl md:text-8xl font-serif font-bold leading-[1.1] text-ledger-charcoal mb-8"
+                    className="relative text-4xl sm:text-6xl md:text-8xl font-serif font-bold leading-[1.1] text-ledger-charcoal mb-8"
                 >
                     Your Business, <br />
                     <span className="relative inline-block">
@@ -93,7 +100,7 @@ export function Hero() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, delay: 0.4 }}
-                    className="max-w-2xl mx-auto text-lg md:text-xl text-ledger-charcoal/70 mb-12 leading-relaxed"
+                    className="max-w-2xl mx-auto text-base md:text-lg lg:text-xl text-ledger-charcoal/70 mb-12 leading-relaxed px-4"
                 >
                     Transition from regular paper chaos to digital clarity.
                     The first business command center built specifically for independent service vendors.
@@ -116,8 +123,7 @@ export function Hero() {
                 {/* Video / Visual Box */}
                 <div
                     ref={bookRef}
-                    className="relative w-full max-w-5xl mx-auto mt-20 aspect-[16/9] bg-white rounded-2xl shadow-[0_32px_72px_-16px_rgba(0,0,0,0.25)] border border-ledger-border perspective-2000 overflow-hidden"
-                    style={{ transformStyle: 'preserve-3d' }}
+                    className="relative w-full max-w-5xl mx-auto mt-20 aspect-video bg-white rounded-2xl shadow-[0_32px_72px_-16px_rgba(0,0,0,0.25)] border border-ledger-border overflow-hidden"
                 >
                     <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-white to-ledger-paper">
                         <div className="flex flex-col items-center gap-4 p-8 text-center">
@@ -129,9 +135,6 @@ export function Hero() {
                             <h3 className="text-2xl font-serif font-bold text-ledger-charcoal">Pitch Video Preview</h3>
                             <p className="text-ledger-charcoal/40 max-w-md">The complete video walkthrough is being finalized. Stay tuned for the definitive business command center tour.</p>
                         </div>
-
-                        {/* The "Paper" Texture Overlay */}
-                        <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')]" />
                     </div>
                 </div>
 

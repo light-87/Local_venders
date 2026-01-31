@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { Smartphone, CheckCircle2, ArrowRight } from 'lucide-react';
 
@@ -64,10 +65,14 @@ export function PaymentFeature() {
                                 transition={{ duration: 1, ease: "easeOut" }}
                                 className="relative z-10 bg-white rounded-2xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] border border-ledger-border overflow-hidden ring-4 ring-white/50 w-full max-w-[280px] sm:max-w-[300px]"
                             >
-                                <img
+                                <Image
                                     src="/screenshots/edited/2.png"
                                     alt="UPI Payment Request"
+                                    width={300}
+                                    height={650}
                                     className="w-full h-auto block"
+                                    loading="lazy"
+                                    quality={85}
                                 />
                             </motion.div>
 
@@ -77,18 +82,22 @@ export function PaymentFeature() {
                                 whileInView={{ y: 0, opacity: 1 }}
                                 viewport={{ once: true }}
                                 transition={{ duration: 1.2, delay: 0.2, ease: "easeOut" }}
-                                className="relative z-20 w-full max-w-[280px] bg-white rounded-2xl shadow-2xl border border-ledger-border overflow-hidden ring-4 ring-white md:-ml-8 lg:-ml-12"
+                                className="relative z-20 w-full max-w-[280px] bg-white rounded-2xl shadow-2xl border border-ledger-border overflow-hidden ring-4 ring-white lg:-ml-8"
                             >
-                                <img
+                                <Image
                                     src="/screenshots/edited/1.png"
                                     alt="Digital Invoice"
+                                    width={280}
+                                    height={600}
                                     className="w-full h-auto block"
+                                    loading="lazy"
+                                    quality={85}
                                 />
                             </motion.div>
                         </div>
 
-                        {/* Decorative element */}
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-brand-100 rounded-full blur-[120px] opacity-20 -z-10" />
+                        {/* Decorative element - hidden on mobile for performance */}
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-brand-100 rounded-full blur-[120px] opacity-20 -z-10 hidden md:block" />
                     </div>
                 </div>
             </div>

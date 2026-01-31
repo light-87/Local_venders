@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { LayoutDashboard, Package, ShoppingCart, Users, CalendarClock, MessageSquare } from 'lucide-react';
 
@@ -32,10 +33,14 @@ export function AppShowcase() {
                             className="flex flex-col group max-w-[280px] mx-auto"
                         >
                             <div className="bg-white rounded-3xl shadow-ledger-lg border border-ledger-border overflow-hidden ring-4 ring-white/50 transition-all duration-500 group-hover:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.1)] group-hover:-translate-y-2">
-                                <img
+                                <Image
                                     src={item.img}
                                     alt={item.title}
+                                    width={280}
+                                    height={600}
                                     className="w-full h-auto block"
+                                    loading="lazy"
+                                    quality={85}
                                 />
                             </div>
 
@@ -75,19 +80,22 @@ export function AppShowcase() {
                             </div>
                         </div>
                         <div className="relative aspect-[16/9] md:aspect-[16/7] bg-ledger-paper/30 overflow-hidden">
-                            <img
+                            <Image
                                 src="/screenshots/edited/3.png"
                                 alt="Full Pulse Analytics Dashboard"
-                                className="w-full h-full object-cover object-top"
+                                fill
+                                className="object-cover object-top"
+                                loading="lazy"
+                                quality={85}
                             />
                         </div>
                     </motion.div>
                 </div>
             </div>
 
-            {/* Background design elements */}
-            <div className="absolute top-1/4 left-0 w-96 h-96 bg-brand-100/30 rounded-full blur-[120px] -z-10" />
-            <div className="absolute bottom-1/4 right-0 w-96 h-96 bg-brand-100/30 rounded-full blur-[120px] -z-10" />
+            {/* Background design elements - hidden on mobile for performance */}
+            <div className="absolute top-1/4 left-0 w-96 h-96 bg-brand-100/30 rounded-full blur-[120px] -z-10 hidden md:block" />
+            <div className="absolute bottom-1/4 right-0 w-96 h-96 bg-brand-100/30 rounded-full blur-[120px] -z-10 hidden md:block" />
         </section>
     );
 }

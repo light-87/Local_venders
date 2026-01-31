@@ -291,7 +291,7 @@ export function BillPdf({ bill, qrCodeDataUrl }: BillPdfProps) {
           {/* QR Code */}
           {qrCodeDataUrl && (
             <View style={styles.qrContainer}>
-              <Image style={styles.qrImage} src={qrCodeDataUrl} />
+              <Image style={styles.qrImage} src={qrCodeDataUrl} alt="Bill QR Code" />
               <Text style={styles.qrLabel}>Scan to view bill</Text>
             </View>
           )}
