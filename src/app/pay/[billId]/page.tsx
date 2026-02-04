@@ -151,10 +151,22 @@ export default async function PaymentPage({
                 <span className="text-gray-900 tabular-nums">{formatCurrency(sale.tax_amount)}</span>
               </div>
             )}
+            <div className="flex justify-between text-sm mb-2">
+              <span className="text-gray-500">Total Amount</span>
+              <span className="text-gray-900 tabular-nums">{formatCurrency(sale.total_amount)}</span>
+            </div>
+            {sale.amount_paid > 0 && sale.balance_amount > 0 && (
+              <div className="flex justify-between text-sm mb-2 text-green-600">
+                <span>Amount Paid</span>
+                <span className="tabular-nums">-{formatCurrency(sale.amount_paid)}</span>
+              </div>
+            )}
             <div className="flex justify-between items-center pt-2 border-t border-gray-200">
-              <span className="text-lg font-semibold text-gray-900">Total Amount</span>
+              <span className="text-lg font-semibold text-gray-900">
+                {sale.balance_amount > 0 ? 'Balance Due' : 'Total Amount'}
+              </span>
               <span className="text-2xl font-bold text-blue-600 tabular-nums">
-                {formatCurrency(sale.total_amount)}
+                {formatCurrency(sale.balance_amount > 0 ? sale.balance_amount : sale.total_amount)}
               </span>
             </div>
           </div>
@@ -164,7 +176,7 @@ export default async function PaymentPage({
             <p className="text-center text-sm text-gray-500 mb-4">Choose payment method</p>
             <PaymentButtons
               upiId={vendor.upi_id}
-              amount={sale.total_amount}
+              amount={sale.balance_amount > 0 ? sale.balance_amount : sale.total_amount}
               businessName={vendor.business_name}
               billNumber={sale.bill_number}
             />
