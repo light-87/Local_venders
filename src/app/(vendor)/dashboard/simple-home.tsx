@@ -126,24 +126,32 @@ function SalesCard({ amount, count }: { amount: number; count: number }) {
   const textColor = hasSales ? 'text-blue-600' : 'text-gray-500';
 
   return (
-    <Card className={`${bgColor} border ${borderColor} min-h-[100px] flex flex-col justify-between p-3`}>
-      <div className="flex items-center gap-1.5 mb-1">
-        <div className={`w-5 h-5 rounded-full ${iconBg} flex items-center justify-center`}>
-          <TrendingUp className={`w-3 h-3 ${iconColor}`} />
+    <Link href="/sales-report">
+      <Card
+        variant="interactive"
+        className={`${bgColor} border ${borderColor} min-h-[100px] flex flex-col justify-between p-3`}
+      >
+        <div className="flex items-center gap-1.5 mb-1">
+          <div className={`w-5 h-5 rounded-full ${iconBg} flex items-center justify-center`}>
+            <TrendingUp className={`w-3 h-3 ${iconColor}`} />
+          </div>
+          <span className="text-xs font-medium text-gray-600">Sales</span>
         </div>
-        <span className="text-xs font-medium text-gray-600">Sales</span>
-      </div>
-      <div className="flex-1">
-        <p className={`text-base font-bold ${amountColor} tabular-nums`}>
-          {formatCurrency(amount)}
-        </p>
-        <p className={`text-xs ${textColor} mt-0.5`}>
-          {hasSales
-            ? `${count} today`
-            : 'No sales'}
-        </p>
-      </div>
-    </Card>
+        <div className="flex-1">
+          <p className={`text-base font-bold ${amountColor} tabular-nums`}>
+            {formatCurrency(amount)}
+          </p>
+          <p className={`text-xs ${textColor} mt-0.5`}>
+            {hasSales
+              ? `${count} today`
+              : 'No sales'}
+          </p>
+        </div>
+        <div className="flex justify-end">
+          <ChevronRight className={`w-3 h-3 ${iconColor}`} />
+        </div>
+      </Card>
+    </Link>
   );
 }
 
