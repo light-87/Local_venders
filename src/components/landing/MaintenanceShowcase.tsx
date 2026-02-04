@@ -65,6 +65,7 @@ export function MaintenanceShowcase() {
                                     src="/screenshots/edited/12.jpeg"
                                     alt="Service Reminders Dashboard"
                                     className="w-full h-auto block"
+                                    loading="lazy"
                                 />
                             </motion.div>
 
@@ -81,9 +82,10 @@ export function MaintenanceShowcase() {
                                     <span>WhatsApp Reminder Details</span>
                                 </div>
                                 <img
-                                    src="/screenshots/edited/9.png"
+                                    src="/screenshots/optimized/9.webp"
                                     alt="Health-Focused Maintenance Alert"
                                     className="w-full h-auto block"
+                                    loading="lazy"
                                 />
                             </motion.div>
                         </div>

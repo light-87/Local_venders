@@ -65,9 +65,10 @@ export function PaymentFeature() {
                                 className="relative z-10 bg-white rounded-2xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] border border-ledger-border overflow-hidden ring-4 ring-white/50 w-full max-w-[280px] sm:max-w-[300px]"
                             >
                                 <img
-                                    src="/screenshots/edited/2.png"
+                                    src="/screenshots/optimized/2.webp"
                                     alt="UPI Payment Request"
                                     className="w-full h-auto block"
+                                    loading="lazy"
                                 />
                             </motion.div>
 
@@ -80,9 +81,10 @@ export function PaymentFeature() {
                                 className="relative z-20 w-full max-w-[280px] bg-white rounded-2xl shadow-2xl border border-ledger-border overflow-hidden ring-4 ring-white md:-ml-8 lg:-ml-12"
                             >
                                 <img
-                                    src="/screenshots/edited/1.png"
+                                    src="/screenshots/optimized/1.webp"
                                     alt="Digital Invoice"
                                     className="w-full h-auto block"
+                                    loading="lazy"
                                 />
                             </motion.div>
                         </div>

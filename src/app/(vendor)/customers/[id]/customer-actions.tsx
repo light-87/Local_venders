@@ -17,6 +17,7 @@ export function CustomerActions({ customer }: CustomerActionsProps) {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [whatsappLoading, setWhatsappLoading] = useState(false);
 
   const handleDelete = async () => {
     setDeleteLoading(true);
@@ -41,11 +42,36 @@ export function CustomerActions({ customer }: CustomerActionsProps) {
     }
   };
 
-  const handleWhatsApp = () => {
-    if (customer.phone) {
-      const phone = customer.phone.replace(/\D/g, '');
-      const url = `https://wa.me/${phone.startsWith('91') ? phone : '91' + phone}`;
-      window.open(url, '_blank');
+  const handleWhatsApp = async () => {
+    // Open window immediately to avoid popup blocker (must be synchronous with user click)
+    const newWindow = window.open('', '_blank');
+
+    setWhatsappLoading(true);
+    try {
+      // Fetch fresh customer data to get the latest phone number (with cache busting)
+      const res = await fetch(`/api/customers/${customer.id}?t=${Date.now()}`, {
+        cache: 'no-store',
+      });
+      const json = await res.json();
+
+      if (json.success && json.customer?.phone) {
+        const phone = json.customer.phone.replace(/\D/g, '');
+        const url = `https://wa.me/${phone.startsWith('91') ? phone : '91' + phone}`;
+        if (newWindow) {
+          newWindow.location.href = url;
+        }
+      } else if (json.success && !json.customer?.phone) {
+        if (newWindow) newWindow.close();
+        error('Customer has no phone number');
+      } else {
+        if (newWindow) newWindow.close();
+        error('Failed to fetch customer data');
+      }
+    } catch {
+      if (newWindow) newWindow.close();
+      error('Something went wrong');
+    } finally {
+      setWhatsappLoading(false);
     }
   };
 
@@ -66,6 +92,7 @@ export function CustomerActions({ customer }: CustomerActionsProps) {
             size="sm"
             icon={<MessageCircle className="w-4 h-4" />}
             onClick={handleWhatsApp}
+            loading={whatsappLoading}
           >
             WhatsApp
           </Button>

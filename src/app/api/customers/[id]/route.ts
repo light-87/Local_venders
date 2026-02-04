@@ -3,6 +3,10 @@ import { validateSession } from '@/lib/auth';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { z } from 'zod';
 
+// Disable caching - always fetch fresh data
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 const updateCustomerSchema = z.object({
   name: z.string().min(1, 'Name is required').optional(),
   phone: z.string().nullable().optional(),
@@ -31,7 +35,9 @@ export async function GET(
       .single();
 
     if (error || !customer) {
-      return NextResponse.json({ error: 'Customer not found' }, { status: 404 });
+      const response = NextResponse.json({ error: 'Customer not found' }, { status: 404 });
+      response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+      return response;
     }
 
     // Get recent sales
@@ -42,14 +48,18 @@ export async function GET(
       .order('created_at', { ascending: false })
       .limit(20);
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       customer,
       sales: sales ?? [],
     });
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+    return response;
   } catch (error) {
     console.error('Customer fetch error:', error);
-    return NextResponse.json({ error: 'Failed to fetch customer' }, { status: 500 });
+    const response = NextResponse.json({ error: 'Failed to fetch customer' }, { status: 500 });
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+    return response;
   }
 }
 

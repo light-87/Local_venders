@@ -57,7 +57,7 @@ export default async function BillPage({
     business_logo: string | null;
     upi_id: string | null;
   };
-  const customer = sale.customer as { name: string; phone: string | null } | null;
+  const customer = sale.customer as { id: string; name: string; phone: string | null } | null;
 
   return (
     <div className="min-h-screen bg-surface-primary">
@@ -172,6 +172,24 @@ export default async function BillPage({
                 {formatCurrency(sale.total_amount)}
               </span>
             </div>
+
+            {/* Amount Paid / Balance */}
+            {sale.balance_amount > 0 && (
+              <div className="mt-4 pt-4 border-t border-gray-200 space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-green-600">Amount Paid</span>
+                  <span className="font-medium text-green-700 tabular-nums">
+                    {formatCurrency(sale.amount_paid || 0)}
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-amber-600 font-medium">Balance Due</span>
+                  <span className="font-bold text-amber-700 tabular-nums">
+                    {formatCurrency(sale.balance_amount)}
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Payment Status */}
@@ -182,14 +200,14 @@ export default async function BillPage({
                   ? 'bg-green-100 text-green-700'
                   : sale.payment_status === 'pending'
                   ? 'bg-amber-100 text-amber-700'
-                  : 'bg-blue-100 text-blue-700'
+                  : 'bg-amber-100 text-amber-700'
               }`}
             >
               {sale.payment_status === 'paid'
                 ? 'Paid'
                 : sale.payment_status === 'pending'
                 ? 'Payment Pending'
-                : 'Partially Paid'}
+                : `Partial - Balance: ${formatCurrency(sale.balance_amount)}`}
             </span>
           </div>
 
@@ -204,6 +222,7 @@ export default async function BillPage({
           billId={billId}
           vendorHasUpiId={!!vendor.upi_id}
           billData={{
+            customerId: customer?.id || null,
             customerName: customer?.name || 'Customer',
             customerPhone: customer?.phone || null,
             businessName: vendor.business_name,
@@ -212,7 +231,12 @@ export default async function BillPage({
               quantity: item.quantity,
               price: item.subtotal,
             })),
+            subtotal: sale.subtotal,
+            discount: sale.discount_amount,
+            discountPercent: sale.discount_percent,
             total: sale.total_amount,
+            amountPaid: sale.amount_paid,
+            balance: sale.balance_amount,
             date: formatDateShort(sale.sale_date || sale.created_at),
           }}
         />

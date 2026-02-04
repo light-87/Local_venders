@@ -3,12 +3,13 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { formatCurrency, formatDate } from '@/lib/utils/format';
 import { PageHeader } from '@/components/layout';
 import { Card } from '@/components/ui';
-import { User, Phone, ShoppingBag, MapPin, Wrench } from 'lucide-react';
+import { User, Phone, ShoppingBag, MapPin, Wrench, Wallet } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { CustomerActions } from './customer-actions';
 import { WarrantyItemsSection } from './warranty-items-section';
 import { CustomerRemindersSection } from './customer-reminders-section';
+import { CustomerBalanceHistory } from './customer-balance-history';
 
 interface ServiceReminder {
   label: string;
@@ -149,7 +150,7 @@ export default async function CustomerDetailPage({
             <CustomerActions customer={customer} />
           </div>
 
-          <div className={`grid ${totalMaintenanceSpent > 0 ? 'grid-cols-3' : 'grid-cols-2'} gap-3 mt-6`}>
+          <div className={`grid grid-cols-2 gap-3 mt-6`}>
             <div className="text-center p-3 bg-gray-50 rounded-xl">
               <p className="text-2xl font-semibold text-gray-900">
                 {customer.total_purchases}
@@ -173,6 +174,19 @@ export default async function CustomerDetailPage({
                 </p>
               </div>
             )}
+            {customer.balance_amount > 0 && (
+              <Link href="/balances">
+                <div className="text-center p-3 bg-amber-50 rounded-xl hover:bg-amber-100 transition-colors cursor-pointer">
+                  <p className="text-2xl font-semibold text-amber-700 tabular-nums">
+                    {formatCurrency(customer.balance_amount)}
+                  </p>
+                  <p className="text-sm text-amber-600 flex items-center justify-center gap-1">
+                    <Wallet className="w-3 h-3" />
+                    Balance Due
+                  </p>
+                </div>
+              </Link>
+            )}
           </div>
         </Card>
 
@@ -181,6 +195,9 @@ export default async function CustomerDetailPage({
 
         {/* Service Reminders */}
         <CustomerRemindersSection customerId={customer.id} />
+
+        {/* Balance History */}
+        <CustomerBalanceHistory customerId={customer.id} currentBalance={customer.balance_amount || 0} />
 
         {/* Purchase History */}
         <section>

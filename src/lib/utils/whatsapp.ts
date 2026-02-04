@@ -136,25 +136,56 @@ export function generatePaymentReminderMessage(params: {
 }
 
 /**
- * Generate bill notification message with optional payment link
+ * Generate bill notification message with optional payment link, discount, and balance
  */
 export function generateBillMessage(params: {
   customerName: string;
   businessName: string;
   items: string; // Pre-formatted items string like "Rice 5kg Rs.250 | Oil 1L Rs.180"
+  subtotal?: number;
+  discount?: number;
+  discountPercent?: number;
   total: number;
+  amountPaid?: number;
+  balance?: number;
   date: string;
   paymentLink?: string; // Optional payment link (only included if vendor has UPI ID)
 }): string {
-  const { customerName, businessName, items, total, date, paymentLink } = params;
+  const {
+    customerName,
+    businessName,
+    items,
+    subtotal,
+    discount,
+    discountPercent,
+    total,
+    amountPaid,
+    balance,
+    date,
+    paymentLink,
+  } = params;
 
   let message = `Hi *${customerName}*,\n\n`;
   message += `Thank you for shopping at *${businessName}*!\n\n`;
   message += `*BILL SUMMARY*\n`;
   message += `------------------------\n\n`;
   message += `*Items:*\n${items}\n\n`;
+
+  // Show subtotal if there's a discount
+  if (subtotal && discount && discount > 0) {
+    message += `Subtotal: Rs.${subtotal.toLocaleString('en-IN')}\n`;
+    message += `Discount${discountPercent ? ` (${discountPercent}%)` : ''}: -Rs.${discount.toLocaleString('en-IN')}\n`;
+  }
+
   message += `*Total:* Rs.${total.toLocaleString('en-IN')}\n`;
-  message += `*Date:* ${date}\n\n`;
+
+  // Show payment breakdown if partial payment
+  if (amountPaid !== undefined && balance !== undefined && balance > 0) {
+    message += `\n*Paid:* Rs.${amountPaid.toLocaleString('en-IN')}\n`;
+    message += `*Balance Due:* Rs.${balance.toLocaleString('en-IN')}\n`;
+  }
+
+  message += `\n*Date:* ${date}\n`;
   message += `------------------------\n`;
 
   // Add payment link if available

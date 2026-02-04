@@ -206,6 +206,17 @@ export async function POST(request: Request) {
     // Use provided sale date or current IST date
     const saleDate = data.saleDate || getISTDateString();
 
+    // Calculate amount paid and balance
+    // If amountPaid not specified, assume full payment
+    const amountPaid = data.amountPaid !== undefined ? data.amountPaid : totalAmount;
+    const balanceAmount = Math.max(0, totalAmount - amountPaid);
+
+    // Determine payment status
+    let paymentStatus: 'paid' | 'partial' | 'pending' = 'paid';
+    if (balanceAmount > 0) {
+      paymentStatus = amountPaid > 0 ? 'partial' : 'pending';
+    }
+
     // Create sale with sale_type and maintenance_amount
     const { data: sale, error: saleError } = await supabase
       .from('sales')
@@ -221,8 +232,10 @@ export async function POST(request: Request) {
         discount_description: data.discountDescription ?? null,
         tax_amount: data.taxAmount ?? 0,
         total_amount: totalAmount,
+        amount_paid: amountPaid,
+        balance_amount: balanceAmount,
         maintenance_amount: maintenanceAmount,
-        payment_status: 'paid',
+        payment_status: paymentStatus,
         sale_type: data.saleType || 'regular',
         notes: data.notes ?? null,
         sale_date: saleDate,
@@ -357,47 +370,54 @@ export async function POST(request: Request) {
         }
       }
 
-      // Update account balance
-      const { data: account } = await supabase
-        .from('accounts')
-        .select('balance')
-        .eq('id', data.accountId)
-        .single();
-
-      if (account) {
-        await supabase
+      // Only update account balance and create income if something was paid
+      if (amountPaid > 0) {
+        // Update account balance (only for amount actually received)
+        const { data: account } = await supabase
           .from('accounts')
-          .update({ balance: account.balance + totalAmount })
-          .eq('id', data.accountId);
+          .select('balance')
+          .eq('id', data.accountId)
+          .single();
+
+        if (account) {
+          await supabase
+            .from('accounts')
+            .update({ balance: account.balance + amountPaid })
+            .eq('id', data.accountId);
+        }
+
+        // Create income record (legacy) - only for amount paid
+        await supabase.from('income').insert({
+          vendor_id: session.id,
+          account_id: data.accountId,
+          sale_id: sale.id,
+          amount: amountPaid,
+          description: balanceAmount > 0
+            ? `Sale ${billNumber} (Partial - Balance: Rs.${balanceAmount})`
+            : `Sale ${billNumber}`,
+          income_date: saleDate,
+        });
+
+        // Create transaction record for unified transaction view - only for amount paid
+        await supabase.from('transactions').insert({
+          vendor_id: session.id,
+          account_id: data.accountId,
+          sale_id: sale.id,
+          name: `Sale #${billNumber}`,
+          description: balanceAmount > 0
+            ? `Partial payment (Balance: Rs.${balanceAmount})`
+            : customerId ? 'Customer sale' : 'Walk-in sale',
+          type: 'income',
+          amount: amountPaid,
+          transaction_date: saleDate,
+        });
       }
-
-      // Create income record (legacy)
-      await supabase.from('income').insert({
-        vendor_id: session.id,
-        account_id: data.accountId,
-        sale_id: sale.id,
-        amount: totalAmount,
-        description: `Sale ${billNumber}`,
-        income_date: saleDate,
-      });
-
-      // Create transaction record for unified transaction view
-      await supabase.from('transactions').insert({
-        vendor_id: session.id,
-        account_id: data.accountId,
-        sale_id: sale.id,
-        name: `Sale #${billNumber}`,
-        description: customerId ? 'Customer sale' : 'Walk-in sale',
-        type: 'income',
-        amount: totalAmount,
-        transaction_date: saleDate,
-      });
 
       // Update customer stats if linked (only for regular sales)
       if (customerId) {
         const { data: customer } = await supabase
           .from('customers')
-          .select('total_purchases, total_spent')
+          .select('total_purchases, total_spent, balance_amount')
           .eq('id', customerId)
           .single();
 
@@ -406,8 +426,34 @@ export async function POST(request: Request) {
             .from('customers')
             .update({
               total_purchases: customer.total_purchases + 1,
-              total_spent: customer.total_spent + totalAmount,
+              total_spent: customer.total_spent + amountPaid, // Only count what was paid
               last_purchase_date: new Date().toISOString(),
+            })
+            .eq('id', customerId);
+        }
+
+        // If there's a balance, create a customer balance transaction
+        if (balanceAmount > 0) {
+          // Get current customer balance for running_balance calculation
+          const currentBalance = customer?.balance_amount || 0;
+          const newRunningBalance = currentBalance + balanceAmount;
+
+          await supabase.from('customer_balance_transactions').insert({
+            vendor_id: session.id,
+            customer_id: customerId,
+            sale_id: sale.id,
+            type: 'sale',
+            amount: balanceAmount,
+            running_balance: newRunningBalance,
+            notes: `Balance from Sale #${billNumber}`,
+          });
+
+          // Note: The customer balance_amount is updated by the database trigger
+          // But we'll also update it manually as a fallback
+          await supabase
+            .from('customers')
+            .update({
+              balance_amount: newRunningBalance,
             })
             .eq('id', customerId);
         }
