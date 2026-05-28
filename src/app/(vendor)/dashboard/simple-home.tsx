@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card } from '@/components/ui';
 import { formatCurrency } from '@/lib/utils/format';
 import {
@@ -281,24 +281,28 @@ function RemindersCard({ todayCount, overdueCount }: { todayCount: number; overd
 export function SimpleHome({ vendorName }: SimpleHomeProps) {
   const [data, setData] = useState<HomeData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setFetchError(null);
+    try {
+      const res = await fetch('/api/home');
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || `Request failed (${res.status})`);
+      }
+      setData(json.data);
+    } catch (err) {
+      setFetchError(err instanceof Error ? err.message : 'Failed to load home data');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await fetch('/api/home');
-        const json = await res.json();
-        if (json.success) {
-          setData(json.data);
-        }
-      } catch (error) {
-        console.error('Failed to fetch home data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   const firstName = vendorName.split(' ')[0];
 
@@ -333,6 +337,24 @@ export function SimpleHome({ vendorName }: SimpleHomeProps) {
       <section>
         {loading ? (
           <TodayCardSkeleton />
+        ) : fetchError ? (
+          <Card className="bg-red-50 border border-red-200">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-red-900">
+                  Could not load today&apos;s summary
+                </p>
+                <p className="text-xs text-red-700 mt-0.5">{fetchError}</p>
+              </div>
+              <button
+                onClick={fetchData}
+                className="text-sm font-medium text-red-700 underline shrink-0"
+              >
+                Retry
+              </button>
+            </div>
+          </Card>
         ) : data ? (
           <div className="grid grid-cols-3 gap-2">
             {/* Sales Card */}

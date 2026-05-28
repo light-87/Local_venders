@@ -34,18 +34,23 @@ export async function GET(request: Request) {
       query = query.eq('category_id', categoryId);
     }
 
-    const { data: expenses, error } = await query.limit(100);
+    const PAGE_SIZE = 100;
+    const { data: rows, error } = await query.limit(PAGE_SIZE + 1);
 
     if (error) {
       return NextResponse.json({ error: 'Failed to fetch expenses' }, { status: 500 });
     }
 
-    const total = expenses?.reduce((sum, e) => sum + Number(e.amount), 0) ?? 0;
+    const truncated = (rows?.length ?? 0) > PAGE_SIZE;
+    const expenses = truncated ? rows!.slice(0, PAGE_SIZE) : rows ?? [];
+    const total = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
 
     return NextResponse.json({
       success: true,
-      expenses: expenses ?? [],
+      expenses,
       total,
+      truncated,
+      pageSize: PAGE_SIZE,
     });
   } catch (error) {
     console.error('Expenses fetch error:', error);

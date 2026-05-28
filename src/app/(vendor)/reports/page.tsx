@@ -1,25 +1,23 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { formatInTimeZone } from 'date-fns-tz';
 import { PageHeader } from '@/components/layout';
 import { Card, useToast } from '@/components/ui';
 import { Calendar, Download, FileText } from 'lucide-react';
 
 type RangePreset = 'today' | '7days' | '30days' | 'custom';
 
+const IST = 'Asia/Kolkata';
+const ISO_DATE = 'yyyy-MM-dd';
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 function todayIST(): string {
-  const now = new Date();
-  const utc = now.getTime() + now.getTimezoneOffset() * 60000;
-  const ist = new Date(utc + 5.5 * 60 * 60000);
-  return ist.toISOString().slice(0, 10);
+  return formatInTimeZone(new Date(), IST, ISO_DATE);
 }
 
 function daysAgoIST(days: number): string {
-  const now = new Date();
-  now.setDate(now.getDate() - days);
-  const utc = now.getTime() + now.getTimezoneOffset() * 60000;
-  const ist = new Date(utc + 5.5 * 60 * 60000);
-  return ist.toISOString().slice(0, 10);
+  return formatInTimeZone(new Date(Date.now() - days * DAY_MS), IST, ISO_DATE);
 }
 
 export default function ReportsPage() {

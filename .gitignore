@@ -43,3 +43,11 @@ public/sw.js
 public/sw.js.map
 public/workbox-*.js
 public/workbox-*.js.map
+
+# Playwright
+/test-results/
+/playwright-report/
+/playwright/.cache/
+/tests/e2e/.auth/
+.env.test
+
