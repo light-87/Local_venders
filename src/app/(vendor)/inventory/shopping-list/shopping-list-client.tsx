@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ShoppingCart, Share2, RefreshCcw } from 'lucide-react';
+import { ShoppingCart, Share2, RefreshCcw, Download, Printer } from 'lucide-react';
 import { formatQuantity } from '@/lib/utils/format';
 
 export interface ShoppingItem {
@@ -43,6 +43,12 @@ export function ShoppingListClient({ items, businessName }: Props) {
     return `https://wa.me/?text=${encodeURIComponent(body)}`;
   }, [items, qtyMap, businessName]);
 
+  const handlePrint = () => {
+    if (typeof window !== 'undefined') {
+      window.print();
+    }
+  };
+
   if (items.length === 0) {
     return (
       <div className="rounded-2xl border border-ledger-border bg-white p-8 text-center">
@@ -63,21 +69,42 @@ export function ShoppingListClient({ items, businessName }: Props) {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2 print:hidden">
         <p className="text-sm text-gray-600">
           {totalLines} item{totalLines === 1 ? '' : 's'} need restocking. Adjust quantities before sharing.
         </p>
-        {whatsappUrl && (
+        <div className="flex flex-wrap gap-2">
+          {whatsappUrl && (
+            <a
+              href={whatsappUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700"
+            >
+              <Share2 className="w-4 h-4" />
+              WhatsApp
+            </a>
+          )}
           <a
-            href={whatsappUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700"
+            href="/api/inventory/shopping-list/pdf"
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-brand-500 text-white text-sm font-medium hover:bg-brand-600"
           >
-            <Share2 className="w-4 h-4" />
-            Share on WhatsApp
+            <Download className="w-4 h-4" />
+            Download PDF
           </a>
-        )}
+          <button
+            onClick={handlePrint}
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-ledger-border text-ledger-charcoal text-sm font-medium hover:bg-surface-secondary"
+          >
+            <Printer className="w-4 h-4" />
+            Print
+          </button>
+        </div>
+      </div>
+
+      <div className="hidden print:block mb-4 pb-3 border-b border-gray-300">
+        <h1 className="text-2xl font-bold text-black">{businessName}</h1>
+        <p className="text-sm text-gray-700 mt-1">Shopping list — {new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
       </div>
 
       <ul className="space-y-2">
@@ -86,33 +113,37 @@ export function ShoppingListClient({ items, businessName }: Props) {
           return (
             <li
               key={item.id}
-              className="rounded-xl border border-ledger-border bg-white p-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+              className="rounded-xl border border-ledger-border bg-white p-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between print:rounded-none print:border-0 print:border-b print:border-gray-300 print:p-2 print:flex-row print:items-center"
             >
-              <div className="min-w-0">
-                <p className="font-medium text-ledger-charcoal truncate">{item.name}</p>
-                <p className="text-xs text-gray-500 mt-0.5">
+              <span className="hidden print:inline-block w-4 h-4 border border-black mr-3 shrink-0" />
+              <div className="min-w-0 print:flex-1">
+                <p className="font-medium text-ledger-charcoal truncate print:text-black">{item.name}</p>
+                <p className="text-xs text-gray-500 mt-0.5 print:text-gray-700">
                   {item.categoryName ? `${item.categoryName} • ` : ''}
                   In stock: {formatQuantity(item.currentStock, item.unit)} • Alert at {formatQuantity(item.minStockAlert, item.unit)}
                 </p>
               </div>
-              <div className="flex items-center gap-2">
-                <label className="text-xs text-gray-500 whitespace-nowrap">Order qty</label>
+              <div className="flex items-center gap-2 print:gap-3">
+                <label className="text-xs text-gray-500 whitespace-nowrap print:hidden">Order qty</label>
                 <input
                   type="number"
                   inputMode="decimal"
                   min={0}
                   step="0.01"
-                  className="w-24 px-2 py-1.5 rounded-md border border-ledger-border text-right tabular-nums focus:outline-none focus:ring-2 focus:ring-brand-200"
+                  className="w-24 px-2 py-1.5 rounded-md border border-ledger-border text-right tabular-nums focus:outline-none focus:ring-2 focus:ring-brand-200 print:hidden"
                   value={qty}
                   onChange={(e) => {
                     const v = Number(e.target.value);
                     setQtyMap((prev) => ({ ...prev, [item.id]: Number.isFinite(v) ? v : 0 }));
                   }}
                 />
-                <span className="text-xs text-gray-500">{item.unit}</span>
+                <span className="text-xs text-gray-500 print:hidden">{item.unit}</span>
+                <span className="hidden print:inline text-sm font-semibold text-black whitespace-nowrap">
+                  Order: {qty} {item.unit}
+                </span>
                 <Link
                   href={`/inventory/${item.id}?addStock=${qty}`}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-brand-500 text-white text-xs font-medium hover:bg-brand-600 whitespace-nowrap"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-brand-500 text-white text-xs font-medium hover:bg-brand-600 whitespace-nowrap print:hidden"
                 >
                   <RefreshCcw className="w-3.5 h-3.5" />
                   Restock

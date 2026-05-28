@@ -49,8 +49,20 @@ const STATUS_STYLES: Record<'out' | 'low' | 'ok', string> = {
 const STATUS_LABEL: Record<'out' | 'low' | 'ok', string> = {
   out: 'Out',
   low: 'Low',
-  ok: 'In Stock',
+  ok: 'OK',
 };
+
+/**
+ * Pick the column count that makes cards fill the viewport without scrolling.
+ * Targets a card aspect ratio close to ~4:3 on a 16:9 display.
+ * Tunable: increase the multiplier (~1.5) if rows look too short.
+ */
+function computeColumns(itemCount: number): { cols: number; rows: number } {
+  if (itemCount <= 1) return { cols: 1, rows: 1 };
+  const cols = Math.max(1, Math.ceil(Math.sqrt(itemCount * 1.6)));
+  const rows = Math.ceil(itemCount / cols);
+  return { cols, rows };
+}
 
 export default async function InventoryDisplayPage() {
   const session = await validateSession();
@@ -58,95 +70,88 @@ export default async function InventoryDisplayPage() {
 
   const { vendor, items } = await getDisplayData(session.id);
 
-  const grouped = new Map<string, InventoryRow[]>();
-  for (const item of items) {
-    const key = item.category?.name ?? 'Uncategorised';
-    if (!grouped.has(key)) grouped.set(key, []);
-    grouped.get(key)!.push(item);
-  }
-
   const counts = items.reduce(
     (acc, i) => {
-      const s = statusFor(i);
-      acc[s] += 1;
+      acc[statusFor(i)] += 1;
       return acc;
     },
     { out: 0, low: 0, ok: 0 }
   );
 
+  const { cols } = computeColumns(items.length || 1);
+
   return (
-    <div className="fixed inset-0 z-50 bg-ledger-charcoal text-white overflow-auto">
-      <header className="sticky top-0 z-10 bg-ledger-charcoal/95 backdrop-blur border-b border-white/10 px-6 py-3 flex items-center justify-between gap-4">
+    <div className="fixed inset-0 z-50 bg-ledger-charcoal text-white flex flex-col">
+      <header className="shrink-0 bg-ledger-charcoal/95 backdrop-blur border-b border-white/10 px-4 py-2 flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
           <Link
             href="/inventory"
-            className="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
+            className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 transition-colors shrink-0"
             aria-label="Back to inventory"
           >
             <ArrowLeft className="w-4 h-4" />
           </Link>
           <div className="min-w-0">
-            <p className="text-xs uppercase tracking-wide text-gray-400">Live Stock Display</p>
-            <h1 className="text-lg font-semibold truncate">
+            <p className="text-[10px] uppercase tracking-wide text-gray-400 leading-tight">
+              Live Stock — {items.length} items
+            </p>
+            <h1 className="text-sm font-semibold truncate leading-tight">
               {vendor?.business_name ?? vendor?.name ?? 'Inventory'}
             </h1>
           </div>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="hidden sm:flex items-center gap-3 text-xs">
-            <span className="inline-flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-              {counts.ok} OK
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
-              {counts.low} Low
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-red-500" />
-              {counts.out} Out
-            </span>
-          </div>
+        <div className="flex items-center gap-3 text-xs shrink-0">
+          <span className="inline-flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+            <span className="tabular-nums">{counts.ok}</span>
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-amber-500" />
+            <span className="tabular-nums">{counts.low}</span>
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-red-500" />
+            <span className="tabular-nums">{counts.out}</span>
+          </span>
           <RefreshTick />
         </div>
       </header>
 
-      <main className="p-6 space-y-8">
+      <main className="flex-1 min-h-0 p-2">
         {items.length === 0 ? (
-          <div className="flex items-center justify-center h-[60vh] text-gray-400">
+          <div className="h-full flex items-center justify-center text-gray-400">
             No inventory items yet.
           </div>
         ) : (
-          Array.from(grouped.entries()).map(([categoryName, rows]) => (
-            <section key={categoryName}>
-              <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-300 mb-3 border-b border-white/10 pb-2">
-                {categoryName} <span className="text-gray-500 font-normal">({rows.length})</span>
-              </h2>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                {rows.map((item) => {
-                  const status = statusFor(item);
-                  const stockNum = Number(item.current_stock);
-                  return (
-                    <div
-                      key={item.id}
-                      className={`rounded-xl border-2 p-4 flex flex-col gap-1 min-w-0 ${STATUS_STYLES[status]}`}
-                    >
-                      <p className="text-sm font-medium truncate" title={item.name}>
-                        {item.name}
-                      </p>
-                      <p className="text-4xl font-bold tabular-nums leading-none">
-                        {stockNum % 1 === 0 ? stockNum : stockNum.toFixed(2)}
-                      </p>
-                      <p className="text-xs opacity-90">{item.unit}</p>
-                      <p className="text-[10px] uppercase tracking-wide opacity-75 mt-auto pt-2">
-                        {STATUS_LABEL[status]} &middot; alert {Number(item.min_stock_alert)}
-                      </p>
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
-          ))
+          <div
+            className="h-full grid gap-2"
+            style={{
+              gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
+              gridAutoRows: '1fr',
+            }}
+          >
+            {items.map((item) => {
+              const status = statusFor(item);
+              const stockNum = Number(item.current_stock);
+              return (
+                <div
+                  key={item.id}
+                  className={`rounded-lg border p-2 flex flex-col justify-between min-w-0 min-h-0 ${STATUS_STYLES[status]}`}
+                >
+                  <p className="text-[clamp(0.65rem,1vw,0.95rem)] font-medium leading-tight truncate" title={item.name}>
+                    {item.name}
+                  </p>
+                  <p className="text-[clamp(1.5rem,4vw,3.5rem)] font-bold tabular-nums leading-none text-center">
+                    {stockNum % 1 === 0 ? stockNum : stockNum.toFixed(1)}
+                  </p>
+                  <div className="flex items-center justify-between gap-1 text-[clamp(0.55rem,0.8vw,0.75rem)] opacity-90">
+                    <span className="truncate">{item.unit}</span>
+                    <span className="font-medium uppercase">{STATUS_LABEL[status]}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         )}
       </main>
     </div>

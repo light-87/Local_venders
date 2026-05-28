@@ -106,3 +106,22 @@
     -webkit-mask-image: linear-gradient(to right, black 90%, transparent);
   }
 }
+
+@media print {
+  /* Hide app chrome so printed pages contain only the intended content */
+  nav,
+  header,
+  [data-print-hide='true'] {
+    display: none !important;
+  }
+
+  body {
+    background: white !important;
+  }
+
+  /* Remove the fixed bottom-nav reserve space when printing */
+  .pb-20,
+  .pb-24 {
+    padding-bottom: 0 !important;
+  }
+}

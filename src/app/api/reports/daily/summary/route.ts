@@ -1,9 +1,7 @@
 import { NextResponse } from 'next/server';
-import { renderToBuffer } from '@react-pdf/renderer';
 import { validateSession } from '@/lib/auth';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getISTDateString } from '@/lib/utils/format';
-import { DailyReportPdf } from '@/lib/pdf/daily-report-pdf';
 import { buildDailyReportData } from '@/lib/services/reports';
 
 export async function GET(request: Request) {
@@ -21,20 +19,9 @@ export async function GET(request: Request) {
     const supabase = createAdminClient();
     const data = await buildDailyReportData(supabase, session.id, from, to);
 
-    const pdfBuffer = await renderToBuffer(<DailyReportPdf data={data} />);
-    const pdfData = new Uint8Array(pdfBuffer);
-    const filename = `kuberbook-report-${from}-to-${to}.pdf`;
-
-    return new NextResponse(pdfData, {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="${filename}"`,
-        'Cache-Control': 'no-store',
-      },
-    });
+    return NextResponse.json({ success: true, data });
   } catch (error) {
-    console.error('Daily report error:', error);
-    return NextResponse.json({ error: 'Failed to generate report' }, { status: 500 });
+    console.error('Daily report summary error:', error);
+    return NextResponse.json({ error: 'Failed to load summary' }, { status: 500 });
   }
 }
