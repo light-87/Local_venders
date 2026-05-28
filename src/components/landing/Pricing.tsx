@@ -8,7 +8,7 @@ export function Pricing() {
     const plans = [
         {
             name: "ANNUAL BUSINESS PLAN",
-            price: "₹10,000",
+            price: "₹15,000",
             originalPrice: "₹20,000",
             period: "/ per year",
             description: "Everything included to run your service business at 100% efficiency. No limits, no extra fees.",
