@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { validateSession } from '@/lib/auth';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { inventoryItemSchema } from '@/lib/utils/validators';
+import { createInventoryExpense } from '@/lib/services/expenses';
 
 export async function GET(
   request: Request,
@@ -61,10 +62,9 @@ export async function PATCH(
 
     const supabase = createAdminClient();
 
-    // Verify ownership
     const { data: existing } = await supabase
       .from('inventory_items')
-      .select('id')
+      .select('id, current_stock, cost_price')
       .eq('id', id)
       .eq('vendor_id', session.id)
       .single();
@@ -96,7 +96,17 @@ export async function PATCH(
       );
     }
 
-    return NextResponse.json({ success: true, item });
+    const qtyAdded = result.data.currentStock - Number(existing.current_stock ?? 0);
+    const costForExpense = result.data.costPrice ?? Number(existing.cost_price ?? 0);
+    const autoExpense = await createInventoryExpense(supabase, {
+      vendorId: session.id,
+      itemName: result.data.name,
+      qtyAdded,
+      costPrice: costForExpense,
+      unit: result.data.unit,
+    });
+
+    return NextResponse.json({ success: true, item, autoExpense });
   } catch (error) {
     console.error('Inventory update error:', error);
     return NextResponse.json(

@@ -14,6 +14,7 @@ import {
   AlertCircle,
   CheckCircle2,
   Wallet,
+  FileText,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -71,13 +72,25 @@ const navigationCards = [
   },
   {
     title: 'Analytics',
-    description: 'Reports & insights',
+    description: 'Charts & insights',
     href: '/analytics',
     icon: BarChart3,
     bgColor: 'bg-indigo-50',
     iconBgColor: 'bg-indigo-100',
     iconColor: 'text-indigo-600',
     borderColor: 'border-indigo-200',
+    countKey: null,
+    countLabel: null,
+  },
+  {
+    title: 'Reports',
+    description: 'Download daily PDF',
+    href: '/reports',
+    icon: FileText,
+    bgColor: 'bg-brand-50',
+    iconBgColor: 'bg-brand-100',
+    iconColor: 'text-brand-600',
+    borderColor: 'border-brand-200',
     countKey: null,
     countLabel: null,
   },

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { validateSession } from '@/lib/auth';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { inventoryItemSchema } from '@/lib/utils/validators';
+import { createInventoryExpense } from '@/lib/services/expenses';
 
 export async function GET(request: Request) {
   try {
@@ -110,7 +111,15 @@ export async function POST(request: Request) {
       );
     }
 
-    return NextResponse.json({ success: true, item });
+    const autoExpense = await createInventoryExpense(supabase, {
+      vendorId: session.id,
+      itemName: result.data.name,
+      qtyAdded: result.data.currentStock,
+      costPrice: result.data.costPrice ?? 0,
+      unit: result.data.unit,
+    });
+
+    return NextResponse.json({ success: true, item, autoExpense });
   } catch (error) {
     console.error('Inventory create error:', error);
     return NextResponse.json(

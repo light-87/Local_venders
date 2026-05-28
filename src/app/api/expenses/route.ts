@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { validateSession } from '@/lib/auth';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { expenseSchema } from '@/lib/utils/validators';
-import { getISTDateString } from '@/lib/utils/format';
+import { createExpense } from '@/lib/services/expenses';
 
 export async function GET(request: Request) {
   try {
@@ -77,7 +77,6 @@ export async function POST(request: Request) {
     const supabase = createAdminClient();
     const data = result.data;
 
-    // Get category name
     const { data: category } = await supabase
       .from('expense_categories')
       .select('name')
@@ -89,55 +88,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid category' }, { status: 400 });
     }
 
-    // Use provided date or current IST date
-    const expenseDate = data.expenseDate || getISTDateString();
-
-    // Create expense
-    const { data: expense, error: expenseError } = await supabase
-      .from('expenses')
-      .insert({
-        vendor_id: session.id,
-        account_id: data.accountId,
-        category_id: data.categoryId,
-        category_name: category.name,
-        amount: data.amount,
-        description: data.description ?? null,
-        expense_date: expenseDate,
-      })
-      .select()
-      .single();
-
-    if (expenseError) {
-      return NextResponse.json(
-        { error: 'Failed to create expense' },
-        { status: 500 }
-      );
-    }
-
-    // Update account balance (subtract)
-    const { data: account } = await supabase
-      .from('accounts')
-      .select('balance')
-      .eq('id', data.accountId)
-      .single();
-
-    if (account) {
-      await supabase
-        .from('accounts')
-        .update({ balance: account.balance - data.amount })
-        .eq('id', data.accountId);
-    }
-
-    // Create transaction record for unified transaction view (Money tab)
-    await supabase.from('transactions').insert({
-      vendor_id: session.id,
-      account_id: data.accountId,
-      expense_id: expense.id,
-      name: category.name,
-      description: data.description ?? null,
-      type: 'expense',
+    const expense = await createExpense(supabase, {
+      vendorId: session.id,
+      accountId: data.accountId,
+      categoryId: data.categoryId,
+      categoryName: category.name,
       amount: data.amount,
-      transaction_date: expenseDate,
+      description: data.description ?? null,
+      expenseDate: data.expenseDate || undefined,
     });
 
     return NextResponse.json({ success: true, expense });

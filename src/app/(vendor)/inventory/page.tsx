@@ -3,7 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { formatCurrency, formatQuantity } from '@/lib/utils/format';
 import { PageHeader } from '@/components/layout';
 import { Card, Badge, EmptyState } from '@/components/ui';
-import { Package, Plus, Search, AlertTriangle } from 'lucide-react';
+import { Package, Plus, Search, AlertTriangle, Tv, ShoppingCart } from 'lucide-react';
 import Link from 'next/link';
 import { InventorySearch } from './inventory-search';
 
@@ -62,11 +62,35 @@ export default async function InventoryPage({
     params.category
   );
 
+  const lowStockCount = items.filter((i) => i.current_stock <= i.min_stock_alert).length;
+
   return (
     <div className="relative pb-20">
       <PageHeader title="Inventory" />
 
       <div className="p-4 space-y-4">
+        <div className="flex gap-2">
+          <Link
+            href="/inventory/shopping-list"
+            className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-white border border-brand-200 text-brand-700 text-sm font-medium hover:bg-brand-50 transition-colors"
+          >
+            <ShoppingCart className="w-4 h-4" />
+            Shopping list
+            {lowStockCount > 0 && (
+              <span className="ml-1 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-brand-500 text-white text-xs font-semibold">
+                {lowStockCount}
+              </span>
+            )}
+          </Link>
+          <Link
+            href="/inventory/display"
+            className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-ledger-charcoal text-white text-sm font-medium hover:opacity-90 transition-opacity"
+          >
+            <Tv className="w-4 h-4" />
+            Display mode
+          </Link>
+        </div>
+
         {/* Search and Filter */}
         <InventorySearch categories={categories} />
 

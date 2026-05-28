@@ -15,9 +15,10 @@ interface InventoryFormProps {
   categories: InventoryCategory[];
   onSuccess?: () => void; // Callback when item is successfully created/updated
   isModal?: boolean; // When used in a modal, don't navigate away
+  addStock?: number; // Pre-add this quantity to current stock (shopping-list restock flow)
 }
 
-export function InventoryForm({ item, categories, onSuccess, isModal }: InventoryFormProps) {
+export function InventoryForm({ item, categories, onSuccess, isModal, addStock }: InventoryFormProps) {
   const router = useRouter();
   const { success, error } = useToast();
   const [loading, setLoading] = useState(false);
@@ -26,6 +27,9 @@ export function InventoryForm({ item, categories, onSuccess, isModal }: Inventor
   const [newCategoryName, setNewCategoryName] = useState('');
   const [categoryLoading, setCategoryLoading] = useState(false);
   const [localCategories, setLocalCategories] = useState(categories);
+
+  const baseStock = item?.current_stock ?? 0;
+  const initialStock = baseStock + (addStock ?? 0);
 
   const {
     register,
@@ -38,7 +42,7 @@ export function InventoryForm({ item, categories, onSuccess, isModal }: Inventor
     defaultValues: {
       name: item?.name ?? '',
       categoryId: item?.category_id ?? null,
-      currentStock: item?.current_stock ?? 0,
+      currentStock: initialStock,
       unit: item?.unit ?? 'pcs',
       unitPrice: item?.unit_price ?? 0,
       costPrice: item?.cost_price ?? 0,
@@ -48,6 +52,10 @@ export function InventoryForm({ item, categories, onSuccess, isModal }: Inventor
   });
 
   const categoryId = watch('categoryId');
+  const watchedStock = watch('currentStock');
+  const watchedCost = watch('costPrice');
+  const qtyAdded = Math.max(0, (Number(watchedStock) || 0) - baseStock);
+  const previewExpense = qtyAdded * (Number(watchedCost) || 0);
 
   const onSubmit = async (data: InventoryItemInput) => {
     setLoading(true);
@@ -196,6 +204,12 @@ export function InventoryForm({ item, categories, onSuccess, isModal }: Inventor
           {...register('costPrice', { valueAsNumber: true })}
         />
       </div>
+
+      {previewExpense > 0 && (
+        <div className="rounded-lg bg-brand-50 border border-brand-100 px-3 py-2 text-xs text-brand-700">
+          An expense of ₹{previewExpense.toLocaleString('en-IN', { maximumFractionDigits: 2 })} will be recorded automatically for {qtyAdded} new units &times; cost ₹{Number(watchedCost) || 0}.
+        </div>
+      )}
 
       <Input
         type="number"

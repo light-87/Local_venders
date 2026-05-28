@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter, EB_Garamond } from 'next/font/google';
 import './globals.css';
+import InstallPrompt from '@/components/ui/install-prompt';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -40,6 +41,7 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} ${ebGaramond.variable}`}>
       <body className="font-sans antialiased bg-ledger-paper text-ledger-charcoal min-h-screen overflow-x-hidden">
         {children}
+        <InstallPrompt />
       </body>
     </html>
   );

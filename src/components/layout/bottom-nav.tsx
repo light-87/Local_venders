@@ -19,8 +19,14 @@ const navItems = [
   { href: '/settings', label: 'More', icon: Menu },
 ];
 
+const FULLSCREEN_ROUTES = ['/inventory/display'];
+
 export function BottomNav() {
   const pathname = usePathname();
+
+  if (FULLSCREEN_ROUTES.some((route) => pathname === route || pathname.startsWith(route + '/'))) {
+    return null;
+  }
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 safe-area-bottom">
