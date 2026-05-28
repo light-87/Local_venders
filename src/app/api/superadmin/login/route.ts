@@ -1,5 +1,13 @@
 import { NextResponse } from 'next/server';
+import { timingSafeEqual } from 'crypto';
 import { createSuperAdminSession } from '@/lib/superadmin-session';
+
+function safeEqual(a: string, b: string): boolean {
+  const ab = Buffer.from(a);
+  const bb = Buffer.from(b);
+  if (ab.length !== bb.length) return false;
+  return timingSafeEqual(ab, bb);
+}
 
 export async function POST(request: Request) {
   try {
@@ -18,7 +26,7 @@ export async function POST(request: Request) {
       );
     }
 
-    if (pin !== expected) {
+    if (!safeEqual(pin, expected)) {
       return NextResponse.json({ error: 'Invalid PIN' }, { status: 401 });
     }
 
